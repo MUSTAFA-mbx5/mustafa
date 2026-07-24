@@ -3,178 +3,557 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>أداة معالجة وتسمية المستندات</title>
-<link href="https://fonts.googleapis.com/css2?family=Cairo:wght@600;700&display=swap" rel="stylesheet">
+<title>ماكينة سحب وتوزيع المستمسكات | A4 DocScanner</title>
+
+<!-- خط Cairo + أيقونات FontAwesome + مكتبة Cropper.js + html2pdf -->
+<link href="https://fonts.googleapis.com/css2?family=Cairo:wght@400;600;700;800&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/cropperjs/1.5.13/cropper.min.css">
+
+<script src="https://cdnjs.cloudflare.com/ajax/libs/cropperjs/1.5.13/cropper.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/html2pdf.js/0.10.1/html2pdf.bundle.min.js"></script>
+
 <style>
-  * { box-sizing: border-box; font-family: 'Cairo', sans-serif; }
-  body { background: #f0f2f5; padding: 20px; direction: rtl; text-align: center; }
-  h1 { color: #1e293b; font-size: 24px; margin-bottom: 20px; }
-  
-  .grid {
-    display: grid;
-    grid-template-columns: repeat(auto-fit, minmax(240px, 1fr));
-    gap: 15px;
-    max-width: 1000px;
-    margin: 0 auto 25px;
+  :root {
+    --primary: #1e293b;
+    --accent: #2563eb;
+    --accent-hover: #1d4ed8;
+    --success: #10b981;
+    --danger: #ef4444;
+    --bg: #f8fafc;
+    --card-bg: #ffffff;
   }
-  
-  .card {
-    background: #fff;
-    padding: 15px;
-    border-radius: 12px;
-    box-shadow: 0 4px 12px rgba(0,0,0,0.08);
-    border: 2px dashed #cbd5e1;
+
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  body {
+    font-family: 'Cairo', sans-serif;
+    background-color: var(--bg);
+    color: var(--primary);
+    padding-bottom: 60px;
+  }
+
+  /* Header */
+  header {
+    background: var(--primary);
+    color: white;
+    padding: 20px;
+    text-align: center;
+    box-shadow: 0 4px 12px rgba(0,0,0,0.1);
+  }
+  header h1 { font-size: 22px; font-weight: 800; }
+  header p { font-size: 13px; color: #94a3b8; margin-top: 4px; }
+
+  /* Main Container */
+  .container {
+    max-width: 1200px;
+    margin: 20px auto;
+    padding: 0 15px;
     display: flex;
     flex-direction: column;
-    align-items: center;
-    gap: 10px;
+    gap: 25px;
   }
-  
-  .card h3 { font-size: 16px; margin: 0; color: #0f172a; }
-  input[type="file"] { display: none; }
-  
-  .upload-btn {
-    background: #3b82f6;
-    color: white;
-    padding: 8px 16px;
-    border-radius: 8px;
+
+  /* Upload Area */
+  .upload-box {
+    background: var(--card-bg);
+    border: 2px dashed #cbd5e1;
+    border-radius: 16px;
+    padding: 30px;
+    text-align: center;
     cursor: pointer;
-    font-size: 14px;
-    transition: 0.2s;
+    transition: all 0.3s;
   }
-  .upload-btn:hover { background: #2563eb; }
-  
-  canvas {
-    max-width: 100%;
-    height: 140px;
-    border-radius: 6px;
-    border: 1px solid #e2e8f0;
-    display: none;
-    object-fit: contain;
-  }
-  
-  .actions {
+  .upload-box:hover { border-color: var(--accent); background: #f0f9ff; }
+  .upload-box i { font-size: 40px; color: var(--accent); margin-bottom: 10px; }
+  .upload-box p { font-weight: 700; font-size: 16px; }
+  .upload-box span { font-size: 12px; color: #64748b; }
+
+  /* Images Gallery */
+  .section-title {
+    font-size: 18px;
+    font-weight: 700;
+    margin-bottom: 12px;
     display: flex;
-    justify-content: center;
+    align-items: center;
+    gap: 8px;
+  }
+
+  .gallery {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(220px, 1fr));
     gap: 15px;
   }
-  
-  .download-all-btn {
-    background: #10b981;
-    color: white;
+
+  .doc-card {
+    background: var(--card-bg);
+    border-radius: 12px;
+    border: 1px solid #e2e8f0;
+    padding: 10px;
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+    box-shadow: 0 2px 8px rgba(0,0,0,0.04);
+  }
+  .doc-card img {
+    width: 100%;
+    height: 130px;
+    object-fit: contain;
+    background: #f1f5f9;
+    border-radius: 8px;
+  }
+  .doc-card-actions {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 6px;
+  }
+
+  .btn {
+    padding: 8px 12px;
     border: none;
-    padding: 12px 30px;
-    border-radius: 10px;
-    font-size: 16px;
-    font-weight: bold;
+    border-radius: 8px;
+    font-family: inherit;
+    font-size: 12px;
+    font-weight: 700;
     cursor: pointer;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 5px;
     transition: 0.2s;
   }
-  .download-all-btn:hover { background: #059669; }
+  .btn-primary { background: var(--accent); color: white; }
+  .btn-primary:hover { background: var(--accent-hover); }
+  .btn-success { background: var(--success); color: white; }
+  .btn-danger { background: var(--danger); color: white; }
+  .btn-secondary { background: #64748b; color: white; }
+  .btn-full { grid-column: span 2; }
+
+  /* Modal Edit Window */
+  .modal {
+    position: fixed;
+    top: 0; left: 0; width: 100%; height: 100%;
+    background: rgba(0,0,0,0.8);
+    display: none;
+    justify-content: center;
+    align-items: center;
+    z-index: 1000;
+    padding: 15px;
+  }
+  .modal-content {
+    background: white;
+    width: 100%;
+    max-width: 800px;
+    max-height: 90vh;
+    border-radius: 16px;
+    display: flex;
+    flex-direction: column;
+    overflow: hidden;
+  }
+  .modal-header {
+    padding: 15px 20px;
+    background: var(--primary);
+    color: white;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+  }
+  .modal-body {
+    padding: 15px;
+    flex: 1;
+    overflow-y: auto;
+    display: flex;
+    flex-direction: column;
+    gap: 15px;
+    align-items: center;
+  }
+  .crop-wrapper {
+    width: 100%;
+    max-height: 400px;
+    background: #000;
+  }
+  .crop-wrapper img { max-width: 100%; }
+
+  .filter-bar {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 8px;
+    justify-content: center;
+    width: 100%;
+  }
+
+  /* A4 Workspace Section */
+  .a4-section {
+    background: var(--card-bg);
+    border-radius: 16px;
+    padding: 20px;
+    border: 1px solid #e2e8f0;
+    box-shadow: 0 4px 15px rgba(0,0,0,0.05);
+  }
+
+  .a4-controls {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 10px;
+    margin-bottom: 20px;
+    justify-content: space-between;
+    align-items: center;
+  }
+
+  /* ورقة A4 بالأبعاد الحقيقية الحسابية */
+  .a4-paper-wrapper {
+    overflow-x: auto;
+    display: flex;
+    justify-content: center;
+    background: #cbd5e1;
+    padding: 20px;
+    border-radius: 12px;
+  }
+
+  #a4Paper {
+    width: 210mm;
+    min-height: 297mm;
+    height: auto;
+    background: white;
+    padding: 10mm;
+    box-shadow: 0 10px 25px rgba(0,0,0,0.2);
+    display: grid;
+    grid-template-columns: repeat(2, 85mm);
+    grid-auto-rows: 55mm;
+    gap: 8mm 10mm;
+    justify-content: center;
+    align-content: start;
+    box-sizing: border-box;
+  }
+
+  .a4-card-item {
+    width: 85mm;
+    height: 55mm;
+    border: 1px dashed #cbd5e1;
+    position: relative;
+    border-radius: 4px;
+    overflow: hidden;
+    background: #fafafa;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+  }
+
+  .a4-card-item img {
+    width: 100%;
+    height: 100%;
+    object-fit: fill;
+  }
+
+  .a4-card-item .remove-btn {
+    position: absolute;
+    top: 3px;
+    right: 3px;
+    background: rgba(239, 68, 68, 0.85);
+    color: white;
+    border: none;
+    border-radius: 50%;
+    width: 22px;
+    height: 22px;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 10px;
+  }
+
+  @media print {
+    body * { visibility: hidden; }
+    #a4Paper, #a4Paper * { visibility: visible; }
+    #a4Paper {
+      position: fixed;
+      top: 0; left: 0;
+      width: 210mm !important;
+      height: 297mm !important;
+      padding: 10mm !important;
+      box-shadow: none !important;
+      background: white !important;
+    }
+    .remove-btn { display: none !important; }
+  }
 </style>
 </head>
 <body>
 
-<h1>📄 أداة سحب وتوضيح المستندات التلقائية</h1>
+<header>
+  <h1><i class="fas fa-id-card"></i> نظام ماسح وتوزيع المستمسكات التلقائي</h1>
+  <p>قص حر وتوضيح فلاتر + توزيع قياسي على ورقة A4 (8.5cm × 5.5cm)</p>
+</header>
 
-<div class="grid">
-  <!-- الجنسية وجه -->
-  <div class="card">
-    <h3>الجنسية (وجه)</h3>
-    <label class="upload-btn" for="file-1">اختيار صورة</label>
-    <input type="file" id="file-1" accept="image/*" onchange="processImage(this, 'canvas-1', 'الجنسية وجه')">
-    <canvas id="canvas-1"></canvas>
+<div class="container">
+
+  <!-- منطقة الرفع -->
+  <div class="upload-box" onclick="document.getElementById('fileInput').click()">
+    <i class="fas fa-cloud-upload-alt"></i>
+    <p>اضغط هنا لرفع المستمسكات أو قم بسحب الصور وإسقاطها</p>
+    <span>يمكنك رفع عدد لا نهائي من الصور دفعة واحدة (JPG, PNG, WEBP)</span>
+    <input type="file" id="fileInput" multiple accept="image/*" style="display:none;" onchange="handleFiles(this.files)">
   </div>
 
-  <!-- الجنسية ظهر -->
-  <div class="card">
-    <h3>الجنسية (ظهر)</h3>
-    <label class="upload-btn" for="file-2">اختيار صورة</label>
-    <input type="file" id="file-2" accept="image/*" onchange="processImage(this, 'canvas-2', 'الجنسية ظهر')">
-    <canvas id="canvas-2"></canvas>
+  <!-- معارض الصور المرفوعة -->
+  <div>
+    <div class="section-title">
+      <i class="fas fa-images" style="color: var(--accent);"></i> المستمسكات المرفوعة المعالجة
+    </div>
+    <div class="gallery" id="gallery">
+      <!-- تظهر الصور المرفوعة هنا -->
+    </div>
   </div>
 
-  <!-- سكن وجه -->
-  <div class="card">
-    <h3>سكن (وجه)</h3>
-    <label class="upload-btn" for="file-3">اختيار صورة</label>
-    <input type="file" id="file-3" accept="image/*" onchange="processImage(this, 'canvas-3', 'سكن وجه')">
-    <canvas id="canvas-3"></canvas>
+  <!-- قسم ورقة A4 والطباعة -->
+  <div class="a4-section">
+    <div class="a4-controls">
+      <div class="section-title" style="margin: 0;">
+        <i class="fas fa-file-pdf" style="color: var(--success);"></i> معاينة وتوزيع ورقة A4 (قياس الهوية 8.5×5.5 سم)
+      </div>
+      <div style="display: flex; gap: 8px;">
+        <button class="btn btn-success" onclick="exportToPDF()"><i class="fas fa-download"></i> تصدير PDF</button>
+        <button class="btn btn-primary" onclick="window.print()"><i class="fas fa-print"></i> طباعة الورقة</button>
+        <button class="btn btn-danger" onclick="clearA4()"><i class="fas fa-trash"></i> تفريغ الورقة</button>
+      </div>
+    </div>
+
+    <div class="a4-paper-wrapper">
+      <div id="a4Paper">
+        <!-- يتم توزيع الكروت هنا تلقائياً -->
+      </div>
+    </div>
   </div>
 
-  <!-- سكن ظهر -->
-  <div class="card">
-    <h3>سكن (ظهر)</h3>
-    <label class="upload-btn" for="file-4">اختيار صورة</label>
-    <input type="file" id="file-4" accept="image/*" onchange="processImage(this, 'canvas-4', 'سكن ظهر')">
-    <canvas id="canvas-4"></canvas>
-  </div>
 </div>
 
-<div class="actions">
-  <button class="download-all-btn" onclick="downloadAll()">📥 حفظ وتحميل الكل بالتسميات</button>
+<!-- نافذة التعديل والقص الحر والترشيح -->
+<div class="modal" id="editModal">
+  <div class="modal-content">
+    <div class="modal-header">
+      <h3><i class="fas fa-crop-alt"></i> تعديل وتوضيح المستمسك</h3>
+      <i class="fas fa-times" style="cursor: pointer;" onclick="closeModal()"></i>
+    </div>
+    <div class="modal-body">
+      
+      <!-- منطقة القص -->
+      <div class="crop-wrapper">
+        <img id="cropImage" src="">
+      </div>
+
+      <!-- أدوات القص والتعديل -->
+      <div class="filter-bar">
+        <button class="btn btn-secondary" onclick="cropper.rotate(-90)"><i class="fas fa-undo"></i> تدوير اليسار</button>
+        <button class="btn btn-secondary" onclick="cropper.rotate(90)"><i class="fas fa-redo"></i> تدوير اليمين</button>
+        <button class="btn btn-secondary" onclick="autoCropPreset()"><i class="fas fa-magic"></i> قص تلقائي لوسط الصورة</button>
+      </div>
+
+      <hr style="width: 100%; border: 0.5px solid #e2e8f0;">
+
+      <!-- شريط الفلاتر (3 فلاتر + إلغاء) -->
+      <div class="filter-bar">
+        <span style="font-weight: 700; font-size: 13px; align-self: center;">اختر الفلتر:</span>
+        <button class="btn btn-primary" onclick="applyFilter('none')">بدون فلتر (الأصلي)</button>
+        <button class="btn btn-success" onclick="applyFilter('magic')">✨ توضيح ملون (Magic)</button>
+        <button class="btn btn-primary" style="background:#000;" onclick="applyFilter('bw')">🌓 أسود وأبيض (عالي التباين)</button>
+        <button class="btn btn-secondary" onclick="applyFilter('gray')">🔘 رمادي (Grayscale)</button>
+      </div>
+
+      <div style="width:100%; display:flex; gap:10px; margin-top:10px;">
+        <button class="btn btn-success btn-full" style="padding:12px; font-size:15px;" onclick="saveCrop()">
+          <i class="fas fa-check-circle"></i> حفظ التعديلات وإعتماد المستمسك
+        </button>
+      </div>
+
+    </div>
+  </div>
 </div>
 
 <script>
-  const processedImages = {};
+  let docList = [];
+  let currentDocId = null;
+  let cropper = null;
+  let activeFilter = 'none';
 
-  function processImage(input, canvasId, docName) {
-    if (!input.files || !input.files[0]) return;
-    
-    const file = input.files[0];
-    const reader = new FileReader();
+  // استقبال الصور عند السحب والإفلات
+  const uploadBox = document.querySelector('.upload-box');
+  uploadBox.addEventListener('dragover', (e) => { e.preventDefault(); });
+  uploadBox.addEventListener('drop', (e) => {
+    e.preventDefault();
+    if(e.dataTransfer.files) handleFiles(e.dataTransfer.files);
+  });
 
-    reader.onload = function(e) {
-      const img = new Image();
-      img.onload = function() {
-        const canvas = document.getElementById(canvasId);
-        const ctx = canvas.getContext('2d');
-
-        canvas.width = img.width;
-        canvas.height = img.height;
-
-        // رسم الصورة الأصلي
-        ctx.drawImage(img, 0, 0);
-
-        // فلتر تحسين التباين والتوضيح (CamScanner Effect)
-        const imgData = ctx.getImageData(0, 0, canvas.width, canvas.height);
-        const data = imgData.data;
-
-        // زيادت التباين والسطوع لتوضيح النص
-        const contrast = 1.3; // درجة التباين
-        const brightness = 10; // درجة السطوع
-        const factor = (259 * (contrast + 255)) / (255 * (259 - contrast));
-
-        for (let i = 0; i < data.length; i += 4) {
-          data[i] = factor * (data[i] - 128) + 128 + brightness;     // Red
-          data[i+1] = factor * (data[i+1] - 128) + 128 + brightness; // Green
-          data[i+2] = factor * (data[i+2] - 128) + 128 + brightness; // Blue
-        }
-
-        ctx.putImageData(imgData, 0, 0);
-        canvas.style.display = 'block';
-
-        // تخزين الصورة الجاهزة للتحميل
-        processedImages[docName] = canvas.toDataURL('image/jpeg', 0.95);
+  // معالجة الملفات المرفوعة
+  function handleFiles(files) {
+    Array.from(files).forEach(file => {
+      const reader = new FileReader();
+      reader.onload = (e) => {
+        const docObj = {
+          id: Date.now() + Math.random(),
+          originalSrc: e.target.result,
+          processedSrc: e.target.result,
+          filter: 'none'
+        };
+        docList.push(docObj);
+        renderGallery();
       };
-      img.src = e.target.result;
-    };
-    reader.readAsDataURL(file);
+      reader.readAsDataURL(file);
+    });
   }
 
-  function downloadAll() {
-    const keys = Object.keys(processedImages);
-    if (keys.length === 0) {
-      alert("الرجاء رفع صورة واحدة على الأقل!");
-      return;
+  // عرض معرض الصور
+  function renderGallery() {
+    const gallery = document.getElementById('gallery');
+    gallery.innerHTML = '';
+
+    docList.forEach(doc => {
+      const card = document.createElement('div');
+      card.className = 'doc-card';
+      card.innerHTML = `
+        <img src="${doc.processedSrc}">
+        <div class="doc-card-actions">
+          <button class="btn btn-primary" onclick="openEditModal(${doc.id})"><i class="fas fa-edit"></i> تعديل وقص</button>
+          <button class="btn btn-danger" onclick="deleteDoc(${doc.id})"><i class="fas fa-trash"></i> حذف</button>
+          <button class="btn btn-success btn-full" onclick="addToA4('${doc.processedSrc}')"><i class="fas fa-plus-circle"></i> إضافة لورقة A4</button>
+        </div>
+      `;
+      gallery.appendChild(card);
+    });
+  }
+
+  // حذف مستمسك
+  function deleteDoc(id) {
+    docList = docList.filter(d => d.id !== id);
+    renderGallery();
+  }
+
+  // فتح نافذة القص والترشيح
+  function openEditModal(id) {
+    currentDocId = id;
+    const doc = docList.find(d => d.id === id);
+    const cropImg = document.getElementById('cropImage');
+    cropImg.src = doc.originalSrc;
+
+    document.getElementById('editModal').style.display = 'flex';
+
+    if(cropper) cropper.destroy();
+    cropper = new Cropper(cropImg, {
+      viewMode: 1,
+      dragMode: 'crop',
+      autoCropArea: 0.9,
+      restore: false,
+      guides: true,
+      center: true,
+      highlight: true,
+      cropBoxMovable: true,
+      cropBoxResizable: true,
+      toggleDragModeOnDblclick: false,
+    });
+  }
+
+  function closeModal() {
+    document.getElementById('editModal').style.display = 'none';
+    if(cropper) cropper.destroy();
+  }
+
+  // قص تلقائي سريع للمركز
+  function autoCropPreset() {
+    if(!cropper) return;
+    cropper.setCropBoxData({
+      left: cropper.getCanvasData().left + 20,
+      top: cropper.getCanvasData().top + 20,
+      width: cropper.getCanvasData().width - 40,
+      height: cropper.getCanvasData().height - 40
+    });
+  }
+
+  // تطبيق الفلاتر الثلاثة مع خيار الإلغاء
+  function applyFilter(filterType) {
+    activeFilter = filterType;
+  }
+
+  // معالجة الفلاتر على الكانفاس
+  function processCanvasFilter(canvas, filterType) {
+    const ctx = canvas.getContext('2d');
+    const imgData = ctx.getImageData(0, 0, canvas.width, canvas.height);
+    const d = imgData.data;
+
+    if (filterType === 'magic') {
+      // توضيح ملون زيادة التباين والسطوع
+      const contrast = 1.3;
+      const brightness = 15;
+      const factor = (259 * (contrast + 255)) / (255 * (259 - contrast));
+      for (let i = 0; i < d.length; i += 4) {
+        d[i] = factor * (d[i] - 128) + 128 + brightness;
+        d[i+1] = factor * (d[i+1] - 128) + 128 + brightness;
+        d[i+2] = factor * (d[i+2] - 128) + 128 + brightness;
+      }
+    } else if (filterType === 'bw') {
+      // أسود وأبيض شديد التوضيح (Threshold)
+      for (let i = 0; i < d.length; i += 4) {
+        let avg = (d[i] + d[i+1] + d[i+2]) / 3;
+        let v = avg > 120 ? 255 : 0;
+        d[i] = d[i+1] = d[i+2] = v;
+      }
+    } else if (filterType === 'gray') {
+      // رمادي
+      for (let i = 0; i < d.length; i += 4) {
+        let v = 0.299 * d[i] + 0.587 * d[i+1] + 0.114 * d[i+2];
+        d[i] = d[i+1] = d[i+2] = v;
+      }
+    }
+    ctx.putImageData(imgData, 0, 0);
+  }
+
+  // حفظ القص والفلترة
+  function saveCrop() {
+    if(!cropper) return;
+    const croppedCanvas = cropper.getCroppedCanvas({
+      maxWidth: 1600,
+      maxHeight: 1600,
+      fillColor: '#fff',
+      imageSmoothingQuality: 'high'
+    });
+
+    if(activeFilter !== 'none') {
+      processCanvasFilter(croppedCanvas, activeFilter);
     }
 
-    keys.forEach(name => {
-      const link = document.createElement('a');
-      link.download = `(${name}).jpg`;
-      link.href = processedImages[name];
-      link.click();
-    });
+    const finalImage = croppedCanvas.toDataURL('image/jpeg', 0.92);
+    const doc = docList.find(d => d.id === currentDocId);
+    doc.processedSrc = finalImage;
+    doc.filter = activeFilter;
+
+    renderGallery();
+    closeModal();
+  }
+
+  // إدارة ورقة A4 (عرض 8.5سم × ارتفاع 5.5سم)
+  function addToA4(imageSrc) {
+    const a4Paper = document.getElementById('a4Paper');
+    const cardItem = document.createElement('div');
+    cardItem.className = 'a4-card-item';
+    cardItem.innerHTML = `
+      <img src="${imageSrc}">
+      <button class="remove-btn" onclick="this.parentElement.remove()"><i class="fas fa-times"></i></button>
+    `;
+    a4Paper.appendChild(cardItem);
+  }
+
+  function clearA4() {
+    document.getElementById('a4Paper').innerHTML = '';
+  }
+
+  // تصدير A4 كـ PDF
+  function exportToPDF() {
+    const element = document.getElementById('a4Paper');
+    const opt = {
+      margin: 0,
+      filename: 'A4_Documents.pdf',
+      image: { type: 'jpeg', quality: 0.98 },
+      html2canvas: { scale: 3 },
+      jsPDF: { unit: 'mm', format: 'a4', orientation: 'portrait' }
+    };
+    html2pdf().set(opt).from(element).save();
   }
 </script>
 
