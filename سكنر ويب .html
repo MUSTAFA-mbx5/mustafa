@@ -247,6 +247,7 @@
     justify-content: center;
     align-content: start;
     box-sizing: border-box;
+    position: relative;
   }
 
   .a4-card-item {
@@ -301,15 +302,69 @@
     box-shadow: 0 2px 4px rgba(0,0,0,0.2);
   }
 
+  /* ==========================================
+     إخفاء الأزرار أثناء تصدير PDF
+     ========================================== */
+  .exporting-pdf .remove-btn,
+  .exporting-pdf .rotate-btn,
+  .exporting-pdf .flip-btn {
+    display: none !important;
+  }
+
+  .exporting-pdf .a4-card-item {
+    border: none !important;
+  }
+
+  /* ==========================================
+     تنسيقات الطباعة والتصدير عبر المتصفح (window.print)
+     ========================================== */
   @media print {
-    body * { visibility: hidden; }
-    #a4Paper, #a4Paper * { visibility: visible; }
-    #a4Paper {
-      position: fixed; top: 0; left: 0;
-      width: 210mm !important; height: 297mm !important;
-      padding: 10mm !important; box-shadow: none !important; background: white !important;
+    /* إخفاء الواجهة بالكامل واستثناء ورقة A4 فقط */
+    header, 
+    #statusEngine, 
+    .upload-box, 
+    .section-title, 
+    .gallery, 
+    .a4-controls, 
+    .modal, 
+    .remove-btn, 
+    .rotate-btn, 
+    .flip-btn {
+      display: none !important;
     }
-    .remove-btn, .rotate-btn, .flip-btn { display: none !important; }
+
+    body, .container, .a4-section, .a4-paper-wrapper {
+      background: white !important;
+      padding: 0 !important;
+      margin: 0 !important;
+      border: none !important;
+      box-shadow: none !important;
+      display: block !important;
+    }
+
+    .a4-card-item {
+      border: none !important;
+    }
+
+    /* تثبيت ورقة A4 في أعلى الصفحة تماماً */
+    #a4Paper {
+      position: absolute !important;
+      top: 0 !important;
+      left: 0 !important;
+      margin: 0 !important;
+      width: 210mm !important;
+      height: 297mm !important;
+      padding: 10mm !important;
+      box-shadow: none !important;
+      background: white !important;
+      page-break-after: avoid !important;
+      page-break-before: avoid !important;
+    }
+
+    @page {
+      size: A4 portrait;
+      margin: 0;
+    }
   }
 </style>
 </head>
@@ -539,7 +594,7 @@
     editorImg.src = tempCanvas.toDataURL();
   }
 
-  // 1. انعكاس الصورة (أفقي / رأسي) في المحرر الرئيسي
+  // انعكاس الصورة (أفقي / رأسي) في المحرر الرئيسي
   function flipImage(direction) {
     const tempCanvas = document.createElement('canvas');
     const tempCtx = tempCanvas.getContext('2d');
@@ -788,7 +843,7 @@
     tempImg.src = img.src;
   }
 
-  // 2. انعكاس الصورة أفقياً داخل بطاقات ورقة A4 مباشرة
+  // انعكاس الصورة أفقياً داخل بطاقات ورقة A4 مباشرة
   function flipA4Card(btn) {
     const cardItem = btn.parentElement;
     const img = cardItem.querySelector('img');
@@ -814,16 +869,35 @@
     document.getElementById('a4Paper').innerHTML = '';
   }
 
-  function exportToPDF() {
+  // تصدير PDF بدون أزرار وبأعلى جودة
+  async function exportToPDF() {
     const element = document.getElementById('a4Paper');
+    
+    if (!element || element.children.length === 0) {
+      alert("ورقة A4 فارغة! يرجى إضافة مستمسكات أولاً.");
+      return;
+    }
+
+    // 1. إضافة كلاس لإخفاء الأزرار والحدود المنقطة مؤقتاً عند التقاط صورة الـ PDF
+    element.classList.add('exporting-pdf');
+
     const opt = {
       margin: 0,
       filename: 'المستمسكات_A4.pdf',
       image: { type: 'jpeg', quality: 0.98 },
-      html2canvas: { scale: 3 },
+      html2canvas: { scale: 3, useCORS: true, logging: false },
       jsPDF: { unit: 'mm', format: 'a4', orientation: 'portrait' }
     };
-    html2pdf().set(opt).from(element).save();
+
+    try {
+      await html2pdf().set(opt).from(element).save();
+    } catch (err) {
+      console.error("خطأ أثناء التصدير:", err);
+      alert("حدث خطأ أثناء تصدير ملف PDF.");
+    } finally {
+      // 2. إعادة الأزرار إلى الشاشة بعد اكتمال التحميل
+      element.classList.remove('exporting-pdf');
+    }
   }
 </script>
 
