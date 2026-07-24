@@ -1,0 +1,913 @@
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>Teacher Alarm - Ultimate Dashboard</title>
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=Cairo:wght@600;700;800&display=swap');
+
+        :root {
+            --bg-page: #f8fbfb;     
+            --primary-color: #3b82f6; 
+            --primary-light: #eff6ff; 
+            --text-dark: #1e293b;   
+            --text-muted: #64748b;  
+            --card-bg: #ffffff;
+            
+            --font-main: 'Cairo', system-ui, -apple-system, sans-serif;
+        }
+
+        * { box-sizing: border-box; -webkit-tap-highlight-color: transparent; }
+
+        body {
+            background-color: var(--bg-page);
+            font-family: var(--font-main);
+            margin: 0; padding: 0;
+            display: flex; flex-direction: column;
+            height: 100vh; height: 100dvh; 
+            overflow: hidden; 
+            color: var(--text-dark);
+            user-select: none;
+            transition: all 0.4s ease;
+        }
+
+        /* --- خلفية القوس العلوي --- */
+        .top-section {
+            background: linear-gradient(180deg, #dcf4f5 0%, #ffffff 100%);
+            border-bottom: 2px solid #bce3e6;
+            border-radius: 0 0 50% 50% / 0 0 35px 35px; 
+            padding: 10px 10px 20px 10px; 
+            box-shadow: 0 4px 20px rgba(188, 227, 230, 0.4);
+            position: relative; z-index: 2; flex-shrink: 0;
+            transition: all 0.5s cubic-bezier(0.4, 0, 0.2, 1);
+            display: flex; flex-direction: column;
+        }
+
+        .top-bar {
+            display: flex; justify-content: space-between; align-items: center;
+            padding: 0 10px;
+        }
+        .top-bar .title { font-size: 1.1rem; font-weight: 800; color: var(--text-dark); display: flex; align-items: center; gap: 6px;}
+        
+        .settings-icon {
+            width: 32px; height: 32px; border-radius: 50%;
+            background: rgba(59, 130, 246, 0.1); display: flex; align-items: center; justify-content: center;
+            font-size: 0.9rem; cursor: pointer; border: none; color: var(--primary-color); transition: 0.2s;
+        }
+        .settings-icon:active { transform: scale(0.9); background: var(--primary-color); color: white;}
+
+        /* --- الساعة الكبيرة بالترتيب (م 2:13:44) --- */
+        .clock-container {
+            text-align: center; margin-top: 15px; transition: all 0.5s ease;
+        }
+        .time-row {
+            display: flex; justify-content: center; align-items: baseline; gap: 4px; direction: ltr;
+        }
+        .time-text { 
+            font-size: 4rem; font-weight: bold; margin: 0; letter-spacing: -2px;
+            font-family: 'Arial', sans-serif; color: var(--text-dark);
+            line-height: 1; display: flex; align-items: baseline; 
+        }
+        .colon { animation: blinker 1s linear infinite; margin: 0 1px; }
+        @keyframes blinker { 50% { opacity: 0; } }
+        
+        .seconds-text { 
+            font-size: 1.05rem; color: var(--primary-color); font-weight: 800; direction: ltr; 
+        }
+        
+        .ampm-text { 
+            font-size: 1.5rem; font-weight: 800; color: var(--primary-color); margin-left: 6px;
+        }
+
+        .date-text { color: var(--text-muted); font-size: 0.95rem; font-weight: 800; margin-top: 5px; }
+
+        /* --- القسم الأوسط --- */
+        .main-content {
+            flex: 1; display: flex; flex-direction: column;
+            padding: 5px 8px 70px 8px; overflow: hidden; 
+            transition: all 0.5s ease;
+        }
+
+        /* ========================================= */
+        /* تصميم الوضع النظيف (Clean Mode - إخفاء الدروس) */
+        /* ========================================= */
+        body.clean-mode .top-section {
+            flex: 0.6; 
+            justify-content: flex-start; padding-bottom: 30px;
+            border-radius: 0 0 50% 50% / 0 0 50px 50px; 
+        }
+        body.clean-mode .clock-container { transform: scale(1.1); margin-top: 25px; }
+        body.clean-mode .main-content { 
+            justify-content: space-around; 
+            padding-bottom: 75px; 
+        }
+        body.clean-mode #schedule-list { display: none; }
+        body.clean-mode .clean-widget { display: flex; } 
+        
+        body.clean-mode .nav-item:not(.active) { display: none; }
+        body.clean-mode .bottom-nav { justify-content: center; }
+        body.clean-mode .nav-item.active { transform: scale(1.1); }
+        /* ========================================= */
+
+        /* بطاقة الدرس القادم (الودجت) */
+        .clean-widget {
+            display: none; flex-direction: column; align-items: center; justify-content: center;
+            background: var(--card-bg); border-radius: 20px; padding: 20px 10px;
+            box-shadow: 0 10px 30px rgba(59, 130, 246, 0.08); border: 1px solid var(--primary-light);
+            margin: 10px 15px; text-align: center; gap: 5px;
+            animation: fadeIn 0.5s ease;
+        }
+        @keyframes fadeIn { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; transform: translateY(0); } }
+        .cw-label { font-size: 0.95rem; color: var(--text-muted); font-weight: 800; }
+        .cw-title { font-size: 1.3rem; color: var(--primary-color); font-weight: 800; line-height: 1.4; }
+        
+        .cw-time {
+            margin-top: 6px; background: #f1f5f9; color: var(--text-muted);
+            font-size: 0.85rem; font-weight: 800; padding: 4px 15px;
+            border-radius: 20px; display: none; border: 1px solid #e2e8f0;
+        }
+
+        /* ========================================= */
+        /* شريط التنبيه المتحرك اللانهائي المطور */
+        /* ========================================= */
+        .marquee-container {
+            background: var(--primary-light); border-right: 3px solid var(--primary-color);
+            color: var(--text-dark); border-radius: 8px;
+            font-size: 0.75rem; font-weight: 800; margin-bottom: 6px; flex-shrink: 0;
+            height: 26px; display: flex; align-items: center; overflow: hidden; position: relative; width: 100%;
+        }
+        .marquee-wrapper { 
+            display: flex; width: max-content; 
+            animation: scrollMarquee 15s linear infinite; 
+        }
+        .marquee-msg { white-space: nowrap; padding-left: 30px; }
+        
+        @keyframes scrollMarquee { 
+            0% { transform: translateX(0); } 
+            100% { transform: translateX(50%); } 
+        }
+
+        /* شريط الإعدادات السريعة */
+        .settings-panel {
+            background: var(--card-bg); border-radius: 12px; padding: 6px 10px;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.03); margin-bottom: 6px; flex-shrink: 0; border: 1px solid #f1f5f9;
+        }
+
+        .supervisor-bar {
+            display: flex; align-items: center; justify-content: space-between;
+            font-size: 0.75rem; font-weight: 800; color: var(--text-dark);
+            margin-bottom: 6px; padding-bottom: 6px; border-bottom: 1px dashed #e2e8f0;
+        }
+        .switch { position: relative; display: inline-block; width: 36px; height: 20px; }
+        .switch input { opacity: 0; width: 0; height: 0; }
+        .slider { position: absolute; cursor: pointer; top: 0; left: 0; right: 0; bottom: 0; background-color: #cbd5e1; transition: .4s; border-radius: 20px; }
+        .slider:before { position: absolute; content: ""; height: 16px; width: 16px; left: 2px; bottom: 2px; background-color: white; transition: .4s; border-radius: 50%; box-shadow: 0 1px 2px rgba(0,0,0,0.2);}
+        input:checked + .slider { background-color: var(--primary-color); }
+        input:checked + .slider:before { transform: translateX(16px); }
+
+        .timing-settings { display: flex; gap: 6px; justify-content: space-between; }
+        .timing-item { flex: 1; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 2px;}
+        .timing-item label { font-size: 0.55rem; color: var(--text-muted); font-weight: 800; line-height: 1; margin-bottom: 1px;}
+        .timing-item input, .timing-item select {
+            width: 100%; text-align: center; padding: 2px; border-radius: 6px;
+            border: 1px solid #e2e8f0; background: var(--primary-light); color: var(--text-dark);
+            font-weight: 800; font-family: var(--font-main); outline: none; font-size: 0.75rem; appearance: none; transition: 0.3s;
+        }
+        .timing-item input:focus, .timing-item select:focus { border-color: var(--primary-color); }
+
+        /* قائمة الدروس (عرض فقط) */
+        #schedule-list {
+            flex: 1; display: flex; flex-direction: column; gap: 4px; justify-content: stretch; min-height: 0; 
+        }
+        .lesson-card {
+            background-color: var(--card-bg); border-radius: 10px; padding: 4px 8px;
+            box-shadow: 0 2px 6px rgba(0,0,0,0.02); flex: 1; border: 1px solid #f1f5f9;
+            display: flex; align-items: center; gap: 6px; transition: 0.3s ease; min-height: 0; margin: 0; border-right: 4px solid transparent;
+        }
+        .lesson-card.active-now { 
+            background-color: var(--text-dark) !important; color: #ffffff !important;
+            box-shadow: 0 4px 15px rgba(30, 41, 59, 0.25); transform: scale(1.01); z-index: 10; border: none;
+        }
+        .lesson-card.active-now .lesson-avatar { background-color: #ffffff; color: var(--text-dark); }
+        .lesson-card.active-now .lesson-select { color: #ffffff; }
+        .lesson-card.active-now .lesson-time { color: rgba(255, 255, 255, 0.85); }
+
+        .lesson-avatar {
+            width: 26px; height: 26px; border-radius: 6px; background: var(--primary-light);
+            color: var(--primary-color); display: flex; align-items: center; justify-content: center;
+            font-size: 0.8rem; font-weight: 800; flex-shrink: 0; transition: 0.3s;
+        }
+        .lesson-details { flex: 1; display: flex; flex-direction: column; justify-content: center; gap: 2px; min-height: 0;}
+        .select-group { display: flex; gap: 4px; width: 100%; align-items: center;}
+        
+        .lesson-select {
+            flex: 1; border: 1px solid transparent; border-radius: 6px; padding: 2px 0; margin: 0;
+            font-size: 0.8rem; color: var(--text-dark); font-weight: 800; 
+            background: transparent; text-align: center; white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
+        }
+        .select-subj { flex: 2; color: var(--primary-color); } 
+        .lesson-time { font-size: 0.65rem; color: var(--text-muted); display: flex; align-items: center; gap: 4px; direction: ltr; justify-content: flex-end; font-weight: 800; }
+
+        /* --- شريط الأيام السفلي --- */
+        .bottom-nav {
+            position: fixed; bottom: 0; left: 0; width: 100%; height: 60px;
+            background: #ffffff; box-shadow: 0 -4px 15px rgba(0,0,0,0.05);
+            display: flex; justify-content: space-around; align-items: center;
+            border-radius: 20px 20px 0 0; z-index: 100; transition: all 0.4s ease;
+        }
+        .nav-item {
+            flex: 1; text-align: center; color: var(--text-muted); font-size: 0.75rem; font-weight: 800; cursor: pointer;
+            display: flex; flex-direction: column; align-items: center; gap: 3px; transition: 0.3s;
+        }
+        .nav-icon { font-size: 1.2rem; opacity: 0.5; transition: 0.3s; filter: grayscale(100%); }
+        .nav-item.active { color: var(--primary-color); }
+        .nav-item.active .nav-icon { opacity: 1; transform: translateY(-2px); filter: grayscale(0%); }
+        .nav-item.active::after { content: ''; display: block; width: 5px; height: 5px; border-radius: 50%; background: var(--primary-color); margin-top: 1px; }
+
+        /* رسالة الحفظ */
+        .auto-save-toast {
+            position: fixed; top: -50px; left: 50%; transform: translateX(-50%);
+            background: #10b981; color: white; padding: 6px 20px; border-radius: 20px;
+            font-size: 0.8rem; font-weight: 800; transition: 0.3s; z-index: 1000; box-shadow: 0 4px 15px rgba(16, 185, 129, 0.3);
+        }
+        .auto-save-toast.show { top: 20px; } 
+
+        /* الشاشات المنبثقة العامة */
+        .overlay {
+            position: fixed; top: 0; left: 0; width: 100%; height: 100%;
+            background: rgba(30, 41, 59, 0.8); z-index: 999;
+            display: none; justify-content: center; align-items: center; backdrop-filter: blur(2px);
+        }
+        .modal-card {
+            background: var(--card-bg); width: 90%; max-width: 360px; border-radius: 20px;
+            padding: 20px; text-align: center; box-shadow: 0 10px 40px rgba(0,0,0,0.2); max-height: 90vh; overflow-y: auto;
+        }
+        .modal-card h3 { margin-top: 0; color: var(--text-dark); font-size: 1.2rem; font-weight: 800; border-bottom: 2px solid var(--primary-light); padding-bottom: 10px;}
+        
+        .tone-btn {
+            display: block; width: 100%; padding: 12px; margin: 8px 0; border-radius: 12px;
+            border: 1px solid #e2e8f0; background: #f8fafc; font-weight: 800; color: var(--text-dark); cursor: pointer; font-size: 0.9rem; font-family: var(--font-main); transition: 0.3s;
+        }
+        .tone-btn.selected { border-color: var(--primary-color); color: var(--primary-color); background: var(--primary-light); }
+        
+        .setting-row {
+            display: flex; justify-content: space-between; align-items: center;
+            background: #f8fafc; padding: 12px; border-radius: 12px; border: 1px solid #e2e8f0; margin-bottom: 15px; font-weight: 800; font-size: 0.85rem;
+        }
+
+        .primary-btn {
+            background: var(--primary-color); color: white; padding: 12px; border-radius: 12px; border: none;
+            width: 100%; font-weight: 800; font-size: 1rem; font-family: var(--font-main); cursor: pointer; margin-bottom: 10px; box-shadow: 0 4px 10px rgba(59, 130, 246, 0.3);
+        }
+        .close-btn {
+            padding: 10px; border-radius: 12px; border: none; background: #e2e8f0; color: var(--text-dark); font-weight: 800; cursor: pointer; font-family: var(--font-main); font-size: 0.9rem; width: 100%; transition: 0.3s;
+        }
+
+        /* --- شاشة محرر الدروس --- */
+        .editor-tabs {
+            display: flex; background: #f1f5f9; border-radius: 10px; padding: 4px; margin-bottom: 15px; overflow-x: auto;
+        }
+        .e-tab {
+            flex: 1; text-align: center; padding: 8px 4px; border-radius: 8px; font-size: 0.75rem; font-weight: 800; color: var(--text-muted); cursor: pointer; transition: 0.3s; min-width: 50px;
+        }
+        .e-tab.active { background: var(--primary-color); color: white; box-shadow: 0 2px 5px rgba(59, 130, 246, 0.3); }
+
+        .editor-list { display: flex; flex-direction: column; gap: 8px; margin-bottom: 15px;}
+        .editor-card { background: #f8fafc; border: 1px solid #e2e8f0; border-radius: 10px; padding: 8px; display: flex; align-items: center; gap: 8px;}
+        .editor-card .num { width: 24px; height: 24px; background: var(--primary-light); color: var(--primary-color); border-radius: 5px; display: flex; align-items: center; justify-content: center; font-weight: 800; font-size: 0.8rem;}
+        
+        .editor-selects { flex: 1; display: flex; gap: 4px; }
+        .e-select {
+            flex: 1; border: 1px solid #cbd5e1; border-radius: 6px; padding: 4px 2px; font-size: 0.75rem; font-weight: 800; font-family: var(--font-main); color: var(--text-dark); outline: none; background: white; text-align: center;
+        }
+        .e-select:focus { border-color: var(--primary-color); }
+        .e-subj { flex: 2; }
+
+        #start-overlay { display: flex; flex-direction: column; color: var(--text-dark); text-align: center; background: linear-gradient(180deg, #dcf4f5 0%, #ffffff 100%);}
+        .start-btn {
+            margin-top: 20px; padding: 15px 40px; border-radius: 25px; border: none; background: var(--primary-color); color: white; font-size: 1.2rem; font-weight: 800; font-family: var(--font-main); box-shadow: 0 10px 20px rgba(59, 130, 246, 0.3); animation: pulse 2s infinite; cursor: pointer; 
+        }
+        @keyframes pulse { 0% { transform: scale(1); } 50% { transform: scale(1.05); } 100% { transform: scale(1); } }
+
+        #supervisor-reminder-card { border: 4px solid var(--primary-color); }
+        #supervisor-reminder-card h3 { color: var(--primary-color); font-size: 1.4rem;}
+    </style>
+</head>
+<body>
+
+    <div class="overlay" id="start-overlay">
+        <div style="font-size: 4.5rem; margin-bottom: 10px;">🎓</div>
+        <h2 style="margin:0; color: var(--text-dark);">منبه المعلم</h2>
+        <p style="color: var(--text-muted); margin-bottom: 20px; font-size:0.95rem; font-weight:bold;">يرجى إبقاء التطبيق مفتوحاً</p>
+        <button class="start-btn" onclick="startApp()">تشغيل النظام</button>
+    </div>
+
+    <div class="overlay" id="supervisor-reminder" style="z-index: 1000;">
+        <div class="modal-card" id="supervisor-reminder-card">
+            <div style="font-size: 3.5rem; margin-bottom: 10px;">🚨</div>
+            <h3>تنبيه هام</h3>
+            <p style="font-weight: bold; font-size: 1rem; color: var(--text-dark);">لا تنسى، أنت "معلم مراقب" لهذا اليوم!</p>
+            <button class="primary-btn" onclick="closeSupervisorReminder()">حسناً، تذكرت</button>
+        </div>
+    </div>
+
+    <div class="overlay" id="settings-modal">
+        <div class="modal-card">
+            <h3>⚙️ الإعدادات العامة</h3>
+            
+            <div class="setting-row">
+                <span>👁️ عرض الدروس في الشاشة الرئيسية</span>
+                <label class="switch">
+                    <input type="checkbox" id="setting-show-lessons" onchange="toggleLessonsView()">
+                    <span class="slider"></span>
+                </label>
+            </div>
+
+            <button class="primary-btn" onclick="openEditorModal()">📝 إدخال وتعديل جدول الدروس</button>
+
+            <h3 style="margin-top: 20px;">🎵 نغمة المنبه</h3>
+            <button class="tone-btn" id="tone-bell" onclick="setTone('bell')">🔔 جرس مدرسي</button>
+            <button class="tone-btn" id="tone-digital" onclick="setTone('digital')">⏰ منبه رقمي</button>
+            <button class="tone-btn" id="tone-calm" onclick="setTone('calm')">✨ نغمة هادئة</button>
+            
+            <button class="close-btn" onclick="closeSettings()">إغلاق</button>
+        </div>
+    </div>
+
+    <div class="overlay" id="editor-modal">
+        <div class="modal-card" style="width: 95%; max-width: 450px;">
+            <h3>📝 إدخال وتعديل الجدول</h3>
+            <div class="editor-tabs" id="editor-tabs-container"></div>
+            <div class="editor-list" id="editor-list-container"></div>
+            <button class="primary-btn" onclick="saveEditorAndClose()">✅ حفظ الجدول</button>
+        </div>
+    </div>
+
+    <div class="auto-save-toast" id="toast">✅ عاشت ايدك</div>
+
+    <div class="top-section">
+        <div class="top-bar">
+            <span class="settings-icon" onclick="openSettings()">⚙️</span>
+            <div class="title">🏫 منبه المعلم</div>
+            <span class="settings-icon" style="opacity: 0; cursor:default;">⚙️</span>
+        </div>
+
+        <div class="clock-container">
+            <div class="time-row">
+                <div class="time-text">
+                    <span id="hh">00</span><span class="colon">:</span><span id="mm">00</span>
+                </div>
+                <div class="seconds-text">
+                    <span class="colon" style="color: var(--primary-color); margin: 0 1px;">:</span><span id="ss">00</span>
+                </div>
+                <div class="ampm-text" id="ap">ص</div>
+            </div>
+            <div class="date-text" id="date-text">الأحد 0-0-0000</div>
+        </div>
+    </div>
+
+    <div class="main-content">
+        
+        <div class="marquee-container">
+            <div class="marquee-wrapper" id="marquee-wrapper">
+                <div class="marquee-msg">جاري التحميل...</div>
+                <div class="marquee-msg">جاري التحميل...</div>
+            </div>
+        </div>
+
+        <div id="clean-mode-widget" class="clean-widget">
+            <div id="cw-label" class="cw-label">جاري التحميل</div>
+            <div id="cw-title" class="cw-title">...</div>
+            <div id="cw-time" class="cw-time">...</div>
+        </div>
+
+        <div class="settings-panel">
+            <div class="supervisor-bar">
+                <span>👁️ تفعيل وضع المعلم المراقب لهذا اليوم</span>
+                <label class="switch">
+                    <input type="checkbox" id="supervisor-toggle" onchange="handleTimingsSave()">
+                    <span class="slider"></span>
+                </label>
+            </div>
+
+            <div class="timing-settings">
+                <div class="timing-item">
+                    <label>بداية الدوام</label>
+                    <input type="time" id="set-start" value="08:00" onchange="handleTimingsSave()">
+                </div>
+                <div class="timing-item">
+                    <label>الدرس (د)</label>
+                    <input type="number" id="set-duration" value="40" min="10" max="120" onchange="handleTimingsSave()">
+                </div>
+                <div class="timing-item">
+                    <label>الفرصة (د)</label>
+                    <input type="number" id="set-break" value="5" min="0" max="60" onchange="handleTimingsSave()">
+                </div>
+                <div class="timing-item">
+                    <label>الفرصة 3</label>
+                    <select id="set-break3" onchange="handleTimingsSave()">
+                        <option value="5">5</option>
+                        <option value="10">10</option>
+                    </select>
+                </div>
+            </div>
+        </div>
+
+        <div id="schedule-list"></div>
+    </div>
+
+    <div class="bottom-nav" id="bottom-nav"></div>
+
+    <script>
+        const DAYS = ['الأحد', 'الاثنين', 'الثلاثاء', 'الأربعاء', 'الخميس'];
+        const LESSONS_COUNT = 6;
+        const SUBJECTS = ['المادة...', 'التربية الفنية', 'التربية الإسلامية', 'اللغة العربية', 'اللغة الإنجليزية', 'الرياضيات', 'العلوم', 'الاجتماعيات', 'الرياضة', 'شاغر'];
+        const GRADES = ['الصف...', 'الأول', 'الثاني', 'الثالث', 'الرابع', 'الخامس', 'السادس'];
+        const SECTIONS = ['الشعبة...', 'أ', 'ب', 'ج', 'د', 'هـ', 'و'];
+
+        let currentDayIndex = 0; 
+        let editorDayIndex = 0; 
+        let audioCtx; let wakeLock = null; let currentTone = 'bell';
+        let showLessonsOnMain = true; 
+        let lastAlertMinute = ""; let calculatedTimes = []; let saveTimeout;
+
+        document.addEventListener('DOMContentLoaded', () => {
+            const today = new Date().getDay(); 
+            currentDayIndex = (today >= 0 && today <= 4) ? today : 0;
+            editorDayIndex = currentDayIndex;
+            
+            initBottomNav();
+            
+            const sets = JSON.parse(localStorage.getItem('globalSettings')) || {};
+            if(sets.tone) currentTone = sets.tone;
+            if(sets.showLessons !== undefined) showLessonsOnMain = sets.showLessons;
+            
+            document.getElementById('setting-show-lessons').checked = showLessonsOnMain;
+            applyCleanMode();
+
+            loadDayData(currentDayIndex);
+            
+            setInterval(updateClock, 1000);
+            updateClock();
+            
+            document.addEventListener('visibilitychange', () => {
+                if (document.visibilityState === 'visible') requestWakeLock();
+            });
+        });
+
+        function initBottomNav() {
+            const nav = document.getElementById('bottom-nav');
+            let icons = ['🎒', '📖', '🏫', '🎓', '📚']; 
+            nav.innerHTML = DAYS.map((day, i) => `
+                <div class="nav-item ${i === currentDayIndex ? 'active' : ''}" id="nav-${i}" onclick="selectDay(${i})">
+                    <span class="nav-icon">${icons[i]}</span>
+                    <span>${day}</span>
+                </div>
+            `).join('');
+        }
+
+        function selectDay(index) {
+            currentDayIndex = index;
+            document.querySelectorAll('.nav-item').forEach((t, i) => {
+                if (i === index) t.classList.add('active');
+                else t.classList.remove('active');
+            });
+            loadDayData(index);
+        }
+
+        function loadDayData(index) {
+            const dayData = JSON.parse(localStorage.getItem(`day_data_${index}`)) || {};
+            document.getElementById('set-start').value = dayData.startTime || '08:00';
+            document.getElementById('set-duration').value = dayData.duration || 40;
+            document.getElementById('set-break').value = dayData.breakTime || 5;
+            document.getElementById('set-break3').value = dayData.break3Time || 5; 
+            document.getElementById('supervisor-toggle').checked = dayData.isSupervisor || false;
+            renderMainSchedule();
+        }
+
+        function handleTimingsSave() {
+            const dayData = JSON.parse(localStorage.getItem(`day_data_${currentDayIndex}`)) || { lessons: [] };
+            dayData.startTime = document.getElementById('set-start').value || '08:00';
+            dayData.duration = document.getElementById('set-duration').value || 40;
+            dayData.breakTime = document.getElementById('set-break').value || 5;
+            dayData.break3Time = document.getElementById('set-break3').value || 5;
+            dayData.isSupervisor = document.getElementById('supervisor-toggle').checked;
+            localStorage.setItem(`day_data_${currentDayIndex}`, JSON.stringify(dayData));
+            
+            showToast();
+            renderMainSchedule();
+        }
+
+        function toggleLessonsView() {
+            showLessonsOnMain = document.getElementById('setting-show-lessons').checked;
+            let sets = JSON.parse(localStorage.getItem('globalSettings')) || {};
+            sets.showLessons = showLessonsOnMain;
+            localStorage.setItem('globalSettings', JSON.stringify(sets));
+            applyCleanMode();
+        }
+
+        function applyCleanMode() {
+            if(showLessonsOnMain) {
+                document.body.classList.remove('clean-mode');
+            } else {
+                document.body.classList.add('clean-mode');
+            }
+        }
+
+        /* --- نظام المحرر المتقدم --- */
+        function openEditorModal() {
+            document.getElementById('settings-modal').style.display = 'none';
+            document.getElementById('editor-modal').style.display = 'flex';
+            editorDayIndex = currentDayIndex; 
+            renderEditorTabs();
+            renderEditorList();
+        }
+
+        function renderEditorTabs() {
+            const container = document.getElementById('editor-tabs-container');
+            container.innerHTML = DAYS.map((day, i) => `
+                <div class="e-tab ${i === editorDayIndex ? 'active' : ''}" onclick="switchEditorDay(${i})">${day}</div>
+            `).join('');
+        }
+
+        function switchEditorDay(index) {
+            saveEditorData();
+            editorDayIndex = index;
+            renderEditorTabs();
+            renderEditorList();
+        }
+
+        function generateOptionsHtml(array, selectedValue) {
+            return array.map((item, index) => {
+                let val = index === 0 ? '' : item; 
+                let isSelected = val === selectedValue ? 'selected' : '';
+                return `<option value="${val}" ${isSelected}>${item}</option>`;
+            }).join('');
+        }
+
+        function renderEditorList() {
+            const container = document.getElementById('editor-list-container');
+            const dayData = JSON.parse(localStorage.getItem(`day_data_${editorDayIndex}`)) || { lessons: [] };
+            const savedLessons = dayData.lessons || [];
+            
+            let html = '';
+            for(let i=1; i<=LESSONS_COUNT; i++) {
+                let lData = savedLessons[i-1] || { subj: '', grade: '', sec: '' };
+                html += `
+                <div class="editor-card">
+                    <div class="num">${i}</div>
+                    <div class="editor-selects">
+                        <select class="e-select e-subj" id="e-subj-${i}">${generateOptionsHtml(SUBJECTS, lData.subj)}</select>
+                        <select class="e-select" id="e-grade-${i}">${generateOptionsHtml(GRADES, lData.grade)}</select>
+                        <select class="e-select" id="e-sec-${i}">${generateOptionsHtml(SECTIONS, lData.sec)}</select>
+                    </div>
+                </div>`;
+            }
+            container.innerHTML = html;
+        }
+
+        function saveEditorData() {
+            const dayData = JSON.parse(localStorage.getItem(`day_data_${editorDayIndex}`)) || {};
+            let lessonsArr = [];
+            for(let i=1; i<=LESSONS_COUNT; i++) {
+                lessonsArr.push({
+                    subj: document.getElementById(`e-subj-${i}`).value,
+                    grade: document.getElementById(`e-grade-${i}`).value,
+                    sec: document.getElementById(`e-sec-${i}`).value
+                });
+            }
+            dayData.lessons = lessonsArr;
+            localStorage.setItem(`day_data_${editorDayIndex}`, JSON.stringify(dayData));
+        }
+
+        function saveEditorAndClose() {
+            saveEditorData(); 
+            document.getElementById('editor-modal').style.display = 'none';
+            showToast();
+            renderMainSchedule(); 
+        }
+
+        /* --- عرض الجدول --- */
+        function calculateLessonTimes() {
+            const startStr = document.getElementById('set-start').value || '08:00';
+            const duration = parseInt(document.getElementById('set-duration').value) || 40;
+            const breakMins = parseInt(document.getElementById('set-break').value) || 5;
+            const break3Mins = parseInt(document.getElementById('set-break3').value) || 5;
+            calculatedTimes = [];
+            let [startH, startM] = startStr.split(':').map(Number);
+            let currentMinutes = startH * 60 + startM;
+
+            for(let i=1; i<=LESSONS_COUNT; i++) {
+                let h = Math.floor(currentMinutes / 60); let m = currentMinutes % 60;
+                calculatedTimes.push({ id: i, time: `${String(h).padStart(2,'0')}:${String(m).padStart(2,'0')}`, minutesTotal: currentMinutes });
+                currentMinutes += duration + ((i === 3) ? break3Mins : breakMins);
+            }
+        }
+
+        function renderMainSchedule() {
+            calculateLessonTimes();
+            const container = document.getElementById('schedule-list');
+            const dayData = JSON.parse(localStorage.getItem(`day_data_${currentDayIndex}`)) || { lessons: [] };
+            const savedLessons = dayData.lessons || [];
+            
+            let html = '';
+            calculatedTimes.forEach((lesson, index) => {
+                let lData = savedLessons[index] || { subj: '', grade: '', sec: '' };
+                let [lh, lm] = lesson.time.split(':');
+                let l_ampm = lh >= 12 ? 'م' : 'ص'; lh = lh % 12 || 12;
+                
+                html += `
+                <div class="lesson-card" id="card-${lesson.id}">
+                    <div class="lesson-avatar">${lesson.id}</div>
+                    <div class="lesson-details">
+                        <div class="select-group">
+                            <div class="lesson-select select-subj">${lData.subj || 'المادة...'}</div>
+                            <div class="lesson-select">${lData.grade || 'الصف...'}</div>
+                            <div class="lesson-select">${lData.sec || 'الشعبة...'}</div>
+                        </div>
+                        <div class="lesson-time">البدء: <span style="color:var(--primary-color); margin:0 3px;">${lh}:${lm} ${l_ampm}</span> 🕒</div>
+                    </div>
+                </div>`;
+            });
+            container.innerHTML = html; 
+            updateUIState();
+        }
+
+        async function startApp() {
+            audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+            const silentOsc = audioCtx.createOscillator(); const silentGain = audioCtx.createGain();
+            silentGain.gain.value = 0.001; silentOsc.connect(silentGain); silentGain.connect(audioCtx.destination); silentOsc.start(); 
+            await requestWakeLock(); document.getElementById('start-overlay').style.display = 'none';
+
+            setTimeout(() => {
+                const realDay = new Date().getDay();
+                if (realDay >= 0 && realDay <= 4) {
+                    const dayData = JSON.parse(localStorage.getItem(`day_data_${realDay}`)) || {};
+                    if (dayData.isSupervisor === true) document.getElementById('supervisor-reminder').style.display = 'flex';
+                }
+            }, 400);
+        }
+
+        function closeSupervisorReminder() { document.getElementById('supervisor-reminder').style.display = 'none'; }
+        async function requestWakeLock() { try { if ('wakeLock' in navigator) wakeLock = await navigator.wakeLock.request('screen'); } catch (err) { } }
+
+        function showToast() {
+            const toast = document.getElementById('toast'); toast.classList.add('show');
+            clearTimeout(saveTimeout); saveTimeout = setTimeout(() => { toast.classList.remove('show'); }, 1000);
+        }
+
+        function updateClock() {
+            const now = new Date();
+            let h = now.getHours(); const m = String(now.getMinutes()).padStart(2, '0'); const s = String(now.getSeconds()).padStart(2, '0');
+            
+            document.getElementById('hh').innerText = h % 12 || 12; 
+            document.getElementById('mm').innerText = m; 
+            document.getElementById('ss').innerText = s; 
+            document.getElementById('ap').innerText = h >= 12 ? 'م' : 'ص';
+            
+            const dayName = DAYS[now.getDay()] || '';
+            const dayNum = now.getDate(); const monthNum = now.getMonth() + 1; const yearNum = now.getFullYear();
+            document.getElementById('date-text').innerText = `${dayName} ${yearNum}-${monthNum}-${dayNum}`;
+
+            checkAlarmsBackground(now); updateUIState();
+            if (audioCtx && audioCtx.state === 'suspended') audioCtx.resume();
+        }
+
+        function checkAlarmsBackground(now) {
+            const realDay = now.getDay(); if (realDay > 4) return; 
+            const currentTotalMins = now.getHours() * 60 + now.getMinutes();
+            const current24Str = `${String(now.getHours()).padStart(2,'0')}:${String(now.getMinutes()).padStart(2,'0')}`;
+            const dayData = JSON.parse(localStorage.getItem(`day_data_${realDay}`)) || {};
+            const savedLessons = dayData.lessons || [];
+            
+            let [startH, startM] = (dayData.startTime || '08:00').split(':').map(Number);
+            let mins = startH * 60 + startM;
+            let dur = parseInt(dayData.duration || 40);
+            let brk = parseInt(dayData.breakTime || 5);
+            let brk3 = parseInt(dayData.break3Time || 5);
+
+            let shouldRingRegular = false; let shouldRingSupervisor = false;
+
+            for(let i=0; i<LESSONS_COUNT; i++) {
+                if ((savedLessons[i] && savedLessons[i].subj !== '') && currentTotalMins === (mins - 1)) shouldRingRegular = true;
+                if (dayData.isSupervisor && (currentTotalMins === mins || currentTotalMins === (mins + dur))) shouldRingSupervisor = true;
+                mins += dur + ((i === 2) ? brk3 : brk); 
+            }
+
+            if (lastAlertMinute !== current24Str) {
+                if (shouldRingSupervisor && shouldRingRegular) {
+                    playSchoolBell(); setTimeout(() => { playTone(false); }, 4000); lastAlertMinute = current24Str;
+                } else if (shouldRingSupervisor) { playSchoolBell(); lastAlertMinute = current24Str; } 
+                  else if (shouldRingRegular) { playTone(false); lastAlertMinute = current24Str; }
+            }
+        }
+
+        function updateUIState() {
+            const now = new Date(); const realDay = now.getDay(); 
+            const isWeekend = (realDay > 4); const isTodayDisplayed = (realDay === currentDayIndex);
+            const currentTotalMins = now.getHours() * 60 + now.getMinutes();
+            const duration = parseInt(document.getElementById('set-duration').value) || 40;
+            const brk = parseInt(document.getElementById('set-break').value) || 5;
+            const brk3 = parseInt(document.getElementById('set-break3').value) || 5;
+            const dayData = JSON.parse(localStorage.getItem(`day_data_${currentDayIndex}`)) || {};
+            const savedLessons = dayData.lessons || [];
+
+            let activeLesson = null;
+            let nextLesson = null;
+            let minDiff = Infinity;
+            let schoolEndMins = 0; // متغير لتخزين وقت نهاية المدرسة كلياً
+
+            if (calculatedTimes.length > 0) {
+                calculatedTimes.forEach((lesson, i) => {
+                    const card = document.getElementById(`card-${lesson.id}`);
+                    if(card) card.classList.remove('active-now');
+                    
+                    let lData = savedLessons[i] || { subj: '', grade: '', sec: '' };
+                    let parts = [];
+                    if (lData.subj) parts.push(lData.subj);
+                    if (lData.grade) parts.push(lData.grade);
+                    if (lData.sec) parts.push(lData.sec);
+                    let fullName = parts.join(' - '); 
+
+                    const lStart = lesson.minutesTotal;
+                    const lEnd = lStart + duration;
+                    
+                    // حساب وقت انتهاء الدوام الفعلي (نهاية الدرس السادس)
+                    if (i === LESSONS_COUNT - 1) schoolEndMins = lEnd;
+
+                    if (isTodayDisplayed && !isWeekend) {
+                        const diff = lStart - currentTotalMins;
+
+                        if (currentTotalMins >= lStart && currentTotalMins < lEnd) {
+                            activeLesson = { name: fullName || `الدرس ${i+1}`, num: i+1, endTimeMins: lEnd };
+                            if(card) card.classList.add('active-now');
+                        }
+                        
+                        if (diff > 0 && diff < minDiff && fullName) {
+                            minDiff = diff;
+                            let [sh, sm] = lesson.time.split(':');
+                            let s_ampm = sh >= 12 ? 'م' : 'ص';
+                            sh = sh % 12 || 12;
+                            nextLesson = { name: fullName, num: i+1, startTimeStr: `${sh}:${sm} ${s_ampm}` };
+                        }
+                    }
+                });
+            }
+
+            // تحديث الشريط المتحرك
+            let msgParts = [];
+            if (document.getElementById('supervisor-toggle').checked && isTodayDisplayed && !isWeekend) {
+                msgParts.push("👁️ اليوم انت مراقب");
+            }
+
+            if (isWeekend) {
+                msgParts.push("🌴 عطلة سعيدة! استمتع بوقتك");
+            } else if (!isTodayDisplayed) {
+                msgParts.push(`✏️ عرض جدول: يوم ${DAYS[currentDayIndex]}`);
+            } else {
+                let currentStatus = "";
+                let isBreakTime = false;
+                
+                if (activeLesson) {
+                    currentStatus = `🔴 الان: الدرس ${activeLesson.num}`;
+                } else if (calculatedTimes.length > 0) {
+                    for (let i = 0; i < LESSONS_COUNT - 1; i++) {
+                        let lEnd = calculatedTimes[i].minutesTotal + duration;
+                        let currentBreak = (i === 2) ? brk3 : brk;
+                        if (currentTotalMins >= lEnd && currentTotalMins < (lEnd + currentBreak)) {
+                            currentStatus = `☕ الان: استراحة الدرس ${i+1}`;
+                            isBreakTime = true;
+                        }
+                    }
+                    let firstStart = calculatedTimes[0].minutesTotal;
+                    
+                    // التعديل الجوهري: الرسالة تظهر فقط عند انتهاء المدرسة فعلياً
+                    if (currentTotalMins >= schoolEndMins && schoolEndMins > 0) currentStatus = "انتهى الدوام";
+                    else if (currentTotalMins < firstStart) currentStatus = "⏳ الدوام لم يبدأ بعد";
+                    else if (!isBreakTime && !nextLesson) currentStatus = "☕ وقت شاغر";
+                }
+                
+                if (currentStatus) msgParts.push(currentStatus);
+                if (nextLesson) msgParts.push(`🔔 القادم: ${nextLesson.name}`);
+            }
+
+            let finalMsg = `📚 ${msgParts.join("  |  ")}`;
+            let wrapper = document.getElementById('marquee-wrapper');
+            if (wrapper.dataset.msg !== finalMsg) {
+                wrapper.dataset.msg = finalMsg;
+                wrapper.innerHTML = `
+                    <div class="marquee-msg">${finalMsg} &emsp;&emsp;&emsp;</div>
+                    <div class="marquee-msg">${finalMsg} &emsp;&emsp;&emsp;</div>
+                `;
+            }
+
+            // تحديث بطاقة (الدرس القادم) الخاصة بالوضع النظيف
+            let cwLabelText = "";
+            let cwTitleText = "";
+            let cwTimeText = "";
+
+            if (isWeekend) {
+                cwLabelText = "عطلة سعيدة!"; cwTitleText = "استمتع بوقتك 🌴"; cwTimeText = "";
+            } else if (!isTodayDisplayed) {
+                cwLabelText = "وضع العرض"; cwTitleText = `جدول يوم ${DAYS[currentDayIndex]}`; cwTimeText = "";
+            } else {
+                if (activeLesson) {
+                    cwLabelText = "الدرس الحالي"; 
+                    cwTitleText = activeLesson.name;
+                    let remainingMins = activeLesson.endTimeMins - currentTotalMins;
+                    cwTimeText = `⏳ ينتهي بعد: ${remainingMins} دقيقة`;
+                } else if (nextLesson) {
+                    cwLabelText = "الدرس القادم"; 
+                    cwTitleText = nextLesson.name;
+                    cwTimeText = `🕒 يبدأ الساعة: ${nextLesson.startTimeStr}`;
+                } else {
+                    let firstStart = calculatedTimes[0]?.minutesTotal || 0;
+                    if (currentTotalMins < firstStart) {
+                        cwLabelText = "بانتظار الدوام"; 
+                        cwTitleText = "لم تبدأ الدروس بعد ⏳";
+                        let [fsh, fsm] = calculatedTimes[0].time.split(':');
+                        let fs_ampm = fsh >= 12 ? 'م' : 'ص';
+                        fsh = fsh % 12 || 12;
+                        cwTimeText = `الدوام يبدأ: ${fsh}:${fsm} ${fs_ampm}`;
+                    } else if (currentTotalMins >= schoolEndMins && schoolEndMins > 0) {
+                        // هنا يتم التأكد أن وقت المدرسة بأكمله قد انتهى (بعد الدرس السادس)
+                        cwLabelText = "انتهى"; 
+                        cwTitleText = "انتهى الدوام";
+                        cwTimeText = "";
+                    } else {
+                        // المعلم في وقت شاغر والمدرسة مستمرة
+                        cwLabelText = "وقت شاغر"; 
+                        cwTitleText = "ليس لديك دروس";
+                        cwTimeText = "استمتع بوقتك ☕";
+                    }
+                }
+            }
+            
+            document.getElementById('cw-label').innerText = cwLabelText;
+            document.getElementById('cw-title').innerText = cwTitleText;
+            
+            const timeEl = document.getElementById('cw-time');
+            if(cwTimeText) {
+                timeEl.innerText = cwTimeText;
+                timeEl.style.display = 'inline-block';
+            } else {
+                timeEl.style.display = 'none';
+            }
+        }
+
+        function playSchoolBell() {
+            if(!audioCtx) return; if(audioCtx.state === 'suspended') audioCtx.resume();
+            const t = audioCtx.currentTime;
+            for(let j=0; j<4; j++) {
+                let burstStart = t + (j * 1.0);
+                playOsc(800, burstStart, 0.4, 'square'); playOsc(650, burstStart, 0.4, 'triangle'); 
+            }
+            const topSec = document.querySelector('.top-section');
+            topSec.style.background = 'linear-gradient(180deg, #ffe0e0 0%, #ffffff 100%)';
+            setTimeout(() => { topSec.style.background = ''; }, 4000);
+        }
+
+        function openSettings() { document.getElementById('settings-modal').style.display = 'flex'; }
+        
+        function closeSettings() { 
+            let sets = JSON.parse(localStorage.getItem('globalSettings')) || {};
+            sets.tone = currentTone;
+            localStorage.setItem('globalSettings', JSON.stringify(sets));
+            document.getElementById('settings-modal').style.display = 'none'; 
+            resetToToday();
+        }
+        
+        function resetToToday() {
+            const realToday = new Date().getDay();
+            if (realToday >= 0 && realToday <= 4) {
+                selectDay(realToday);
+            } else {
+                selectDay(0);
+            }
+        }
+        
+        function setTone(tone) { currentTone = tone; document.querySelectorAll('.tone-btn').forEach(b => b.classList.remove('selected')); document.getElementById(`tone-${tone}`).classList.add('selected'); playTone(true); }
+
+        function playTone(isPreview) {
+            if(!audioCtx) return; if(audioCtx.state === 'suspended') audioCtx.resume(); const t = audioCtx.currentTime;
+            if (currentTone === 'bell') { playOsc(600, t, 0.5); playOsc(450, t + 0.6, 1.0); if(!isPreview) { playOsc(600, t + 2.0, 0.5); playOsc(450, t + 2.6, 1.0); }
+            } else if (currentTone === 'digital') { playOsc(800, t, 0.1, 'square'); playOsc(800, t + 0.2, 0.1, 'square'); if(!isPreview) { playOsc(800, t + 1.0, 0.1, 'square'); }
+            } else if (currentTone === 'calm') { playOsc(440, t, 0.5, 'triangle'); playOsc(554, t + 0.2, 0.5, 'triangle'); playOsc(659, t + 0.4, 1.5, 'triangle'); }
+            
+            if(!isPreview) {
+                const topSec = document.querySelector('.top-section');
+                topSec.style.background = 'linear-gradient(180deg, #e0ffe0 0%, #ffffff 100%)';
+                setTimeout(() => { topSec.style.background = ''; }, 3000);
+            }
+        }
+        
+        function playOsc(freq, time, duration, type='sine') {
+            const osc = audioCtx.createOscillator(); const g = audioCtx.createGain();
+            osc.type = type; osc.frequency.setValueAtTime(freq, time);
+            g.gain.setValueAtTime(0.5, time); g.gain.exponentialRampToValueAtTime(0.01, time + duration);
+            osc.connect(g); g.connect(audioCtx.destination); osc.start(time); osc.stop(time + duration);
+        }
+    </script>
+</body>
+</html>

@@ -1,0 +1,582 @@
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>مقسم الصور الجدارية - Soft UI</title>
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=Cairo:wght@400;700;900&display=swap');
+    </style>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
+    <style>
+        /* الألوان الدقيقة المستخرجة من الصورة الجديدة */
+        :root {
+            --bg-base: #f0ebe1;
+            --shadow-light: #ffffff;
+            --shadow-dark: #d5d0c4;
+            
+            --widget-blue: #859bb8;
+            --clock-face: #526c7a;
+            --widget-pink: #cf8893;
+            --widget-green: #6fa397;
+            --widget-peach: #e0b08a;
+            
+            --text-dark: #5c5954;
+            --text-light: #ffffff;
+        }
+
+        body {
+            font-family: 'Cairo', sans-serif;
+            background-color: var(--bg-base);
+            color: var(--text-dark);
+            margin: 0;
+            padding: 30px 15px;
+            min-height: 100vh;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            overflow-x: hidden;
+        }
+
+        /* خلفية الطابعات وأدوات التصميم الفنية */
+        .bg-pattern {
+            position: fixed;
+            top: 0; left: 0; width: 100%; height: 100%;
+            z-index: -1;
+            pointer-events: none;
+            opacity: 0.04;
+            background-image: 
+                url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='%23000'%3E%3Cpath d='M19 8h-1V3H6v5H5c-1.66 0-3 1.34-3 3v6h4v4h12v-4h4v-6c0-1.66-1.34-3-3-3zM8 5h8v3H8V5zm8 14H8v-4h8v4zm4-5.5c-.83 0-1.5-.67-1.5-1.5s.67-1.5 1.5-1.5 1.5.67 1.5 1.5-.67 1.5-1.5 1.5z'/%3E%3C/svg%3E"),
+                url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='%23000'%3E%3Cpath d='M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10c1.38 0 2.5-1.12 2.5-2.5 0-.61-.25-1.16-.65-1.57-.36-.36-.88-.93-.88-1.43 0-1.1.9-2 2-2h1.54c3.09 0 5.46-2.37 5.46-5.46C22 6.54 17.52 2 12 2z'/%3E%3C/svg%3E"),
+                url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='%23000'%3E%3Cpath d='M3 17.25V21h3.75L17.81 9.94l-3.75-3.75L3 17.25zM20.71 7.04c.39-.39.39-1.02 0-1.41l-2.34-2.34c-.39-.39-1.02-.39-1.41 0l-1.83 1.83 3.75 3.75 1.83-1.83z'/%3E%3C/svg%3E");
+            background-size: 80px 80px, 100px 100px, 70px 70px;
+            background-position: 10px 10px, 60px 80px, 130px 30px;
+            background-repeat: repeat;
+        }
+
+        .app-container {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 20px;
+            width: 100%;
+            max-width: 380px;
+        }
+
+        .col-span-2 { grid-column: span 2; }
+
+        /* ويدجت الساعة التناظرية */
+        .analog-clock-widget {
+            background-color: var(--bg-base);
+            border-radius: 28px;
+            padding: 15px;
+            box-shadow: 10px 10px 20px var(--shadow-dark), -10px -10px 20px var(--shadow-light);
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            aspect-ratio: 1 / 1;
+            box-sizing: border-box;
+        }
+
+        .clock-bezel {
+            width: 100%;
+            height: 100%;
+            background-color: var(--bg-base);
+            border-radius: 50%;
+            padding: 8px;
+            box-shadow: inset 4px 4px 8px var(--shadow-dark), inset -4px -4px 8px var(--shadow-light);
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            box-sizing: border-box;
+        }
+
+        .clock-face {
+            width: 100%;
+            height: 100%;
+            border-radius: 50%;
+            background-color: var(--clock-face);
+            position: relative;
+            box-shadow: inset 3px 3px 6px rgba(0,0,0,0.2), inset -3px -3px 6px rgba(255,255,255,0.1);
+        }
+
+        .dot-wrapper {
+            position: absolute;
+            top: 0; left: 0; width: 100%; height: 100%;
+        }
+        .dot-main {
+            position: absolute;
+            top: 6%; left: 50%;
+            transform: translateX(-50%);
+            width: 6px; height: 6px;
+            background-color: #e8ce9e;
+            border-radius: 50%;
+            box-shadow: 1px 1px 2px rgba(0,0,0,0.3);
+        }
+        .dot-sub {
+            position: absolute;
+            top: 8%; left: 50%;
+            transform: translateX(-50%);
+            width: 3.5px; height: 3.5px;
+            background-color: #e0e9f0;
+            border-radius: 50%;
+            box-shadow: 1px 1px 1px rgba(0,0,0,0.2);
+        }
+
+        .hand {
+            position: absolute;
+            bottom: 50%; left: 50%;
+            transform-origin: bottom center;
+            border-radius: 10px;
+            z-index: 5;
+            box-shadow: 2px 2px 4px rgba(0,0,0,0.2);
+        }
+        .hour-hand {
+            width: 4.5px; height: 26%;
+            background-color: #f3f1e8;
+            margin-left: -2.25px;
+            z-index: 6;
+        }
+        .minute-hand {
+            width: 3px; height: 36%;
+            background-color: #a9d2d8;
+            margin-left: -1.5px;
+            z-index: 5;
+        }
+        .second-hand {
+            width: 1.5px; height: 42%;
+            background-color: #d9858d;
+            margin-left: -0.75px;
+            z-index: 7;
+            box-shadow: 1px 1px 2px rgba(0,0,0,0.2);
+        }
+        .center-pin {
+            position: absolute;
+            top: 50%; left: 50%;
+            width: 12px; height: 12px;
+            background-color: #f3f1e8;
+            border: 3px solid #d9858d;
+            border-radius: 50%;
+            transform: translate(-50%, -50%);
+            z-index: 8;
+            box-sizing: border-box;
+            box-shadow: 1px 1px 4px rgba(0,0,0,0.3);
+        }
+
+        /* ويدجت رفع الصورة */
+        .upload-widget {
+            background-color: var(--bg-base);
+            border-radius: 28px;
+            padding: 15px;
+            box-shadow: 10px 10px 20px var(--shadow-dark), -10px -10px 20px var(--shadow-light);
+            text-align: center;
+            cursor: pointer;
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            align-items: center;
+            aspect-ratio: 1 / 1;
+            box-sizing: border-box;
+            transition: transform 0.2s ease;
+        }
+        .upload-widget:active { transform: scale(0.97); }
+        
+        .upload-inner {
+            background-color: var(--widget-blue);
+            border-radius: 20px;
+            width: 80%;
+            height: 80%;
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            align-items: center;
+            color: var(--text-light);
+            box-shadow: inset 4px 4px 8px rgba(0,0,0,0.1), inset -4px -4px 8px rgba(255,255,255,0.2);
+        }
+        .upload-icon { font-size: 28px; margin-bottom: 5px; }
+        .upload-text { font-size: 13px; font-weight: 700; }
+        input[type="file"] { display: none; }
+
+        /* ويدجت الأرقام */
+        .input-pill {
+            background-color: var(--bg-base);
+            border-radius: 35px;
+            padding: 12px;
+            box-shadow: 10px 10px 20px var(--shadow-dark), -10px -10px 20px var(--shadow-light);
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            height: 165px;
+            box-sizing: border-box;
+        }
+        .input-icon {
+            font-size: 20px;
+            margin: 5px 0;
+            opacity: 0.6;
+        }
+        .pill-fill {
+            width: 100%;
+            flex-grow: 1;
+            border-radius: 24px;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            color: var(--text-light);
+            padding: 5px 0;
+            box-shadow: inset 3px 3px 6px rgba(0,0,0,0.12), inset -3px -3px 6px rgba(255,255,255,0.2);
+        }
+        .fill-pink { background-color: var(--widget-pink); }
+        .fill-green { background-color: var(--widget-green); }
+
+        .pill-fill input {
+            background: transparent;
+            border: none;
+            color: var(--text-light);
+            font-size: 28px;
+            font-weight: 900;
+            text-align: center;
+            width: 100%;
+            outline: none;
+            font-family: 'Cairo', sans-serif;
+        }
+        .pill-fill span {
+            font-size: 12px;
+            font-weight: 700;
+            opacity: 0.9;
+        }
+        input[type=number]::-webkit-inner-spin-button, 
+        input[type=number]::-webkit-outer-spin-button { -webkit-appearance: none; margin: 0; }
+
+        /* ويدجت الحجم الإجمالي */
+        .info-widget {
+            background-color: #e5edf0;
+            border-radius: 22px;
+            padding: 15px;
+            box-shadow: inset 5px 5px 10px #d1d8db, inset -5px -5px 10px #ffffff;
+            color: #6a82a1;
+            font-weight: 900;
+            text-align: center;
+            font-size: 15px;
+        }
+
+        /* أزرار الحفظ والقص */
+        .action-row {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 20px;
+        }
+        .action-square {
+            background-color: var(--bg-base);
+            border-radius: 25px;
+            padding: 15px;
+            box-shadow: 10px 10px 20px var(--shadow-dark), -10px -10px 20px var(--shadow-light);
+            border: none;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            transition: transform 0.2s;
+        }
+        .action-square:active {
+            box-shadow: inset 5px 5px 10px var(--shadow-dark), inset -5px -5px 10px var(--shadow-light);
+            transform: scale(0.96);
+        }
+        .icon-box {
+            border-radius: 18px;
+            width: 55px;
+            height: 55px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 24px;
+            color: white;
+            box-shadow: inset 3px 3px 6px rgba(0,0,0,0.08);
+        }
+        .box-peach { background-color: var(--widget-peach); }
+        .box-blue { background-color: var(--widget-blue); }
+
+        /* منطقة المعاينة */
+        #output {
+            display: grid;
+            gap: 12px;
+            margin: 35px auto 0 auto;
+            justify-content: center;
+            max-width: 90vw;
+        }
+        .page-preview {
+            width: 100%;
+            height: auto;
+            border-radius: 15px;
+            box-shadow: 6px 6px 15px var(--shadow-dark);
+            display: block;
+        }
+
+        /* حقوق البرمجة */
+        .footer-credit {
+            margin-top: 45px;
+            font-size: 11px;
+            color: var(--text-dark);
+            opacity: 0.5;
+            font-weight: 700;
+            letter-spacing: 0.5px;
+            text-align: center;
+        }
+    </style>
+</head>
+<body>
+
+    <div class="bg-pattern"></div>
+
+    <div class="app-container">
+        
+        <div class="analog-clock-widget">
+            <div class="clock-bezel">
+                <div class="clock-face">
+                    <div class="dot-wrapper" style="transform: rotate(0deg);"><div class="dot-main"></div></div>
+                    <div class="dot-wrapper" style="transform: rotate(90deg);"><div class="dot-main"></div></div>
+                    <div class="dot-wrapper" style="transform: rotate(180deg);"><div class="dot-main"></div></div>
+                    <div class="dot-wrapper" style="transform: rotate(270deg);"><div class="dot-main"></div></div>
+                    <div class="dot-wrapper" style="transform: rotate(30deg);"><div class="dot-sub"></div></div>
+                    <div class="dot-wrapper" style="transform: rotate(60deg);"><div class="dot-sub"></div></div>
+                    <div class="dot-wrapper" style="transform: rotate(120deg);"><div class="dot-sub"></div></div>
+                    <div class="dot-wrapper" style="transform: rotate(150deg);"><div class="dot-sub"></div></div>
+                    <div class="dot-wrapper" style="transform: rotate(210deg);"><div class="dot-sub"></div></div>
+                    <div class="dot-wrapper" style="transform: rotate(240deg);"><div class="dot-sub"></div></div>
+                    <div class="dot-wrapper" style="transform: rotate(300deg);"><div class="dot-sub"></div></div>
+                    <div class="dot-wrapper" style="transform: rotate(330deg);"><div class="dot-sub"></div></div>
+
+                    <div class="hand hour-hand" id="hourHand"></div>
+                    <div class="hand minute-hand" id="minuteHand"></div>
+                    <div class="hand second-hand" id="secondHand"></div>
+                    <div class="center-pin"></div>
+                </div>
+            </div>
+        </div>
+
+        <label for="imageUpload" class="upload-widget">
+            <div class="upload-inner" id="uploadLabelBox">
+                <div class="upload-icon" id="uploadIcon">🖼️</div>
+                <div class="upload-text" id="uploadText">رفع صورة</div>
+            </div>
+        </label>
+        <input type="file" id="imageUpload" accept="image/*">
+
+        <div class="input-pill">
+            <div class="input-icon">↔️</div>
+            <div class="pill-fill fill-pink">
+                <input type="number" id="pagesX" value="3" min="1" max="20" oninput="calculateDimensions()">
+                <span>القطع بالعرض</span>
+            </div>
+        </div>
+
+        <div class="input-pill">
+            <div class="input-icon">↕️</div>
+            <div class="pill-fill fill-green">
+                <input type="number" id="pagesY" value="3" min="1" max="20" oninput="calculateDimensions()">
+                <span>القطع بالطول</span>
+            </div>
+        </div>
+
+        <div class="info-widget col-span-2" id="sizeDisplay">
+            📐 المقاس: 63.0 سم × 89.1 سم
+        </div>
+
+        <div class="action-row col-span-2">
+            <button class="action-square" onclick="processImage()" title="تقسيم الصورة">
+                <div class="icon-box box-peach">✂️</div>
+            </button>
+            <button class="action-square" id="saveBtn" onclick="generatePDF()" title="حفظ ومشاركة ملف PDF">
+                <div class="icon-box box-blue">🖨️</div>
+            </button>
+        </div>
+
+    </div>
+
+    <div id="output"></div>
+
+    <div class="footer-credit">برمجة وتطوير أ. احمد حسن</div>
+
+    <canvas id="sourceCanvas" style="display:none;"></canvas>
+
+    <script>
+        let img = new Image();
+        let imagePieces = []; 
+        
+        function initAnalogClock() {
+            const hourHand = document.getElementById('hourHand');
+            const minuteHand = document.getElementById('minuteHand');
+            const secondHand = document.getElementById('secondHand');
+
+            const updateClock = () => {
+                const now = new Date();
+                const seconds = now.getSeconds();
+                const minutes = now.getMinutes();
+                const hours = now.getHours();
+
+                const secDeg = (seconds / 60) * 360;
+                const minDeg = ((minutes + seconds / 60) / 60) * 360;
+                const hourDeg = ((hours % 12 + minutes / 60) / 12) * 360;
+
+                secondHand.style.transform = `rotate(${secDeg}deg)`;
+                minuteHand.style.transform = `rotate(${minDeg}deg)`;
+                hourHand.style.transform = `rotate(${hourDeg}deg)`;
+            };
+            updateClock();
+            setInterval(updateClock, 1000);
+        }
+        initAnalogClock();
+
+        document.getElementById('imageUpload').addEventListener('change', function(e) {
+            const reader = new FileReader();
+            reader.onload = function(event) {
+                img.src = event.target.result;
+            }
+            if(e.target.files[0]) {
+                reader.readAsDataURL(e.target.files[0]);
+                document.getElementById('uploadLabelBox').style.backgroundColor = "var(--widget-green)";
+                document.getElementById('uploadIcon').innerHTML = "✔️";
+                document.getElementById('uploadText').innerHTML = "تم الرفع";
+            }
+        });
+
+        function calculateDimensions() {
+            const pagesX = parseInt(document.getElementById('pagesX').value) || 0;
+            const pagesY = parseInt(document.getElementById('pagesY').value) || 0;
+            
+            const totalWidth = (pagesX * 21).toFixed(1);
+            const totalHeight = (pagesY * 29.7).toFixed(1);
+            
+            document.getElementById('sizeDisplay').innerHTML = `📐 المقاس: ${totalWidth} سم × ${totalHeight} سم`;
+        }
+
+        function processImage() {
+            if (!img.src) { alert("الرجاء رفع صورة أولاً!"); return; }
+
+            const pagesX = parseInt(document.getElementById('pagesX').value);
+            const pagesY = parseInt(document.getElementById('pagesY').value);
+            const outputDiv = document.getElementById('output');
+            
+            outputDiv.innerHTML = ''; 
+            imagePieces = []; 
+
+            const canvas = document.getElementById('sourceCanvas');
+            const ctx = canvas.getContext('2d');
+
+            canvas.width = img.width;
+            canvas.height = img.height;
+            ctx.drawImage(img, 0, 0);
+
+            const pageWidth = canvas.width / pagesX;
+            const pageHeight = canvas.height / pagesY; 
+
+            outputDiv.style.gridTemplateColumns = `repeat(${pagesX}, 1fr)`;
+            outputDiv.style.maxWidth = `${pagesX * 100}px`; 
+
+            calculateDimensions();
+
+            for (let py = 0; py < pagesY; py++) {
+                for (let px = 0; px < pagesX; px++) {
+                    const pageCanvas = document.createElement('canvas');
+                    pageCanvas.width = pageWidth;
+                    pageCanvas.height = pageHeight;
+                    const pCtx = pageCanvas.getContext('2d');
+
+                    pCtx.fillStyle = 'white';
+                    pCtx.fillRect(0,0, pageWidth, pageHeight);
+
+                    pCtx.drawImage(canvas,
+                        px * pageWidth, py * pageHeight, pageWidth, pageHeight,
+                        0, 0, pageWidth, pageHeight
+                    );
+
+                    // تقليل جودة الصورة لـ 0.85 لتجنب امتلاء الـ RAM في الهواتف
+                    const dataURL = pageCanvas.toDataURL('image/jpeg', 0.85);
+                    
+                    imagePieces.push({
+                        url: dataURL,
+                        ratio: pageWidth / pageHeight
+                    });
+
+                    const pageImg = document.createElement('img');
+                    pageImg.src = dataURL;
+                    pageImg.className = 'page-preview';
+                    outputDiv.appendChild(pageImg);
+                }
+            }
+        }
+
+        function generatePDF() {
+            if (imagePieces.length === 0) {
+                alert("الرجاء تقسيم الصورة أولاً لرؤية المعاينة قبل الحفظ!");
+                return;
+            }
+
+            // إظهار مؤشر التحميل في الزر لكي لا يظن المستخدم أن التطبيق معلق
+            const btnIconBox = document.querySelector('#saveBtn .box-blue');
+            btnIconBox.innerHTML = "⏳";
+
+            // إضافة مهلة بسيطة لكي يتحدث شكل الزر قبل تجميد الشاشة لبناء الـ PDF
+            setTimeout(() => {
+                try {
+                    const { jsPDF } = window.jspdf;
+                    const doc = new jsPDF({
+                        orientation: 'portrait',
+                        unit: 'mm',
+                        format: 'a4'
+                    });
+
+                    const a4Width = 210;
+                    const a4Height = 297;
+                    const a4Ratio = a4Width / a4Height;
+
+                    for (let i = 0; i < imagePieces.length; i++) {
+                        if (i > 0) { doc.addPage(); }
+                        
+                        let piece = imagePieces[i];
+                        let printWidth, printHeight;
+
+                        if (piece.ratio > a4Ratio) {
+                            printWidth = a4Width;
+                            printHeight = a4Width / piece.ratio;
+                        } else {
+                            printHeight = a4Height;
+                            printWidth = a4Height * piece.ratio;
+                        }
+
+                        let x = (a4Width - printWidth) / 2;
+                        let y = (a4Height - printHeight) / 2;
+
+                        doc.addImage(piece.url, 'JPEG', x, y, printWidth, printHeight);
+                    }
+
+                    // --- التعديل السحري لدعم تطبيقات الهاتف (WebView) ---
+                    const pdfBlob = doc.output('blob');
+                    const pdfFile = new File([pdfBlob], "poster-split.pdf", { type: "application/pdf" });
+
+                    // التحقق إذا كان التطبيق يدعم ظهور "نافذة المشاركة" الأصلية للهاتف
+                    if (navigator.canShare && navigator.canShare({ files: [pdfFile] })) {
+                        navigator.share({
+                            files: [pdfFile],
+                            title: 'ملف الملصق الجداري',
+                            text: 'الـ PDF جاهز للطباعة.'
+                        }).catch((error) => {
+                            console.log('تم إلغاء المشاركة أو فشلت:', error);
+                            // خطة بديلة إذا فشلت المشاركة
+                            doc.save('poster-split.pdf');
+                        });
+                    } else {
+                        // الحفظ التقليدي إذا لم يكن النظام يدعم المشاركة
+                        doc.save('poster-split.pdf');
+                    }
+                } catch (error) {
+                    alert("حدث خطأ أثناء بناء الـ PDF. يرجى التأكد من مساحة الذاكرة وتقليل عدد القطع.");
+                    console.error(error);
+                } finally {
+                    // إعادة الزر لشكله الطبيعي
+                    btnIconBox.innerHTML = "🖨️";
+                }
+            }, 100);
+        }
+    </script>
+</body>
+</html>
