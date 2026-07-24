@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>انشاء بطاقة( معلومات سوبر كي + بيان السنوي ) </title>
+<title>نظام إنشاء بطاقة الحماية الاجتماعية</title>
 <!-- تحميل مكتبة html2canvas لحفظ الكارت كصورة -->
 <script src="https://html2canvas.hertzen.com/dist/html2canvas.min.js"></script>
 <style>
@@ -114,17 +114,17 @@
     }
     .btn-reset:hover { background: #7f8c8d; }
 
-    /* ===== تصميم الكارت الجديد (شكل محسّن) ===== */
+    /* ===== تصميم الكارت الجديد ===== */
     #cardWrapper {
-        display: none; /* مخفي افتراضياً */
+        display: none; /* مخفي افتراضياً لحين إدخال البيانات */
         margin-top: 40px;
         flex-direction: column;
         align-items: center;
         gap: 20px;
+        width: 100%;
     }
 
     #card {
-        /* الأبعاد القياسية لبطاقة الائتمان/ID (CR80) */
         width: 85.6mm; 
         height: 53.98mm;
         background: linear-gradient(135deg, #ffffff 0%, #f8f9fa 100%);
@@ -137,10 +137,10 @@
         justify-content: space-between;
         overflow: hidden;
         border: 1px solid #ddd;
-        direction: rtl; /* التأكد من اتجاه النص داخل الكارت */
+        direction: rtl;
     }
 
-    /* خلفية مائية للشعار */
+    /* خلفية مائية خفيفة */
     #card::before {
         content: "";
         position: absolute;
@@ -154,7 +154,6 @@
         z-index: 0;
     }
 
-    /* ترويسة الكارت */
     .card-header {
         display: flex;
         align-items: center;
@@ -170,10 +169,9 @@
         gap: 8px;
     }
 
-    /* شعار وهمي (يمكن استبداله بصورة فعلية) */
     .logo-placeholder {
-        width: 40px;
-        height: 40px;
+        width: 38px;
+        height: 38px;
         background: #3498db;
         border-radius: 50%;
         display: flex;
@@ -181,17 +179,17 @@
         justify-content: center;
         color: white;
         font-weight: bold;
-        font-size: 18px;
+        font-size: 16px;
     }
 
     .header-text .main-title {
-        font-size: 16px;
+        font-size: 15px;
         font-weight: bold;
         color: #2c3e50;
         margin: 0;
     }
     .header-text .sub-title {
-        font-size: 10px;
+        font-size: 9px;
         color: #7f8c8d;
         margin: 0;
     }
@@ -201,13 +199,12 @@
         color: #95a5a6;
     }
 
-    /* جسم الكارت (البيانات) */
     .card-body {
         z-index: 1;
-        margin-top: 10px;
+        margin-top: 8px;
         display: flex;
         flex-direction: column;
-        gap: 4px; /* المسافة بين الأسطر */
+        gap: 4px;
     }
 
     .data-row {
@@ -227,22 +224,21 @@
         font-size: 11px;
         color: #333;
         text-align: left;
-        max-width: 60%; /* لمنع النصوص الطويلة من التداخل */
+        max-width: 60%;
         word-break: break-all;
     }
 
-    /* تذييل الكارت */
     .card-footer {
         z-index: 1;
         text-align: center;
-        font-size: 9px;
+        font-size: 8.5px;
         color: #7f8c8d;
         border-top: 1px solid #eee;
         padding-top: 4px;
-        margin-top: 5px;
+        margin-top: 4px;
     }
 
-    /* ===== أزرار التحكم بالكارت ===== */
+    /* ===== أزرار التحكم بالكارت (تحت الكارت مباشرة) ===== */
     .card-actions {
         display: flex;
         flex-wrap: wrap;
@@ -252,29 +248,31 @@
     }
     
     .btn-action {
-        padding: 10px 20px;
+        padding: 12px 18px;
         border-radius: 8px;
         font-size: 14px;
         cursor: pointer;
         border: none;
         color: white;
-        text-decoration: none;
         display: flex;
         align-items: center;
+        justify-content: center;
         gap: 6px;
+        font-weight: bold;
         transition: background 0.2s;
+        flex: 1;
+        min-width: 120px;
     }
 
     .btn-print { background: #34495e; }
     .btn-print:hover { background: #2c3e50; }
 
-    .btn-new { background: #95a5a6; }
-    .btn-new:hover { background: #7f8c8d; }
-
-    .btn-download { background: #e67e22; /* لون برتقالي مميز للتحميل */ }
+    .btn-download { background: #e67e22; }
     .btn-download:hover { background: #d35400; }
 
-    /* تنسيق الطباعة */
+    .btn-new { background: #7f8c8d; }
+    .btn-new:hover { background: #6c7a89; }
+
     @media print {
         body * { visibility: hidden; }
         #cardWrapper, #cardWrapper * { visibility: visible; }
@@ -284,7 +282,7 @@
             left: 0;
             width: 100%;
             height: 100%;
-            display: flex !important; /* فرض إظهار الكارت */
+            display: flex !important;
             justify-content: center;
             align-items: center;
             margin: 0;
@@ -292,8 +290,7 @@
         }
         #card {
             box-shadow: none;
-            border: 1px solid #000; /* حدود واضحة عند الطباعة */
-            page-break-inside: avoid;
+            border: 1px solid #000;
         }
         .card-actions, .form-box, h1 { display: none; }
     }
@@ -308,13 +305,13 @@
     <!-- نموذج إدخال البيانات -->
     <div class="form-box" id="formBox">
         <label for="name">الاسم الكامل</label>
-        <input type="text" id="name" placeholder="مثال: أحمد محمود علي">
+        <input type="text" id="name" placeholder="أدخل الاسم الكامل">
 
         <label for="phone">رقم الهاتف</label>
-        <input type="tel" id="phone" placeholder="مثال: 07701234567" maxlength="15">
+        <input type="tel" id="phone" placeholder="أدخل رقم الهاتف">
 
-        <label for="careNumber">رقم بطاقة الرعاية / الكود التعريفي</label>
-        <input type="text" id="careNumber" placeholder="مثال: SW-987654">
+        <label for="careNumber">رقم بطاقة الرعاية</label>
+        <input type="text" id="careNumber" placeholder="أدخل رقم بطاقة الرعاية">
 
         <label for="date1">تاريخ الموعد الحالي</label>
         <input type="date" id="date1">
@@ -322,10 +319,10 @@
         <label for="date2">تاريخ الموعد القادم</label>
         <input type="date" id="date2">
 
-        <label for="code">الرمز السري (PIN)</label>
-        <input type="password" id="code" placeholder="******">
+        <label for="code">الرمز السري</label>
+        <input type="text" id="code" placeholder="أدخل الرمز السري">
 
-        <div class="error" id="errorMsg">⚠️ الرجاء تعبئة جميع الحقول المطلوبة بشكل صحيح قبل إنشاء الكارت.</div>
+        <div class="error" id="errorMsg">⚠️ الرجاء تعبئة جميع الحقول قبل إنشاء الكارت</div>
 
         <div class="form-actions">
             <button class="btn-generate" onclick="generateCard()">
@@ -337,20 +334,19 @@
         </div>
     </div>
 
-    <!-- منطقة عرض الكارت والتحكم به (مخفية افتراضياً) -->
+    <!-- منطقة عرض الكارت والأزرار -->
     <div id="cardWrapper">
-        <!-- شكل الكارت الجديد والمحسّن -->
         <div id="card">
             <div class="card-header">
                 <div class="header-right">
-                    <div class="logo-placeholder">IQ</div> <!-- شعار وهمي -->
+                    <div class="logo-placeholder">IQ</div>
                     <div class="header-text">
                         <div class="main-title">جمهورية العراق</div>
                         <div class="sub-title">وزارة العمل والشؤون الاجتماعية</div>
                     </div>
                 </div>
                 <div class="header-left">
-                    <div class="main-title" style="font-size: 12px; color: #c0392b;">الحماية الاجتماعية</div>
+                    <div class="main-title" style="font-size: 11px; color: #c0392b;">الحماية الاجتماعية</div>
                     <div class="card-id">بطاقة مستفيد</div>
                 </div>
             </div>
@@ -378,22 +374,96 @@
                 </div>
                 <div class="data-row">
                     <span class="label">الرمز السري:</span>
-                    <span class="value" id="cCode">**************</span> <!-- إخفاء الرمز في الكارت -->
+                    <span class="value" id="cCode"></span>
                 </div>
             </div>
 
             <div class="card-footer">
-                هذه البطاقة شخصية، يرجى إبرازها عند المراجعة. للاستعلام: 1018
+                جميع الحقوق محفوظة لمكتبة المصطفى | ٠٧٨١٣٩٨٥٨٥٣
             </div>
         </div>
 
-        <!-- أزرار التحكم بالكارت -->
+        <!-- أزرار التحكم: طباعة، حفظ كصورة، إنشاء كارت جديد -->
         <div class="card-actions">
             <button class="btn-action btn-print" onclick="window.print()">
-                <span>🖨️</span> طباعة
+                <span>🖨️</span> طباعة الكارت
             </button>
-            <button class="btn-action btn-download" id="btnDownload" onclick="downloadCardAsImage()">
+            <button class="btn-action btn-download" onclick="downloadCardAsImage()">
                 <span>⬇️</span> حفظ كصورة (HD)
             </button>
             <button class="btn-action btn-new" onclick="newCard()">
-                <span>➕</span> كارت
+                <span>➕</span> كارت جديد
+            </button>
+        </div>
+    </div>
+</div>
+
+<script>
+function formatDate(d) {
+    if (!d) return '';
+    const parts = d.split('-');
+    return parts[2] + '/' + parts[1] + '/' + parts[0];
+}
+
+function generateCard() {
+    const name = document.getElementById('name').value.trim();
+    const phone = document.getElementById('phone').value.trim();
+    const careNumber = document.getElementById('careNumber').value.trim();
+    const date1 = document.getElementById('date1').value;
+    const date2 = document.getElementById('date2').value;
+    const code = document.getElementById('code').value.trim();
+    const errorMsg = document.getElementById('errorMsg');
+
+    if (!name || !phone || !careNumber || !date1 || !date2 || !code) {
+        errorMsg.style.display = 'block';
+        return;
+    }
+    errorMsg.style.display = 'none';
+
+    document.getElementById('cName').textContent = name;
+    document.getElementById('cPhone').textContent = phone;
+    document.getElementById('cCareNumber').textContent = careNumber;
+    document.getElementById('cDate1').textContent = formatDate(date1);
+    document.getElementById('cDate2').textContent = formatDate(date2);
+    document.getElementById('cCode').textContent = code;
+
+    document.getElementById('formBox').style.display = 'none';
+    document.getElementById('cardWrapper').style.display = 'flex';
+}
+
+function resetForm() {
+    document.getElementById('name').value = '';
+    document.getElementById('phone').value = '';
+    document.getElementById('careNumber').value = '';
+    document.getElementById('date1').value = '';
+    document.getElementById('date2').value = '';
+    document.getElementById('code').value = '';
+    document.getElementById('errorMsg').style.display = 'none';
+}
+
+function newCard() {
+    resetForm();
+    document.getElementById('formBox').style.display = 'block';
+    document.getElementById('cardWrapper').style.display = 'none';
+}
+
+// وظيفة حفظ الكارت كصورة عالية الجودة
+function downloadCardAsImage() {
+    const cardElement = document.getElementById('card');
+    
+    // استخدام html2canvas لالتقاط الكارت بدقة عالية (Scale 3 لزيادة الجودة)
+    html2canvas(cardElement, {
+        scale: 3,
+        useCORS: true,
+        backgroundColor: null
+    }).then(canvas => {
+        const link = document.createElement('a');
+        link.download = 'Social-Security-Card.png';
+        link.href = canvas.toDataURL('image/png');
+        link.click();
+    });
+}
+</script>
+
+</body>
+</html>
