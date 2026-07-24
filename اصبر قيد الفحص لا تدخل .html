@@ -3,19 +3,16 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>ماكينة سحب وتوزيع المستمسكات | A4 DocScanner</title>
+<title>ماسح المستمسكات الاحترافي | CamScanner Web</title>
 
-<!-- خط Cairo + أيقونات FontAwesome + مكتبة Cropper.js + html2pdf -->
+<!-- خط Cairo + أيقونات FontAwesome + محرك OpenCV.js + html2pdf -->
 <link href="https://fonts.googleapis.com/css2?family=Cairo:wght@400;600;700;800&display=swap" rel="stylesheet">
 <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
-<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/cropperjs/1.5.13/cropper.min.css">
-
-<script src="https://cdnjs.cloudflare.com/ajax/libs/cropperjs/1.5.13/cropper.min.js"></script>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/html2pdf.js/0.10.1/html2pdf.bundle.min.js"></script>
 
 <style>
   :root {
-    --primary: #1e293b;
+    --primary: #0f172a;
     --accent: #2563eb;
     --accent-hover: #1d4ed8;
     --success: #10b981;
@@ -28,7 +25,7 @@
   body {
     font-family: 'Cairo', sans-serif;
     background-color: var(--bg);
-    color: var(--primary);
+    color: #1e293b;
     padding-bottom: 60px;
   }
 
@@ -38,12 +35,21 @@
     color: white;
     padding: 20px;
     text-align: center;
-    box-shadow: 0 4px 12px rgba(0,0,0,0.1);
+    box-shadow: 0 4px 15px rgba(0,0,0,0.15);
   }
   header h1 { font-size: 22px; font-weight: 800; }
   header p { font-size: 13px; color: #94a3b8; margin-top: 4px; }
 
-  /* Main Container */
+  /* Status Bar */
+  #statusEngine {
+    background: #fef3c7;
+    color: #b45309;
+    text-align: center;
+    padding: 8px;
+    font-size: 13px;
+    font-weight: 700;
+  }
+
   .container {
     max-width: 1200px;
     margin: 20px auto;
@@ -53,7 +59,7 @@
     gap: 25px;
   }
 
-  /* Upload Area */
+  /* Upload Box */
   .upload-box {
     background: var(--card-bg);
     border: 2px dashed #cbd5e1;
@@ -64,11 +70,10 @@
     transition: all 0.3s;
   }
   .upload-box:hover { border-color: var(--accent); background: #f0f9ff; }
-  .upload-box i { font-size: 40px; color: var(--accent); margin-bottom: 10px; }
+  .upload-box i { font-size: 45px; color: var(--accent); margin-bottom: 10px; }
   .upload-box p { font-weight: 700; font-size: 16px; }
-  .upload-box span { font-size: 12px; color: #64748b; }
 
-  /* Images Gallery */
+  /* Gallery */
   .section-title {
     font-size: 18px;
     font-weight: 700;
@@ -94,13 +99,14 @@
     gap: 10px;
     box-shadow: 0 2px 8px rgba(0,0,0,0.04);
   }
-  .doc-card img {
+  .doc-card canvas, .doc-card img {
     width: 100%;
-    height: 130px;
+    height: 140px;
     object-fit: contain;
-    background: #f1f5f9;
+    background: #1e293b;
     border-radius: 8px;
   }
+
   .doc-card-actions {
     display: grid;
     grid-template-columns: 1fr 1fr;
@@ -128,11 +134,11 @@
   .btn-secondary { background: #64748b; color: white; }
   .btn-full { grid-column: span 2; }
 
-  /* Modal Edit Window */
+  /* Modal */
   .modal {
     position: fixed;
     top: 0; left: 0; width: 100%; height: 100%;
-    background: rgba(0,0,0,0.8);
+    background: rgba(0,0,0,0.85);
     display: none;
     justify-content: center;
     align-items: center;
@@ -142,8 +148,8 @@
   .modal-content {
     background: white;
     width: 100%;
-    max-width: 800px;
-    max-height: 90vh;
+    max-width: 850px;
+    max-height: 95vh;
     border-radius: 16px;
     display: flex;
     flex-direction: column;
@@ -157,21 +163,33 @@
     justify-content: space-between;
     align-items: center;
   }
+
   .modal-body {
     padding: 15px;
-    flex: 1;
     overflow-y: auto;
     display: flex;
     flex-direction: column;
     gap: 15px;
     align-items: center;
   }
-  .crop-wrapper {
-    width: 100%;
-    max-height: 400px;
-    background: #000;
+
+  .editor-container {
+    position: relative;
+    max-width: 100%;
+    max-height: 420px;
+    background: #0f172a;
+    border-radius: 8px;
+    overflow: hidden;
+    display: flex;
+    justify-content: center;
+    align-items: center;
   }
-  .crop-wrapper img { max-width: 100%; }
+
+  #editorCanvas {
+    max-width: 100%;
+    max-height: 420px;
+    cursor: crosshair;
+  }
 
   .filter-bar {
     display: flex;
@@ -181,7 +199,7 @@
     width: 100%;
   }
 
-  /* A4 Workspace Section */
+  /* A4 Section */
   .a4-section {
     background: var(--card-bg);
     border-radius: 16px;
@@ -189,7 +207,6 @@
     border: 1px solid #e2e8f0;
     box-shadow: 0 4px 15px rgba(0,0,0,0.05);
   }
-
   .a4-controls {
     display: flex;
     flex-wrap: wrap;
@@ -198,8 +215,6 @@
     justify-content: space-between;
     align-items: center;
   }
-
-  /* ورقة A4 بالأبعاد الحقيقية الحسابية */
   .a4-paper-wrapper {
     overflow-x: auto;
     display: flex;
@@ -212,7 +227,6 @@
   #a4Paper {
     width: 210mm;
     min-height: 297mm;
-    height: auto;
     background: white;
     padding: 10mm;
     box-shadow: 0 10px 25px rgba(0,0,0,0.2);
@@ -228,50 +242,34 @@
   .a4-card-item {
     width: 85mm;
     height: 55mm;
-    border: 1px dashed #cbd5e1;
+    border: 1px dashed #94a3b8;
     position: relative;
     border-radius: 4px;
     overflow: hidden;
     background: #fafafa;
-    display: flex;
-    align-items: center;
-    justify-content: center;
   }
-
   .a4-card-item img {
     width: 100%;
     height: 100%;
     object-fit: fill;
   }
-
   .a4-card-item .remove-btn {
     position: absolute;
-    top: 3px;
-    right: 3px;
-    background: rgba(239, 68, 68, 0.85);
-    color: white;
-    border: none;
-    border-radius: 50%;
-    width: 22px;
-    height: 22px;
-    cursor: pointer;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    font-size: 10px;
+    top: 3px; right: 3px;
+    background: rgba(239, 68, 68, 0.9);
+    color: white; border: none;
+    border-radius: 50%; width: 22px; height: 22px;
+    cursor: pointer; display: flex;
+    align-items: center; justify-content: center; font-size: 10px;
   }
 
   @media print {
     body * { visibility: hidden; }
     #a4Paper, #a4Paper * { visibility: visible; }
     #a4Paper {
-      position: fixed;
-      top: 0; left: 0;
-      width: 210mm !important;
-      height: 297mm !important;
-      padding: 10mm !important;
-      box-shadow: none !important;
-      background: white !important;
+      position: fixed; top: 0; left: 0;
+      width: 210mm !important; height: 297mm !important;
+      padding: 10mm !important; box-shadow: none !important; background: white !important;
     }
     .remove-btn { display: none !important; }
   }
@@ -280,118 +278,129 @@
 <body>
 
 <header>
-  <h1><i class="fas fa-id-card"></i> نظام ماسح وتوزيع المستمسكات التلقائي</h1>
-  <p>قص حر وتوضيح فلاتر + توزيع قياسي على ورقة A4 (8.5cm × 5.5cm)</p>
+  <h1><i class="fas fa-camera-retro"></i> ماسح المستمسكات الذكي (CamScanner Web)</h1>
+  <p>قص حر بزوايا مائلة 4-Points + فلاتر توضيح متقدمة + توزيع بقياس الهوية (8.5×5.5 سم)</p>
 </header>
+
+<div id="statusEngine">
+  <i class="fas fa-spinner fa-spin"></i> جاري تحميل محرك التعديل الذكي (OpenCV)... يرجى الانتظار ثوانٍ.
+</div>
 
 <div class="container">
 
-  <!-- منطقة الرفع -->
+  <!-- منطقة رفع الصور -->
   <div class="upload-box" onclick="document.getElementById('fileInput').click()">
-    <i class="fas fa-cloud-upload-alt"></i>
-    <p>اضغط هنا لرفع المستمسكات أو قم بسحب الصور وإسقاطها</p>
-    <span>يمكنك رفع عدد لا نهائي من الصور دفعة واحدة (JPG, PNG, WEBP)</span>
+    <i class="fas fa-file-upload"></i>
+    <p>اضغط هنا أو اسحب الصور لإسقاطها (عدد لا نهائي)</p>
+    <span style="font-size:12px; color:#64748b;">يدعم الصور المائلة أو المصورة عن بعد</span>
     <input type="file" id="fileInput" multiple accept="image/*" style="display:none;" onchange="handleFiles(this.files)">
   </div>
 
-  <!-- معارض الصور المرفوعة -->
+  <!-- المعرض -->
   <div>
     <div class="section-title">
-      <i class="fas fa-images" style="color: var(--accent);"></i> المستمسكات المرفوعة المعالجة
+      <i class="fas fa-images" style="color: var(--accent);"></i> المستمسكات الجاهزة
     </div>
-    <div class="gallery" id="gallery">
-      <!-- تظهر الصور المرفوعة هنا -->
-    </div>
+    <div class="gallery" id="gallery"></div>
   </div>
 
-  <!-- قسم ورقة A4 والطباعة -->
+  <!-- ورقة A4 -->
   <div class="a4-section">
     <div class="a4-controls">
-      <div class="section-title" style="margin: 0;">
-        <i class="fas fa-file-pdf" style="color: var(--success);"></i> معاينة وتوزيع ورقة A4 (قياس الهوية 8.5×5.5 سم)
+      <div class="section-title" style="margin:0;">
+        <i class="fas fa-print" style="color: var(--success);"></i> معاينة وتعديل ورقة A4 (الهوية: 8.5سم × 5.5سم)
       </div>
-      <div style="display: flex; gap: 8px;">
-        <button class="btn btn-success" onclick="exportToPDF()"><i class="fas fa-download"></i> تصدير PDF</button>
-        <button class="btn btn-primary" onclick="window.print()"><i class="fas fa-print"></i> طباعة الورقة</button>
+      <div style="display:flex; gap:8px;">
+        <button class="btn btn-success" onclick="exportToPDF()"><i class="fas fa-file-pdf"></i> تصدير PDF</button>
+        <button class="btn btn-primary" onclick="window.print()"><i class="fas fa-print"></i> طباعة</button>
         <button class="btn btn-danger" onclick="clearA4()"><i class="fas fa-trash"></i> تفريغ الورقة</button>
       </div>
     </div>
 
     <div class="a4-paper-wrapper">
-      <div id="a4Paper">
-        <!-- يتم توزيع الكروت هنا تلقائياً -->
-      </div>
+      <div id="a4Paper"></div>
     </div>
   </div>
 
 </div>
 
-<!-- نافذة التعديل والقص الحر والترشيح -->
+<!-- نافذة القص الحر والفلاتر -->
 <div class="modal" id="editModal">
   <div class="modal-content">
     <div class="modal-header">
-      <h3><i class="fas fa-crop-alt"></i> تعديل وتوضيح المستمسك</h3>
-      <i class="fas fa-times" style="cursor: pointer;" onclick="closeModal()"></i>
+      <h3><i class="fas fa-vector-square"></i> قص حر للزوايا المائلة وتعديل الفلاتر</h3>
+      <i class="fas fa-times" style="cursor:pointer;" onclick="closeModal()"></i>
     </div>
     <div class="modal-body">
       
-      <!-- منطقة القص -->
-      <div class="crop-wrapper">
-        <img id="cropImage" src="">
+      <p style="font-size:12px; color:#64748b; text-align:center;">
+        اسحب الدوائر الحمراء بالأركان الأربعة لتحديد حدود الهوية المائلة بدقة.
+      </p>
+
+      <div class="editor-container">
+        <canvas id="editorCanvas"></canvas>
       </div>
 
-      <!-- أدوات القص والتعديل -->
+      <!-- تحكم الزوايا والتدوير -->
       <div class="filter-bar">
-        <button class="btn btn-secondary" onclick="cropper.rotate(-90)"><i class="fas fa-undo"></i> تدوير اليسار</button>
-        <button class="btn btn-secondary" onclick="cropper.rotate(90)"><i class="fas fa-redo"></i> تدوير اليمين</button>
-        <button class="btn btn-secondary" onclick="autoCropPreset()"><i class="fas fa-magic"></i> قص تلقائي لوسط الصورة</button>
+        <button class="btn btn-secondary" onclick="autoDetectCorners()"><i class="fas fa-magic"></i> التقاط الحدود تلقائياً</button>
+        <button class="btn btn-secondary" onclick="rotateImage(-90)"><i class="fas fa-undo"></i> تدوير 90°-</button>
+        <button class="btn btn-secondary" onclick="rotateImage(90)"><i class="fas fa-redo"></i> تدوير 90°+</button>
+        <button class="btn btn-secondary" onclick="resetCorners()"><i class="fas fa-expand"></i> إعادة تعيين الزوايا</button>
       </div>
 
       <hr style="width: 100%; border: 0.5px solid #e2e8f0;">
 
-      <!-- شريط الفلاتر (3 فلاتر + إلغاء) -->
+      <!-- الفلاتر -->
       <div class="filter-bar">
-        <span style="font-weight: 700; font-size: 13px; align-self: center;">اختر الفلتر:</span>
-        <button class="btn btn-primary" onclick="applyFilter('none')">بدون فلتر (الأصلي)</button>
-        <button class="btn btn-success" onclick="applyFilter('magic')">✨ توضيح ملون (Magic)</button>
-        <button class="btn btn-primary" style="background:#000;" onclick="applyFilter('bw')">🌓 أسود وأبيض (عالي التباين)</button>
-        <button class="btn btn-secondary" onclick="applyFilter('gray')">🔘 رمادي (Grayscale)</button>
+        <span style="font-weight:700; font-size:13px; align-self:center;">الفلتر:</span>
+        <button class="btn btn-primary" onclick="setFilter('none')">الأصلي (إلغاء الفلتر)</button>
+        <button class="btn btn-success" onclick="setFilter('magic')">✨ توضيح ملون (Magic)</button>
+        <button class="btn btn-primary" style="background:#000;" onclick="setFilter('bw')">🌓 أسود وأبيض حاد (B&W)</button>
+        <button class="btn btn-secondary" onclick="setFilter('gray')">🔘 رمادي (Grayscale)</button>
       </div>
 
-      <div style="width:100%; display:flex; gap:10px; margin-top:10px;">
-        <button class="btn btn-success btn-full" style="padding:12px; font-size:15px;" onclick="saveCrop()">
-          <i class="fas fa-check-circle"></i> حفظ التعديلات وإعتماد المستمسك
-        </button>
-      </div>
+      <button class="btn btn-success btn-full" style="padding:12px; font-size:15px; margin-top:10px;" onclick="applyWarpAndSave()">
+        <i class="fas fa-check-circle"></i> تطبيق القص الحر والحفظ
+      </button>
 
     </div>
   </div>
 </div>
 
+<!-- تحميل OpenCV.js -->
+<script async src="https://docs.opencv.org/4.7.0/opencv.js" onload="onOpenCvReady()"></script>
+
 <script>
+  let isOpenCvReady = false;
   let docList = [];
   let currentDocId = null;
-  let cropper = null;
-  let activeFilter = 'none';
+  
+  // متغيرة المحرر
+  let editorImg = new Image();
+  let editorCanvas, editorCtx;
+  let corners = []; // [{x,y}, {x,y}, {x,y}, {x,y}]
+  let activeCornerIndex = -1;
+  let currentFilter = 'none';
+  let rotationAngle = 0;
 
-  // استقبال الصور عند السحب والإفلات
-  const uploadBox = document.querySelector('.upload-box');
-  uploadBox.addEventListener('dragover', (e) => { e.preventDefault(); });
-  uploadBox.addEventListener('drop', (e) => {
-    e.preventDefault();
-    if(e.dataTransfer.files) handleFiles(e.dataTransfer.files);
-  });
+  function onOpenCvReady() {
+    isOpenCvReady = true;
+    document.getElementById('statusEngine').style.background = '#dcfce7';
+    document.getElementById('statusEngine').style.color = '#15803d';
+    document.getElementById('statusEngine').innerHTML = '<i class="fas fa-check-circle"></i> محرك OpenCV جاهز تماماً للعمل!';
+    setTimeout(() => { document.getElementById('statusEngine').style.display = 'none'; }, 3000);
+  }
 
-  // معالجة الملفات المرفوعة
+  // التعامل مع تحميل الصور
   function handleFiles(files) {
     Array.from(files).forEach(file => {
       const reader = new FileReader();
       reader.onload = (e) => {
         const docObj = {
           id: Date.now() + Math.random(),
-          originalSrc: e.target.result,
-          processedSrc: e.target.result,
-          filter: 'none'
+          src: e.target.result,
+          processedSrc: e.target.result
         };
         docList.push(docObj);
         renderGallery();
@@ -400,18 +409,16 @@
     });
   }
 
-  // عرض معرض الصور
   function renderGallery() {
     const gallery = document.getElementById('gallery');
     gallery.innerHTML = '';
-
     docList.forEach(doc => {
       const card = document.createElement('div');
       card.className = 'doc-card';
       card.innerHTML = `
         <img src="${doc.processedSrc}">
         <div class="doc-card-actions">
-          <button class="btn btn-primary" onclick="openEditModal(${doc.id})"><i class="fas fa-edit"></i> تعديل وقص</button>
+          <button class="btn btn-primary" onclick="openEditModal(${doc.id})"><i class="fas fa-crop-alt"></i> تعديل وقص حر</button>
           <button class="btn btn-danger" onclick="deleteDoc(${doc.id})"><i class="fas fa-trash"></i> حذف</button>
           <button class="btn btn-success btn-full" onclick="addToA4('${doc.processedSrc}')"><i class="fas fa-plus-circle"></i> إضافة لورقة A4</button>
         </div>
@@ -420,114 +427,277 @@
     });
   }
 
-  // حذف مستمسك
   function deleteDoc(id) {
     docList = docList.filter(d => d.id !== id);
     renderGallery();
   }
 
-  // فتح نافذة القص والترشيح
+  // فتح نافذة المحرر
   function openEditModal(id) {
     currentDocId = id;
     const doc = docList.find(d => d.id === id);
-    const cropImg = document.getElementById('cropImage');
-    cropImg.src = doc.originalSrc;
+    rotationAngle = 0;
+    currentFilter = 'none';
+
+    editorCanvas = document.getElementById('editorCanvas');
+    editorCtx = editorCanvas.getContext('2d');
+
+    editorImg = new Image();
+    editorImg.onload = () => {
+      initCanvasAndCorners();
+      setupMouseEvents();
+    };
+    editorImg.src = doc.src;
 
     document.getElementById('editModal').style.display = 'flex';
-
-    if(cropper) cropper.destroy();
-    cropper = new Cropper(cropImg, {
-      viewMode: 1,
-      dragMode: 'crop',
-      autoCropArea: 0.9,
-      restore: false,
-      guides: true,
-      center: true,
-      highlight: true,
-      cropBoxMovable: true,
-      cropBoxResizable: true,
-      toggleDragModeOnDblclick: false,
-    });
   }
 
   function closeModal() {
     document.getElementById('editModal').style.display = 'none';
-    if(cropper) cropper.destroy();
   }
 
-  // قص تلقائي سريع للمركز
-  function autoCropPreset() {
-    if(!cropper) return;
-    cropper.setCropBoxData({
-      left: cropper.getCanvasData().left + 20,
-      top: cropper.getCanvasData().top + 20,
-      width: cropper.getCanvasData().width - 40,
-      height: cropper.getCanvasData().height - 40
+  // إعداد الكانفاس ونقاط الزوايا الـ 4
+  function initCanvasAndCorners() {
+    editorCanvas.width = editorImg.width;
+    editorCanvas.height = editorImg.height;
+    resetCorners();
+  }
+
+  function resetCorners() {
+    const w = editorCanvas.width;
+    const h = editorCanvas.height;
+    const padW = w * 0.08;
+    const padH = h * 0.08;
+
+    corners = [
+      { x: padW, y: padH },         // Top-Left
+      { x: w - padW, y: padH },     // Top-Right
+      { x: w - padW, y: h - padH }, // Bottom-Right
+      { x: padW, y: h - padH }      // Bottom-Left
+    ];
+    redrawCanvas();
+  }
+
+  // إعادة التدوير 90 درجة بدون فقدان الحواف
+  function rotateImage(deg) {
+    const tempCanvas = document.createElement('canvas');
+    const tempCtx = tempCanvas.getContext('2d');
+
+    if (Math.abs(deg) === 90) {
+      tempCanvas.width = editorImg.height;
+      tempCanvas.height = editorImg.width;
+    } else {
+      tempCanvas.width = editorImg.width;
+      tempCanvas.height = editorImg.height;
+    }
+
+    tempCtx.translate(tempCanvas.width / 2, tempCanvas.height / 2);
+    tempCtx.rotate((deg * Math.PI) / 180);
+    tempCtx.drawImage(editorImg, -editorImg.width / 2, -editorImg.height / 2);
+
+    editorImg = new Image();
+    editorImg.onload = () => {
+      initCanvasAndCorners();
+    };
+    editorImg.src = tempCanvas.toDataURL();
+  }
+
+  // رسم الصورة والشبكة والزوايا الأربع
+  function redrawCanvas() {
+    editorCtx.clearRect(0, 0, editorCanvas.width, editorCanvas.height);
+    editorCtx.drawImage(editorImg, 0, 0);
+
+    // رسم الخطوط بين النقاط الأربع
+    editorCtx.beginPath();
+    editorCtx.moveTo(corners[0].x, corners[0].y);
+    for (let i = 1; i < 4; i++) {
+      editorCtx.lineTo(corners[i].x, corners[i].y);
+    }
+    editorCtx.closePath();
+    editorCtx.strokeStyle = '#2563eb';
+    editorCtx.lineWidth = Math.max(3, editorCanvas.width / 200);
+    editorCtx.stroke();
+    editorCtx.fillStyle = 'rgba(37, 99, 235, 0.15)';
+    editorCtx.fill();
+
+    // رسم الدوائر عند الزوايا
+    corners.forEach((p, index) => {
+      editorCtx.beginPath();
+      editorCtx.arc(p.x, p.y, Math.max(10, editorCanvas.width / 80), 0, 2 * Math.PI);
+      editorCtx.fillStyle = '#ef4444';
+      editorCtx.fill();
+      editorCtx.lineWidth = 2;
+      editorCtx.strokeStyle = '#ffffff';
+      editorCtx.stroke();
     });
   }
 
-  // تطبيق الفلاتر الثلاثة مع خيار الإلغاء
-  function applyFilter(filterType) {
-    activeFilter = filterType;
+  // التعامل مع سحب وإفلات نقاط الزوايا بالماوس أو اللمس
+  function setupMouseEvents() {
+    const getPos = (e) => {
+      const rect = editorCanvas.getBoundingClientRect();
+      const scaleX = editorCanvas.width / rect.width;
+      const scaleY = editorCanvas.height / rect.height;
+      const clientX = e.touches ? e.touches[0].clientX : e.clientX;
+      const clientY = e.touches ? e.touches[0].clientY : e.clientY;
+      return {
+        x: (clientX - rect.left) * scaleX,
+        y: (clientY - rect.top) * scaleY
+      };
+    };
+
+    const onStart = (e) => {
+      const pos = getPos(e);
+      const threshold = Math.max(30, editorCanvas.width / 30);
+      activeCornerIndex = corners.findIndex(p => Math.hypot(p.x - pos.x, p.y - pos.y) < threshold);
+    };
+
+    const onMove = (e) => {
+      if (activeCornerIndex < 0) return;
+      e.preventDefault();
+      const pos = getPos(e);
+      corners[activeCornerIndex] = pos;
+      redrawCanvas();
+    };
+
+    const onEnd = () => { activeCornerIndex = -1; };
+
+    editorCanvas.onmousedown = onStart;
+    editorCanvas.onmousemove = onMove;
+    editorCanvas.onmouseup = onEnd;
+
+    editorCanvas.ontouchstart = onStart;
+    editorCanvas.ontouchmove = onMove;
+    editorCanvas.ontouchend = onEnd;
   }
 
-  // معالجة الفلاتر على الكانفاس
-  function processCanvasFilter(canvas, filterType) {
-    const ctx = canvas.getContext('2d');
-    const imgData = ctx.getImageData(0, 0, canvas.width, canvas.height);
-    const d = imgData.data;
+  // التقاط الحدود تلقائياً باستخدام OpenCV
+  function autoDetectCorners() {
+    if (!isOpenCvReady) return alert("محرك OpenCV ما زال يتحمل، يرجى الانتظار لحظة.");
+    try {
+      let src = cv.imread(editorCanvas);
+      let gray = new cv.Mat();
+      cv.cvtColor(src, gray, cv.COLOR_RGBA2GRAY);
+      cv.GaussianBlur(gray, gray, new cv.Size(5, 5), 0);
+      cv.Canny(gray, gray, 75, 200);
 
-    if (filterType === 'magic') {
-      // توضيح ملون زيادة التباين والسطوع
-      const contrast = 1.3;
-      const brightness = 15;
-      const factor = (259 * (contrast + 255)) / (255 * (259 - contrast));
-      for (let i = 0; i < d.length; i += 4) {
-        d[i] = factor * (d[i] - 128) + 128 + brightness;
-        d[i+1] = factor * (d[i+1] - 128) + 128 + brightness;
-        d[i+2] = factor * (d[i+2] - 128) + 128 + brightness;
+      let contours = new cv.MatVector();
+      let hierarchy = new cv.Mat();
+      cv.findContours(gray, contours, hierarchy, cv.RETR_EXTERNAL, cv.CHAIN_APPROX_SIMPLE);
+
+      let maxArea = 0;
+      let maxContour = null;
+      for (let i = 0; i < contours.size(); ++i) {
+        let cnt = contours.get(i);
+        let area = cv.contourArea(cnt);
+        if (area > maxArea) {
+          maxArea = area;
+          maxContour = cnt;
+        }
       }
-    } else if (filterType === 'bw') {
-      // أسود وأبيض شديد التوضيح (Threshold)
-      for (let i = 0; i < d.length; i += 4) {
-        let avg = (d[i] + d[i+1] + d[i+2]) / 3;
-        let v = avg > 120 ? 255 : 0;
-        d[i] = d[i+1] = d[i+2] = v;
+
+      if (maxContour) {
+        let peri = cv.arcLength(maxContour, true);
+        let approx = new cv.Mat();
+        cv.approxPolyDP(maxContour, approx, 0.02 * peri, true);
+
+        if (approx.rows === 4) {
+          corners = [
+            { x: approx.data32S[0], y: approx.data32S[1] },
+            { x: approx.data32S[2], y: approx.data32S[3] },
+            { x: approx.data32S[4], y: approx.data32S[5] },
+            { x: approx.data32S[6], y: approx.data32S[7] }
+          ];
+          redrawCanvas();
+        }
+        approx.delete();
       }
-    } else if (filterType === 'gray') {
-      // رمادي
-      for (let i = 0; i < d.length; i += 4) {
-        let v = 0.299 * d[i] + 0.587 * d[i+1] + 0.114 * d[i+2];
-        d[i] = d[i+1] = d[i+2] = v;
-      }
+      src.delete(); gray.delete(); contours.delete(); hierarchy.delete();
+    } catch(err) {
+      console.log("Auto detect error:", err);
     }
-    ctx.putImageData(imgData, 0, 0);
   }
 
-  // حفظ القص والفلترة
-  function saveCrop() {
-    if(!cropper) return;
-    const croppedCanvas = cropper.getCroppedCanvas({
-      maxWidth: 1600,
-      maxHeight: 1600,
-      fillColor: '#fff',
-      imageSmoothingQuality: 'high'
-    });
+  function setFilter(f) {
+    currentFilter = f;
+  }
 
-    if(activeFilter !== 'none') {
-      processCanvasFilter(croppedCanvas, activeFilter);
+  // تطبيق تعديل الزوايا المائلة (Perspective Warp) والترشيح
+  function applyWarpAndSave() {
+    if (!isOpenCvReady) {
+      // طريقة احتياطية في حال عدم اكتمال تحميل OpenCV
+      const doc = docList.find(d => d.id === currentDocId);
+      doc.processedSrc = editorCanvas.toDataURL();
+      renderGallery();
+      closeModal();
+      return;
     }
 
-    const finalImage = croppedCanvas.toDataURL('image/jpeg', 0.92);
-    const doc = docList.find(d => d.id === currentDocId);
-    doc.processedSrc = finalImage;
-    doc.filter = activeFilter;
+    try {
+      let src = cv.imread(editorImg);
 
-    renderGallery();
-    closeModal();
+      // احتساب أبعاد العرض والارتفاع المستهدفين بناءً على النقاط
+      const w1 = Math.hypot(corners[1].x - corners[0].x, corners[1].y - corners[0].y);
+      const w2 = Math.hypot(corners[2].x - corners[3].x, corners[2].y - corners[3].y);
+      const targetW = Math.max(w1, w2);
+
+      const h1 = Math.hypot(corners[3].y - corners[0].y, corners[3].x - corners[0].x);
+      const h2 = Math.hypot(corners[2].y - corners[1].y, corners[2].x - corners[1].x);
+      const targetH = Math.max(h1, h2);
+
+      let srcTri = cv.matFromArray(4, 1, cv.CV_32FC2, [
+        corners[0].x, corners[0].y,
+        corners[1].x, corners[1].y,
+        corners[2].x, corners[2].y,
+        corners[3].x, corners[3].y
+      ]);
+
+      let dstTri = cv.matFromArray(4, 1, cv.CV_32FC2, [
+        0, 0,
+        targetW, 0,
+        targetW, targetH,
+        0, targetH
+      ]);
+
+      let M = cv.getPerspectiveTransform(srcTri, dstTri);
+      let dst = new cv.Mat();
+      let dsize = new cv.Size(targetW, targetH);
+
+      // فرش الصورة المائلة لتصبح مستطيلة قائمة
+      cv.warpPerspective(src, dst, M, dsize, cv.INTER_LINEAR, cv.BORDER_CONSTANT, new cv.Scalar());
+
+      // تطبيق الفلاتر المحددة
+      if (currentFilter === 'magic') {
+        // توضيح ألوان عالي
+        let alpha = 1.3, beta = 10;
+        cv.convertScaleAbs(dst, dst, alpha, beta);
+      } else if (currentFilter === 'bw') {
+        // أسود وأبيض حاد CamScanner (Adaptive Thresholding)
+        cv.cvtColor(dst, dst, cv.COLOR_RGBA2GRAY);
+        cv.adaptiveThreshold(dst, dst, 255, cv.ADAPTIVE_THRESH_GAUSSIAN_C, cv.THRESH_BINARY, 15, 8);
+      } else if (currentFilter === 'gray') {
+        // رمادي
+        cv.cvtColor(dst, dst, cv.COLOR_RGBA2GRAY);
+      }
+
+      // إخراج الصورة النهائية للكانفاس
+      let outCanvas = document.createElement('canvas');
+      cv.imshow(outCanvas, dst);
+
+      const doc = docList.find(d => d.id === currentDocId);
+      doc.processedSrc = outCanvas.toDataURL('image/jpeg', 0.95);
+
+      src.delete(); dst.delete(); srcTri.delete(); dstTri.delete(); M.delete();
+
+      renderGallery();
+      closeModal();
+    } catch (err) {
+      console.error(err);
+      alert("حدث خطأ أثناء معالجة الصورة، تمت العودة للوضع الافتراضي.");
+    }
   }
 
-  // إدارة ورقة A4 (عرض 8.5سم × ارتفاع 5.5سم)
+  // إضافة الكرت لورقة A4 بقياس (8.5cm × 5.5cm)
   function addToA4(imageSrc) {
     const a4Paper = document.getElementById('a4Paper');
     const cardItem = document.createElement('div');
@@ -543,12 +713,11 @@
     document.getElementById('a4Paper').innerHTML = '';
   }
 
-  // تصدير A4 كـ PDF
   function exportToPDF() {
     const element = document.getElementById('a4Paper');
     const opt = {
       margin: 0,
-      filename: 'A4_Documents.pdf',
+      filename: 'المستمسكات_A4.pdf',
       image: { type: 'jpeg', quality: 0.98 },
       html2canvas: { scale: 3 },
       jsPDF: { unit: 'mm', format: 'a4', orientation: 'portrait' }
