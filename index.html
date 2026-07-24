@@ -1,89 +1,317 @@
 <!DOCTYPE html>
-<html lang="ar">
+<html lang="ar" dir="rtl">
 <head>
 <meta charset="UTF-8">
-<title>مكتبة المصطفى</title>
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>مكتبة المصطفى | الصفحة الرئيسية</title>
+<!-- خط Cairo و أيقونات FontAwesome -->
+<link href="https://fonts.googleapis.com/css2?family=Cairo:wght@400;600;700;800&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+
 <style>
-  body {
-    font-family: "Tahoma", sans-serif;
-    background: #f9f9f9;
+  :root {
+    --primary: #1e293b;
+    --accent: #10b981;
+    --accent-hover: #059669;
+    --bg-color: #f8fafc;
+    --card-bg: #ffffff;
+    --text-color: #334155;
+    --gold: #d97706;
+  }
+
+  * {
+    box-sizing: border-box;
     margin: 0;
     padding: 0;
-    text-align: center;
   }
-  header {
-    background: linear-gradient(135deg, #2c3e50, #27ae60);
-    color: white;
-    padding: 40px 20px;
-    font-size: 28px;
-    font-weight: bold;
-    box-shadow: 0 4px 10px rgba(0,0,0,0.2);
-  }
-  main {
-    margin: 40px auto;
-    max-width: 600px;
-    background: white;
-    padding: 30px;
-    border-radius: 12px;
-    box-shadow: 0 4px 15px rgba(0,0,0,0.1);
-  }
-  h2 {
-    margin-bottom: 20px;
-    color: #2c3e50;
-  }
-  #buttons {
+
+  body {
+    font-family: 'Cairo', sans-serif;
+    background-color: var(--bg-color);
+    color: var(--text-color);
+    min-height: 100vh;
     display: flex;
-    flex-wrap: wrap;
-    justify-content: center;
-    gap: 15px;
+    flex-direction: column;
+    align-items: center;
+    padding-bottom: 40px;
   }
-  .page-btn {
-    background: #27ae60;
+
+  /* ===== الهيدر الرئيسي ===== */
+  header {
+    width: 100%;
+    background: linear-gradient(135deg, #0f172a 0%, #1e293b 100%);
     color: white;
-    border: none;
-    padding: 12px 25px;
-    border-radius: 8px;
-    font-size: 16px;
-    cursor: pointer;
-    transition: 0.3s;
+    padding: 35px 20px;
+    text-align: center;
+    box-shadow: 0 4px 20px rgba(0, 0, 0, 0.15);
+    position: relative;
+    border-bottom: 4px solid var(--accent);
   }
+
+  header h1 {
+    font-size: 26px;
+    font-weight: 800;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 12px;
+  }
+
+  header h1 i {
+    color: var(--accent);
+  }
+
+  header p {
+    font-size: 14px;
+    color: #94a3b8;
+    margin-top: 6px;
+  }
+
+  /* ===== الحاوية الرئيسية ===== */
+  .container {
+    width: 100%;
+    max-width: 680px;
+    padding: 0 20px;
+    margin-top: -20px;
+    z-index: 10;
+  }
+
+  /* ===== فقاعة/بطاقة إهداء الثواب ===== */
+  .thawab-card {
+    background: linear-gradient(135deg, #ffffff 0%, #f1f5f9 100%);
+    border: 1px solid #e2e8f0;
+    border-right: 5px solid var(--gold);
+    border-radius: 16px;
+    padding: 18px 20px;
+    display: flex;
+    align-items: center;
+    gap: 16px;
+    box-shadow: 0 10px 25px rgba(0, 0, 0, 0.06);
+    margin-bottom: 25px;
+    position: relative;
+    overflow: hidden;
+  }
+
+  .thawab-card::before {
+    content: "📖 ثواب الفاتحة";
+    position: absolute;
+    top: 10px;
+    left: 15px;
+    font-size: 10px;
+    font-weight: bold;
+    background: #fef3c7;
+    color: var(--gold);
+    padding: 2px 8px;
+    border-radius: 12px;
+  }
+
+  .thawab-img-box {
+    position: relative;
+    width: 70px;
+    height: 70px;
+    flex-shrink: 0;
+  }
+
+  .thawab-img-box img {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+    border-radius: 50%;
+    border: 3px solid var(--gold);
+    box-shadow: 0 4px 10px rgba(217, 119, 6, 0.2);
+  }
+
+  .thawab-text {
+    text-align: right;
+  }
+
+  .thawab-text h3 {
+    font-size: 15px;
+    color: #1e293b;
+    font-weight: 700;
+    margin-bottom: 4px;
+  }
+
+  .thawab-text p {
+    font-size: 13px;
+    color: #64748b;
+    line-height: 1.5;
+  }
+
+  /* ===== قسم الصفحات المتاحة ===== */
+  .main-box {
+    background: var(--card-bg);
+    padding: 25px;
+    border-radius: 20px;
+    box-shadow: 0 10px 30px rgba(0, 0, 0, 0.05);
+    border: 1px solid #e2e8f0;
+  }
+
+  .section-title {
+    font-size: 18px;
+    color: var(--primary);
+    font-weight: 700;
+    margin-bottom: 20px;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    border-bottom: 2px solid #f1f5f9;
+    padding-bottom: 10px;
+  }
+
+  .section-title i {
+    color: var(--accent);
+  }
+
+  /* شبكة الأزرار */
+  #buttons {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(180px, 1fr));
+    gap: 12px;
+  }
+
+  .page-btn {
+    background: #f8fafc;
+    color: var(--primary);
+    border: 1.5px solid #e2e8f0;
+    padding: 14px 18px;
+    border-radius: 12px;
+    font-size: 15px;
+    font-weight: 600;
+    font-family: inherit;
+    cursor: pointer;
+    transition: all 0.25s cubic-bezier(0.4, 0, 0.2, 1);
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    text-decoration: none;
+    box-shadow: 0 2px 5px rgba(0, 0, 0, 0.02);
+  }
+
+  .page-btn span {
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+  }
+
+  .page-btn i {
+    color: #94a3b8;
+    font-size: 14px;
+    transition: transform 0.25s, color 0.25s;
+  }
+
   .page-btn:hover {
-    background: #2ecc71;
-    transform: scale(1.05);
+    background: var(--accent);
+    color: white;
+    border-color: var(--accent);
+    transform: translateY(-3px);
+    box-shadow: 0 8px 15px rgba(16, 185, 129, 0.25);
+  }
+
+  .page-btn:hover i {
+    color: white;
+    transform: translateX(-4px);
+  }
+
+  /* حالة التحميل والخطأ */
+  .status-msg {
+    grid-column: 1 / -1;
+    text-align: center;
+    padding: 20px;
+    color: #64748b;
+    font-size: 14px;
+  }
+
+  .status-msg i {
+    font-size: 24px;
+    margin-bottom: 8px;
+    display: block;
+    color: var(--accent);
   }
 </style>
 </head>
 <body>
+
+  <!-- الهيدر -->
   <header>
-    مرحبا بكم في نظام مكتبة المصطفى
+    <h1><i class="fas fa-book-open"></i> نظام مكتبة المصطفى</h1>
+    <p>بوابة الخدمات والصفحات المتاحة</p>
   </header>
 
-  <main>
-    <h2>الصفحات المتاحة</h2>
-    <div id="buttons"></div>
-  </main>
+  <!-- الحاوية الرئيسية -->
+  <div class="container">
+
+    <!-- فقاعة إهداء ثواب الفاتحة -->
+    <div class="thawab-card">
+      <div class="thawab-img-box">
+        <img src="1.JPG" alt="المرحوم حسن ابن نزيلة" onerror="this.src='https://via.placeholder.com/70?text=رحمه+الله'">
+      </div>
+      <div class="thawab-text">
+        <h3>إهداء ثواب سورة الفاتحة</h3>
+        <p>نسألكم القراءة وإهداء ثوابها إلى روح المرحوم المغفور له بإذن الله <strong>(حسن ابن نزيلة)</strong>.</p>
+      </div>
+    </div>
+
+    <!-- قائمة الصفحات -->
+    <div class="main-box">
+      <div class="section-title">
+        <i class="fas fa-cubes"></i> الصفحات والأدوات المتاحة
+      </div>
+      <div id="buttons">
+        <div class="status-msg">
+          <i class="fas fa-spinner fa-spin"></i>
+          جاري جلب قائمة الصفحات...
+        </div>
+      </div>
+    </div>
+
+  </div>
 
 <script>
-  // اسم المستخدم والمستودع الخاص بك
   const username = "MUSTAFA-mbx5";
   const repo = "mustafa";
+  const container = document.getElementById("buttons");
 
-  // جلب قائمة الملفات من GitHub API
   fetch(`https://api.github.com/repos/${username}/${repo}/contents/`)
-    .then(res => res.json())
+    .then(res => {
+      if(!res.ok) throw new Error("تعذر الوصول للملفات");
+      return res.json();
+    })
     .then(files => {
-      const container = document.getElementById("buttons");
-      files.forEach(file => {
-        if(file.name.endsWith(".html") && file.name !== "index.html"){
-          const btn = document.createElement("button");
-          btn.className = "page-btn";
-          btn.textContent = file.name.replace(".html","");
-          btn.onclick = () => window.location.href = file.name;
-          container.appendChild(btn);
-        }
+      container.innerHTML = "";
+      
+      // تصفية الملفات وإعادة استثناء index.html
+      const htmlFiles = files.filter(file => file.name.endsWith(".html") && file.name.toLowerCase() !== "index.html");
+
+      if (htmlFiles.length === 0) {
+        container.innerHTML = `<div class="status-msg">لا توجد صفحات متاحة حالياً.</div>`;
+        return;
+      }
+
+      htmlFiles.forEach(file => {
+        const btn = document.createElement("button");
+        btn.className = "page-btn";
+        
+        const fileNameWithoutExt = file.name.replace(/\.html$/i, "");
+        
+        btn.innerHTML = `
+          <span>${fileNameWithoutExt}</span>
+          <i class="fas fa-arrow-left"></i>
+        `;
+        
+        btn.onclick = () => window.location.href = file.name;
+        container.appendChild(btn);
       });
     })
-    .catch(err => console.error("خطأ في جلب الملفات:", err));
+    .catch(err => {
+      console.error("خطأ في جلب الملفات:", err);
+      container.innerHTML = `
+        <div class="status-msg" style="color: #ef4444;">
+          <i class="fas fa-exclamation-circle" style="color: #ef4444;"></i>
+          حدث خطأ أثناء تحميل الصفحات.
+        </div>`;
+    });
 </script>
+
 </body>
 </html>
