@@ -289,6 +289,18 @@
     box-shadow: 0 2px 4px rgba(0,0,0,0.2);
   }
 
+  .a4-card-item .flip-btn {
+    position: absolute;
+    top: 4px; left: 32px;
+    background: rgba(16, 185, 129, 0.9);
+    color: white; border: none;
+    border-radius: 50%; width: 24px; height: 24px;
+    cursor: pointer; display: flex;
+    align-items: center; justify-content: center; font-size: 11px;
+    z-index: 5;
+    box-shadow: 0 2px 4px rgba(0,0,0,0.2);
+  }
+
   @media print {
     body * { visibility: hidden; }
     #a4Paper, #a4Paper * { visibility: visible; }
@@ -297,7 +309,7 @@
       width: 210mm !important; height: 297mm !important;
       padding: 10mm !important; box-shadow: none !important; background: white !important;
     }
-    .remove-btn, .rotate-btn { display: none !important; }
+    .remove-btn, .rotate-btn, .flip-btn { display: none !important; }
   }
 </style>
 </head>
@@ -305,7 +317,7 @@
 
 <header>
   <h1><i class="fas fa-camera-retro"></i> ماسح المستمسكات الذكي (CamScanner Web)</h1>
-  <p>قص حر بزوايا مائلة 4-Points + معاينة فلاتر فورية + تدوير داخل ورقة A4 (8.5×5.5 سم)</p>
+  <p>قص حر + معاينة فلاتر فورية + تدوير وانعكاس المستمسكات في ورقة A4 (8.5×5.5 سم)</p>
 </header>
 
 <div id="statusEngine">
@@ -367,12 +379,14 @@
         <canvas id="editorCanvas"></canvas>
       </div>
 
-      <!-- تحكم الزوايا والتدوير -->
+      <!-- تحكم الزوايا، التدوير، والانعكاس -->
       <div class="filter-bar">
         <button class="btn btn-secondary" onclick="autoDetectCorners()"><i class="fas fa-magic"></i> التقاط الحدود تلقائياً</button>
         <button class="btn btn-secondary" onclick="rotateImage(-90)"><i class="fas fa-undo"></i> تدوير 90°-</button>
         <button class="btn btn-secondary" onclick="rotateImage(90)"><i class="fas fa-redo"></i> تدوير 90°+</button>
-        <button class="btn btn-secondary" onclick="resetCorners()"><i class="fas fa-expand"></i> إعادة تعيين الزوايا</button>
+        <button class="btn btn-secondary" onclick="flipImage('h')"><i class="fas fa-arrows-alt-h"></i> انعكاس أفقي</button>
+        <button class="btn btn-secondary" onclick="flipImage('v')"><i class="fas fa-arrows-alt-v"></i> انعكاس رأسي</button>
+        <button class="btn btn-secondary" onclick="resetCorners()"><i class="fas fa-expand"></i> إعادة تعيين</button>
       </div>
 
       <hr style="width: 100%; border: 0.5px solid #e2e8f0;">
@@ -402,7 +416,7 @@
   let docList = [];
   let currentDocId = null;
   
-  // متغيرة المحرر
+  // متغيرات المحرر
   let editorImg = new Image();
   let editorCanvas, editorCtx;
   let corners = [];
@@ -469,7 +483,7 @@
     editorImg.onload = () => {
       initCanvasAndCorners();
       setupMouseEvents();
-      setFilter('none'); // إعادة تعيين الفلتر للأصلي عند الفتح
+      setFilter('none');
     };
     editorImg.src = doc.src;
 
@@ -501,6 +515,7 @@
     redrawCanvas();
   }
 
+  // تدوير الصورة في المحرر
   function rotateImage(deg) {
     const tempCanvas = document.createElement('canvas');
     const tempCtx = tempCanvas.getContext('2d');
@@ -516,6 +531,24 @@
     tempCtx.translate(tempCanvas.width / 2, tempCanvas.height / 2);
     tempCtx.rotate((deg * Math.PI) / 180);
     tempCtx.drawImage(editorImg, -editorImg.width / 2, -editorImg.height / 2);
+
+    editorImg = new Image();
+    editorImg.onload = () => {
+      initCanvasAndCorners();
+    };
+    editorImg.src = tempCanvas.toDataURL();
+  }
+
+  // 1. انعكاس الصورة (أفقي / رأسي) في المحرر الرئيسي
+  function flipImage(direction) {
+    const tempCanvas = document.createElement('canvas');
+    const tempCtx = tempCanvas.getContext('2d');
+    tempCanvas.width = editorImg.width;
+    tempCanvas.height = editorImg.height;
+
+    tempCtx.translate(direction === 'h' ? tempCanvas.width : 0, direction === 'v' ? tempCanvas.height : 0);
+    tempCtx.scale(direction === 'h' ? -1 : 1, direction === 'v' ? 1 : -1);
+    tempCtx.drawImage(editorImg, 0, 0);
 
     editorImg = new Image();
     editorImg.onload = () => {
@@ -637,15 +670,11 @@
     }
   }
 
-  // 1. معاينة الفلتر المباشرة واللحظية
   function setFilter(f) {
     currentFilter = f;
-
-    // تغيير الزر النشط بصرياً
     document.querySelectorAll('.filter-btn').forEach(btn => btn.classList.remove('active'));
     document.getElementById(`filter-${f}`).classList.add('active');
 
-    // تطبيق فلتر مباشر على المعاينة فورياً
     if (f === 'magic') {
       editorCanvas.style.filter = 'contrast(135%) brightness(108%) saturate(125%)';
     } else if (f === 'bw') {
@@ -657,7 +686,6 @@
     }
   }
 
-  // تطبيق القص والترشيح الدائم
   function applyWarpAndSave() {
     if (!isOpenCvReady) {
       const doc = docList.find(d => d.id === currentDocId);
@@ -731,13 +759,14 @@
     cardItem.className = 'a4-card-item';
     cardItem.innerHTML = `
       <button class="rotate-btn" title="تدوير الصورة 90 درجة" onclick="rotateA4Card(this)"><i class="fas fa-redo"></i></button>
+      <button class="flip-btn" title="انعكاس أفقي للصورة" onclick="flipA4Card(this)"><i class="fas fa-arrows-alt-h"></i></button>
       <button class="remove-btn" title="حذف من A4" onclick="this.parentElement.remove()"><i class="fas fa-times"></i></button>
       <img src="${imageSrc}">
     `;
     a4Paper.appendChild(cardItem);
   }
 
-  // 2. تدوير الصورة 90 درجة مباشرة داخل بطاقات ورقة A4
+  // تدوير الصورة داخل A4
   function rotateA4Card(btn) {
     const cardItem = btn.parentElement;
     const img = cardItem.querySelector('img');
@@ -747,7 +776,6 @@
     const tempImg = new Image();
 
     tempImg.onload = () => {
-      // تبديل الأبعاد لتلائم التدوير 90 درجة
       tempCanvas.width = tempImg.height;
       tempCanvas.height = tempImg.width;
 
@@ -755,7 +783,28 @@
       ctx.rotate((90 * Math.PI) / 180);
       ctx.drawImage(tempImg, -tempImg.width / 2, -tempImg.height / 2);
 
-      // تحديث مصدر الصورة داخل البطاقة فوراً
+      img.src = tempCanvas.toDataURL('image/jpeg', 0.95);
+    };
+    tempImg.src = img.src;
+  }
+
+  // 2. انعكاس الصورة أفقياً داخل بطاقات ورقة A4 مباشرة
+  function flipA4Card(btn) {
+    const cardItem = btn.parentElement;
+    const img = cardItem.querySelector('img');
+
+    const tempCanvas = document.createElement('canvas');
+    const ctx = tempCanvas.getContext('2d');
+    const tempImg = new Image();
+
+    tempImg.onload = () => {
+      tempCanvas.width = tempImg.width;
+      tempCanvas.height = tempImg.height;
+
+      ctx.translate(tempCanvas.width, 0);
+      ctx.scale(-1, 1);
+      ctx.drawImage(tempImg, 0, 0);
+
       img.src = tempCanvas.toDataURL('image/jpeg', 0.95);
     };
     tempImg.src = img.src;
