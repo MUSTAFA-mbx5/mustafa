@@ -1,0 +1,304 @@
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>نظام إنشاء بطاقة الحماية الاجتماعية</title>
+<style>
+  * { box-sizing: border-box; }
+  body {
+    font-family: 'Tahoma', 'Segoe UI', Arial, sans-serif;
+    background: linear-gradient(135deg, #eef2f7, #dde6f0);
+    margin: 0;
+    padding: 20px;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    min-height: 100vh;
+  }
+
+  .container {
+    width: 100%;
+    max-width: 480px;
+  }
+
+  h1 {
+    text-align: center;
+    color: #1a3c5e;
+    font-size: 22px;
+    margin-bottom: 20px;
+  }
+
+  .form-box {
+    background: #fff;
+    border-radius: 14px;
+    padding: 22px;
+    box-shadow: 0 6px 18px rgba(0,0,0,0.12);
+  }
+
+  label {
+    display: block;
+    font-size: 14px;
+    font-weight: bold;
+    color: #333;
+    margin: 12px 0 6px;
+  }
+
+  input {
+    width: 100%;
+    padding: 10px 12px;
+    border: 1px solid #c9d3dc;
+    border-radius: 8px;
+    font-size: 14px;
+    font-family: inherit;
+    outline: none;
+    transition: border-color 0.2s;
+  }
+
+  input:focus {
+    border-color: #1a3c5e;
+  }
+
+  button {
+    width: 100%;
+    margin-top: 20px;
+    padding: 13px;
+    background: #1a3c5e;
+    color: #fff;
+    font-size: 16px;
+    font-weight: bold;
+    border: none;
+    border-radius: 8px;
+    cursor: pointer;
+    transition: background 0.2s;
+  }
+
+  button:hover {
+    background: #12293f;
+  }
+
+  .error {
+    color: #c0392b;
+    font-size: 13px;
+    margin-top: 10px;
+    text-align: center;
+    display: none;
+  }
+
+  /* ===== الكارت ===== */
+  #cardWrapper {
+    display: none;
+    margin-top: 30px;
+    flex-direction: column;
+    align-items: center;
+  }
+
+  #card {
+    width: 8.5cm;
+    height: 5.5cm;
+    background: linear-gradient(135deg, #ffffff, #f4f8fb);
+    border: 2px solid #1a3c5e;
+    border-radius: 10px;
+    padding: 10px 14px;
+    position: relative;
+    box-shadow: 0 4px 12px rgba(0,0,0,0.2);
+    display: flex;
+    flex-direction: column;
+    justify-content: space-between;
+    overflow: hidden;
+  }
+
+  #card::before {
+    content: "";
+    position: absolute;
+    top: -30px;
+    left: -30px;
+    width: 100px;
+    height: 100px;
+    background: #1a3c5e10;
+    border-radius: 50%;
+  }
+
+  .card-header {
+    text-align: center;
+    border-bottom: 1.5px solid #1a3c5e;
+    padding-bottom: 4px;
+  }
+
+  .card-header .main-title {
+    font-size: 15px;
+    font-weight: bold;
+    color: #1a3c5e;
+  }
+
+  .card-header .sub-title {
+    font-size: 9px;
+    color: #555;
+  }
+
+  .card-body {
+    font-size: 10.5px;
+    color: #222;
+    line-height: 1.55;
+  }
+
+  .card-body div {
+    display: flex;
+    justify-content: space-between;
+  }
+
+  .card-body .label {
+    font-weight: bold;
+    color: #1a3c5e;
+  }
+
+  .card-footer {
+    text-align: center;
+    font-size: 8.5px;
+    color: #444;
+    border-top: 1px solid #ccc;
+    padding-top: 3px;
+  }
+
+  .card-footer .lib {
+    font-weight: bold;
+  }
+
+  .actions {
+    margin-top: 16px;
+    display: flex;
+    gap: 10px;
+  }
+
+  .actions button {
+    margin-top: 0;
+  }
+
+  .btn-secondary {
+    background: #6b7c8f;
+  }
+  .btn-secondary:hover {
+    background: #566473;
+  }
+
+  @media print {
+    body * {
+      visibility: hidden;
+    }
+    #card, #card * {
+      visibility: visible;
+    }
+    #card {
+      position: fixed;
+      top: 50%;
+      left: 50%;
+      transform: translate(-50%, -50%);
+      box-shadow: none;
+    }
+  }
+</style>
+</head>
+<body>
+
+<div class="container">
+  <h1>نظام إنشاء بطاقة الحماية الاجتماعية</h1>
+
+  <div class="form-box" id="formBox">
+    <label for="name">الاسم</label>
+    <input type="text" id="name" placeholder="أدخل الاسم الكامل">
+
+    <label for="phone">رقم الهاتف</label>
+    <input type="tel" id="phone" placeholder="أدخل رقم الهاتف">
+
+    <label for="careNumber">رقم بطاقة الرعاية</label>
+    <input type="text" id="careNumber" placeholder="أدخل رقم بطاقة الرعاية">
+
+    <label for="date1">تاريخ الموعد</label>
+
+    <input type="date" id="date1">
+
+    <label for="date2">تاريخ الموعد القادم</label>
+    <input type="date" id="date2">
+
+    <label for="code">الرمز السري</label>
+    <input type="text" id="code" placeholder="أدخل الرمز السري">
+
+    <div class="error" id="errorMsg">الرجاء تعبئة جميع الحقول قبل إنشاء الكارت</div>
+
+    <button onclick="generateCard()">إنشاء الكارت</button>
+  </div>
+
+  <div id="cardWrapper">
+    <div id="card">
+      <div class="card-header">
+        <div class="main-title">الحماية الاجتماعية</div>
+        <div class="sub-title">بطاقة معلومات المستفيد</div>
+      </div>
+      <div class="card-body">
+        <div><span class="label">الاسم:</span><span id="cName"></span></div>
+        <div><span class="label">رقم الهاتف:</span><span id="cPhone"></span></div>
+        <div><span class="label">رقم بطاقة الرعاية:</span><span id="cCareNumber"></span></div>
+        <div><span class="label">تاريخ الموعد:</span><span id="cDate1"></span></div>
+        <div><span class="label">الموعد القادم:</span><span id="cDate2"></span></div>
+        <div><span class="label">الرمز السري:</span><span id="cCode"></span></div>
+      </div>
+      <div class="card-footer">
+        <div class="lib">جميع الحقوق محفوظة لمكتبة المصطفى</div>
+        <div>٠٧٨١٣٩٨٥٨٥٣</div>
+      </div>
+    </div>
+
+    <div class="actions">
+      <button onclick="window.print()">🖨️ طباعة الكارت</button>
+      <button class="btn-secondary" onclick="newCard()">إنشاء كارت جديد</button>
+    </div>
+  </div>
+</div>
+
+<script>
+function formatDate(d) {
+  if (!d) return '';
+  const parts = d.split('-');
+  return parts[2] + '/' + parts[1] + '/' + parts[0];
+}
+
+function generateCard() {
+  const name = document.getElementById('name').value.trim();
+  const phone = document.getElementById('phone').value.trim();
+  const careNumber = document.getElementById('careNumber').value.trim();
+  const date1 = document.getElementById('date1').value;
+  const date2 = document.getElementById('date2').value;
+  const code = document.getElementById('code').value.trim();
+  const errorMsg = document.getElementById('errorMsg');
+
+  if (!name || !phone || !careNumber || !date1 || !date2 || !code) {
+    errorMsg.style.display = 'block';
+    return;
+  }
+  errorMsg.style.display = 'none';
+
+  document.getElementById('cName').textContent = name;
+  document.getElementById('cPhone').textContent = phone;
+  document.getElementById('cCareNumber').textContent = careNumber;
+  document.getElementById('cDate1').textContent = formatDate(date1);
+  document.getElementById('cDate2').textContent = formatDate(date2);
+  document.getElementById('cCode').textContent = code;
+
+  document.getElementById('formBox').style.display = 'none';
+  document.getElementById('cardWrapper').style.display = 'flex';
+}
+
+function newCard() {
+  document.getElementById('formBox').style.display = 'block';
+  document.getElementById('cardWrapper').style.display = 'none';
+  document.getElementById('name').value = '';
+  document.getElementById('phone').value = '';
+  document.getElementById('careNumber').value = '';
+  document.getElementById('date1').value = '';
+  document.getElementById('date2').value = '';
+  document.getElementById('code').value = '';
+}
+</script>
+
+</body>
+</html>
