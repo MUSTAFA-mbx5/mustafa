@@ -189,6 +189,7 @@
     max-width: 100%;
     max-height: 420px;
     cursor: crosshair;
+    transition: filter 0.2s ease;
   }
 
   .filter-bar {
@@ -197,6 +198,15 @@
     gap: 8px;
     justify-content: center;
     width: 100%;
+  }
+
+  .filter-btn {
+    border: 2px solid transparent;
+  }
+  .filter-btn.active {
+    border-color: #f59e0b;
+    box-shadow: 0 0 8px rgba(245, 158, 11, 0.5);
+    transform: scale(1.03);
   }
 
   /* A4 Section */
@@ -253,14 +263,30 @@
     height: 100%;
     object-fit: fill;
   }
+  
+  /* أزرار التحكم بالبطاقة داخل A4 */
   .a4-card-item .remove-btn {
     position: absolute;
-    top: 3px; right: 3px;
+    top: 4px; right: 4px;
     background: rgba(239, 68, 68, 0.9);
     color: white; border: none;
-    border-radius: 50%; width: 22px; height: 22px;
+    border-radius: 50%; width: 24px; height: 24px;
     cursor: pointer; display: flex;
-    align-items: center; justify-content: center; font-size: 10px;
+    align-items: center; justify-content: center; font-size: 11px;
+    z-index: 5;
+    box-shadow: 0 2px 4px rgba(0,0,0,0.2);
+  }
+
+  .a4-card-item .rotate-btn {
+    position: absolute;
+    top: 4px; left: 4px;
+    background: rgba(37, 99, 235, 0.9);
+    color: white; border: none;
+    border-radius: 50%; width: 24px; height: 24px;
+    cursor: pointer; display: flex;
+    align-items: center; justify-content: center; font-size: 11px;
+    z-index: 5;
+    box-shadow: 0 2px 4px rgba(0,0,0,0.2);
   }
 
   @media print {
@@ -271,7 +297,7 @@
       width: 210mm !important; height: 297mm !important;
       padding: 10mm !important; box-shadow: none !important; background: white !important;
     }
-    .remove-btn { display: none !important; }
+    .remove-btn, .rotate-btn { display: none !important; }
   }
 </style>
 </head>
@@ -279,7 +305,7 @@
 
 <header>
   <h1><i class="fas fa-camera-retro"></i> ماسح المستمسكات الذكي (CamScanner Web)</h1>
-  <p>قص حر بزوايا مائلة 4-Points + فلاتر توضيح متقدمة + توزيع بقياس الهوية (8.5×5.5 سم)</p>
+  <p>قص حر بزوايا مائلة 4-Points + معاينة فلاتر فورية + تدوير داخل ورقة A4 (8.5×5.5 سم)</p>
 </header>
 
 <div id="statusEngine">
@@ -351,13 +377,13 @@
 
       <hr style="width: 100%; border: 0.5px solid #e2e8f0;">
 
-      <!-- الفلاتر -->
-      <div class="filter-bar">
-        <span style="font-weight:700; font-size:13px; align-self:center;">الفلتر:</span>
-        <button class="btn btn-primary" onclick="setFilter('none')">الأصلي (إلغاء الفلتر)</button>
-        <button class="btn btn-success" onclick="setFilter('magic')">✨ توضيح ملون (Magic)</button>
-        <button class="btn btn-primary" style="background:#000;" onclick="setFilter('bw')">🌓 أسود وأبيض حاد (B&W)</button>
-        <button class="btn btn-secondary" onclick="setFilter('gray')">🔘 رمادي (Grayscale)</button>
+      <!-- الفلاتر مع معاينة مباشرة -->
+      <div class="filter-bar" id="filterButtonsGroup">
+        <span style="font-weight:700; font-size:13px; align-self:center;">معاينة الفلتر:</span>
+        <button class="btn btn-primary filter-btn active" id="filter-none" onclick="setFilter('none')">الأصلي (بدون فلتر)</button>
+        <button class="btn btn-success filter-btn" id="filter-magic" onclick="setFilter('magic')">✨ توضيح ملون (Magic)</button>
+        <button class="btn btn-primary filter-btn" id="filter-bw" style="background:#000;" onclick="setFilter('bw')">🌓 أسود وأبيض (B&W)</button>
+        <button class="btn btn-secondary filter-btn" id="filter-gray" onclick="setFilter('gray')">🔘 رمادي (Grayscale)</button>
       </div>
 
       <button class="btn btn-success btn-full" style="padding:12px; font-size:15px; margin-top:10px;" onclick="applyWarpAndSave()">
@@ -379,10 +405,9 @@
   // متغيرة المحرر
   let editorImg = new Image();
   let editorCanvas, editorCtx;
-  let corners = []; // [{x,y}, {x,y}, {x,y}, {x,y}]
+  let corners = [];
   let activeCornerIndex = -1;
   let currentFilter = 'none';
-  let rotationAngle = 0;
 
   function onOpenCvReady() {
     isOpenCvReady = true;
@@ -436,8 +461,6 @@
   function openEditModal(id) {
     currentDocId = id;
     const doc = docList.find(d => d.id === id);
-    rotationAngle = 0;
-    currentFilter = 'none';
 
     editorCanvas = document.getElementById('editorCanvas');
     editorCtx = editorCanvas.getContext('2d');
@@ -446,6 +469,7 @@
     editorImg.onload = () => {
       initCanvasAndCorners();
       setupMouseEvents();
+      setFilter('none'); // إعادة تعيين الفلتر للأصلي عند الفتح
     };
     editorImg.src = doc.src;
 
@@ -456,7 +480,6 @@
     document.getElementById('editModal').style.display = 'none';
   }
 
-  // إعداد الكانفاس ونقاط الزوايا الـ 4
   function initCanvasAndCorners() {
     editorCanvas.width = editorImg.width;
     editorCanvas.height = editorImg.height;
@@ -478,7 +501,6 @@
     redrawCanvas();
   }
 
-  // إعادة التدوير 90 درجة بدون فقدان الحواف
   function rotateImage(deg) {
     const tempCanvas = document.createElement('canvas');
     const tempCtx = tempCanvas.getContext('2d');
@@ -502,12 +524,11 @@
     editorImg.src = tempCanvas.toDataURL();
   }
 
-  // رسم الصورة والشبكة والزوايا الأربع
   function redrawCanvas() {
     editorCtx.clearRect(0, 0, editorCanvas.width, editorCanvas.height);
     editorCtx.drawImage(editorImg, 0, 0);
 
-    // رسم الخطوط بين النقاط الأربع
+    // رسم الخطوط بين النقاط
     editorCtx.beginPath();
     editorCtx.moveTo(corners[0].x, corners[0].y);
     for (let i = 1; i < 4; i++) {
@@ -520,8 +541,8 @@
     editorCtx.fillStyle = 'rgba(37, 99, 235, 0.15)';
     editorCtx.fill();
 
-    // رسم الدوائر عند الزوايا
-    corners.forEach((p, index) => {
+    // رسم الزوايا
+    corners.forEach((p) => {
       editorCtx.beginPath();
       editorCtx.arc(p.x, p.y, Math.max(10, editorCanvas.width / 80), 0, 2 * Math.PI);
       editorCtx.fillStyle = '#ef4444';
@@ -532,7 +553,6 @@
     });
   }
 
-  // التعامل مع سحب وإفلات نقاط الزوايا بالماوس أو اللمس
   function setupMouseEvents() {
     const getPos = (e) => {
       const rect = editorCanvas.getBoundingClientRect();
@@ -571,7 +591,6 @@
     editorCanvas.ontouchend = onEnd;
   }
 
-  // التقاط الحدود تلقائياً باستخدام OpenCV
   function autoDetectCorners() {
     if (!isOpenCvReady) return alert("محرك OpenCV ما زال يتحمل، يرجى الانتظار لحظة.");
     try {
@@ -618,14 +637,29 @@
     }
   }
 
+  // 1. معاينة الفلتر المباشرة واللحظية
   function setFilter(f) {
     currentFilter = f;
+
+    // تغيير الزر النشط بصرياً
+    document.querySelectorAll('.filter-btn').forEach(btn => btn.classList.remove('active'));
+    document.getElementById(`filter-${f}`).classList.add('active');
+
+    // تطبيق فلتر مباشر على المعاينة فورياً
+    if (f === 'magic') {
+      editorCanvas.style.filter = 'contrast(135%) brightness(108%) saturate(125%)';
+    } else if (f === 'bw') {
+      editorCanvas.style.filter = 'grayscale(100%) contrast(200%) brightness(90%)';
+    } else if (f === 'gray') {
+      editorCanvas.style.filter = 'grayscale(100%)';
+    } else {
+      editorCanvas.style.filter = 'none';
+    }
   }
 
-  // تطبيق تعديل الزوايا المائلة (Perspective Warp) والترشيح
+  // تطبيق القص والترشيح الدائم
   function applyWarpAndSave() {
     if (!isOpenCvReady) {
-      // طريقة احتياطية في حال عدم اكتمال تحميل OpenCV
       const doc = docList.find(d => d.id === currentDocId);
       doc.processedSrc = editorCanvas.toDataURL();
       renderGallery();
@@ -636,7 +670,6 @@
     try {
       let src = cv.imread(editorImg);
 
-      // احتساب أبعاد العرض والارتفاع المستهدفين بناءً على النقاط
       const w1 = Math.hypot(corners[1].x - corners[0].x, corners[1].y - corners[0].y);
       const w2 = Math.hypot(corners[2].x - corners[3].x, corners[2].y - corners[3].y);
       const targetW = Math.max(w1, w2);
@@ -663,24 +696,18 @@
       let dst = new cv.Mat();
       let dsize = new cv.Size(targetW, targetH);
 
-      // فرش الصورة المائلة لتصبح مستطيلة قائمة
       cv.warpPerspective(src, dst, M, dsize, cv.INTER_LINEAR, cv.BORDER_CONSTANT, new cv.Scalar());
 
-      // تطبيق الفلاتر المحددة
       if (currentFilter === 'magic') {
-        // توضيح ألوان عالي
         let alpha = 1.3, beta = 10;
         cv.convertScaleAbs(dst, dst, alpha, beta);
       } else if (currentFilter === 'bw') {
-        // أسود وأبيض حاد CamScanner (Adaptive Thresholding)
         cv.cvtColor(dst, dst, cv.COLOR_RGBA2GRAY);
         cv.adaptiveThreshold(dst, dst, 255, cv.ADAPTIVE_THRESH_GAUSSIAN_C, cv.THRESH_BINARY, 15, 8);
       } else if (currentFilter === 'gray') {
-        // رمادي
         cv.cvtColor(dst, dst, cv.COLOR_RGBA2GRAY);
       }
 
-      // إخراج الصورة النهائية للكانفاس
       let outCanvas = document.createElement('canvas');
       cv.imshow(outCanvas, dst);
 
@@ -697,16 +724,41 @@
     }
   }
 
-  // إضافة الكرت لورقة A4 بقياس (8.5cm × 5.5cm)
+  // إضافة الكرت لورقة A4
   function addToA4(imageSrc) {
     const a4Paper = document.getElementById('a4Paper');
     const cardItem = document.createElement('div');
     cardItem.className = 'a4-card-item';
     cardItem.innerHTML = `
+      <button class="rotate-btn" title="تدوير الصورة 90 درجة" onclick="rotateA4Card(this)"><i class="fas fa-redo"></i></button>
+      <button class="remove-btn" title="حذف من A4" onclick="this.parentElement.remove()"><i class="fas fa-times"></i></button>
       <img src="${imageSrc}">
-      <button class="remove-btn" onclick="this.parentElement.remove()"><i class="fas fa-times"></i></button>
     `;
     a4Paper.appendChild(cardItem);
+  }
+
+  // 2. تدوير الصورة 90 درجة مباشرة داخل بطاقات ورقة A4
+  function rotateA4Card(btn) {
+    const cardItem = btn.parentElement;
+    const img = cardItem.querySelector('img');
+    
+    const tempCanvas = document.createElement('canvas');
+    const ctx = tempCanvas.getContext('2d');
+    const tempImg = new Image();
+
+    tempImg.onload = () => {
+      // تبديل الأبعاد لتلائم التدوير 90 درجة
+      tempCanvas.width = tempImg.height;
+      tempCanvas.height = tempImg.width;
+
+      ctx.translate(tempCanvas.width / 2, tempCanvas.height / 2);
+      ctx.rotate((90 * Math.PI) / 180);
+      ctx.drawImage(tempImg, -tempImg.width / 2, -tempImg.height / 2);
+
+      // تحديث مصدر الصورة داخل البطاقة فوراً
+      img.src = tempCanvas.toDataURL('image/jpeg', 0.95);
+    };
+    tempImg.src = img.src;
   }
 
   function clearA4() {
