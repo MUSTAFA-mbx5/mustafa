@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>📄 مولد الفواتير | مكتبتك</title>
+    <title>📄 مولد الفواتير | دعم الطباعة الحرارية و أحجام متعددة</title>
     <style>
         * {
             margin: 0;
@@ -12,827 +12,489 @@
         }
 
         body {
-            font-family: 'Segoe UI', 'Cairo', 'Tahoma', sans-serif;
-            background: #f0f2f5;
+            font-family: 'Segoe UI', 'Cairo', Tahoma, sans-serif;
+            background: #eef0f4;
             min-height: 100vh;
             padding: 20px;
             direction: rtl;
+            display: flex;
+            justify-content: center;
+            align-items: center;
         }
 
         .app-container {
-            max-width: 1100px;
-            margin: 0 auto;
+            max-width: 1300px;
+            width: 100%;
             display: grid;
-            grid-template-columns: 1fr 1fr;
-            gap: 25px;
+            grid-template-columns: 380px 1fr;
+            gap: 20px;
+            background: #fff;
+            border-radius: 28px;
+            box-shadow: 0 25px 60px rgba(0,0,0,0.12);
+            overflow: hidden;
+            min-height: 85vh;
         }
 
-        @media (max-width: 900px) {
+        @media (max-width: 850px) {
             .app-container {
                 grid-template-columns: 1fr;
+                min-height: auto;
             }
         }
 
-        /* لوحة الإدخال */
-        .input-panel {
-            background: #fff;
-            border-radius: 20px;
-            padding: 28px;
-            box-shadow: 0 10px 40px rgba(0,0,0,0.08);
-            height: fit-content;
-            position: sticky;
-            top: 20px;
+        /* الشريط الجانبي للإعدادات */
+        .sidebar {
+            background: #f9fafc;
+            padding: 25px 20px;
+            border-left: 1px solid #eee;
+            display: flex;
+            flex-direction: column;
+            gap: 18px;
+            overflow-y: auto;
+            max-height: 85vh;
         }
 
-        .input-panel h2 {
-            font-size: 1.5rem;
-            color: #1a1a2e;
-            margin-bottom: 25px;
+        .sidebar h3 {
+            font-size: 1.2rem;
+            color: #1e1e2f;
             display: flex;
             align-items: center;
-            gap: 10px;
-            border-bottom: 3px solid #f5af19;
-            padding-bottom: 15px;
-        }
-
-        .form-row {
-            display: grid;
-            grid-template-columns: 1fr 1fr;
-            gap: 15px;
-            margin-bottom: 15px;
-        }
-
-        .form-row.full {
-            grid-template-columns: 1fr;
+            gap: 8px;
+            margin-bottom: 5px;
         }
 
         .form-group {
-            margin-bottom: 15px;
+            margin-bottom: 8px;
         }
 
         .form-group label {
-            display: block;
-            margin-bottom: 6px;
+            font-size: 0.8rem;
             font-weight: 600;
-            color: #444;
-            font-size: 0.9rem;
+            color: #5e5e7a;
+            display: block;
+            margin-bottom: 4px;
+            letter-spacing: 0.3px;
         }
 
         .form-group input,
         .form-group textarea,
         .form-group select {
             width: 100%;
-            padding: 11px 14px;
-            border: 2px solid #e0e0e0;
+            padding: 10px 12px;
+            border: 1px solid #e2e5ed;
             border-radius: 10px;
-            font-size: 0.95rem;
             font-family: 'Cairo', sans-serif;
-            transition: all 0.3s;
-            background: #fafafa;
+            font-size: 0.9rem;
+            background: #fff;
             outline: none;
+            transition: 0.2s;
             text-align: right;
+            color: #1e1e2f;
         }
 
         .form-group input:focus,
-        .form-group textarea:focus {
-            border-color: #f5af19;
-            background: #fff;
-            box-shadow: 0 0 15px rgba(245,175,25,0.1);
+        .form-group textarea:focus,
+        .form-group select:focus {
+            border-color: #c0842c;
+            box-shadow: 0 0 0 3px rgba(192,132,44,0.1);
         }
 
-        .form-group textarea {
-            resize: vertical;
-            min-height: 70px;
-        }
-
-        /* قسم المواد */
-        .items-section {
-            background: #f9fafb;
-            border-radius: 14px;
-            padding: 18px;
-            margin: 20px 0;
-            border: 2px dashed #ddd;
-        }
-
-        .items-section h3 {
-            color: #1a1a2e;
-            margin-bottom: 15px;
-            font-size: 1.1rem;
-        }
-
-        .item-row {
+        .row-2 {
             display: grid;
-            grid-template-columns: 2fr 1fr 1fr 1fr 40px;
-            gap: 8px;
-            margin-bottom: 10px;
-            align-items: center;
-        }
-
-        .item-row input {
-            width: 100%;
-            padding: 10px;
-            border: 2px solid #e0e0e0;
-            border-radius: 8px;
-            font-family: 'Cairo', sans-serif;
-            font-size: 0.9rem;
-            text-align: center;
-            background: #fff;
-            outline: none;
-        }
-
-        .item-row input:focus {
-            border-color: #f5af19;
-        }
-
-        .item-row .item-desc {
-            text-align: right;
+            grid-template-columns: 1fr 1fr;
+            gap: 10px;
         }
 
         .btn {
-            padding: 11px 22px;
-            border-radius: 10px;
-            border: none;
+            padding: 12px 16px;
+            border-radius: 12px;
             font-weight: bold;
+            border: none;
             cursor: pointer;
             font-family: 'Cairo', sans-serif;
-            font-size: 0.95rem;
-            transition: all 0.3s;
-            display: inline-flex;
+            font-size: 0.9rem;
+            transition: all 0.2s;
+            display: flex;
             align-items: center;
             justify-content: center;
             gap: 6px;
         }
 
-        .btn-add {
-            background: #e8f5e9;
-            color: #2e7d32;
-            width: 100%;
-            margin-top: 8px;
-            border: 2px dashed #4caf50;
-        }
-
-        .btn-add:hover {
-            background: #c8e6c9;
-        }
-
-        .btn-remove {
-            background: #ffebee;
-            color: #c62828;
-            padding: 8px;
-            border-radius: 8px;
-            min-width: 35px;
-            font-size: 1.1rem;
-            cursor: pointer;
-            border: none;
-        }
-
-        .btn-remove:hover {
-            background: #ffcdd2;
-        }
-
-        .action-buttons {
-            display: flex;
-            gap: 12px;
-            margin-top: 20px;
-            flex-wrap: wrap;
-        }
-
         .btn-primary {
-            background: linear-gradient(135deg, #f5af19, #f12711);
-            color: #fff;
-            flex: 1;
-            box-shadow: 0 8px 25px rgba(245,175,25,0.3);
+            background: #1e1e2f;
+            color: white;
+            width: 100%;
         }
+        .btn-primary:hover { background: #2d2d44; }
 
-        .btn-primary:hover {
-            transform: translateY(-2px);
-            box-shadow: 0 12px 35px rgba(245,175,25,0.5);
-        }
-
-        .btn-print {
-            background: #1a1a2e;
-            color: #fff;
+        .btn-outline {
+            background: white;
+            border: 1px solid #d0d5e0;
+            color: #1e1e2f;
             flex: 1;
         }
+        .btn-outline:hover { background: #f5f6fa; }
 
-        .btn-print:hover {
-            background: #333;
-        }
-
-        .btn-export {
-            background: #fff;
-            color: #1a1a2e;
-            border: 2px solid #1a1a2e;
-            flex: 1;
-        }
-
-        .btn-export:hover {
-            background: #f5f5f5;
-        }
-
-        /* معاينة الفاتورة */
-        .preview-panel {
-            background: #fff;
-            border-radius: 20px;
-            padding: 0;
-            box-shadow: 0 10px 40px rgba(0,0,0,0.08);
-            overflow: hidden;
-        }
-
-        .preview-header {
-            background: #1a1a2e;
-            color: #fff;
-            padding: 15px 25px;
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-        }
-
-        .preview-header h2 {
+        .btn-remove-item {
+            background: none;
+            border: none;
+            color: #c0392b;
             font-size: 1.2rem;
+            cursor: pointer;
+            padding: 0 5px;
         }
 
-        .invoice-preview {
-            padding: 30px;
+        .items-list {
             background: #fff;
-            min-height: 500px;
+            border-radius: 14px;
+            border: 1px solid #eef0f5;
+            padding: 8px;
+            max-height: 280px;
+            overflow-y: auto;
         }
 
-        /* تصميم الفاتورة للطباعة */
-        .invoice {
-            font-family: 'Cairo', 'Segoe UI', sans-serif;
-            color: #1a1a2e;
-            max-width: 800px;
-            margin: 0 auto;
+        .item-entry {
+            display: flex;
+            align-items: center;
+            gap: 6px;
+            padding: 6px 0;
+            border-bottom: 1px solid #f5f5f5;
+        }
+        .item-entry:last-child { border-bottom: none; }
+
+        .item-entry input {
+            border: none;
+            background: transparent;
+            padding: 8px;
+            font-family: 'Cairo', sans-serif;
+            font-size: 0.85rem;
+            outline: none;
+            width: 100%;
+        }
+        .item-desc { flex: 2; }
+        .item-price { flex: 1; text-align: center; }
+        .item-qty { flex: 0.8; text-align: center; }
+
+        .action-row {
+            display: flex;
+            gap: 10px;
+            margin-top: 10px;
+        }
+
+        /* منطقة المعاينة */
+        .preview-area {
+            background: #f1f3f6;
+            padding: 20px;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            overflow-y: auto;
+        }
+
+        .paper {
+            background: white;
+            box-shadow: 0 8px 25px rgba(0,0,0,0.1);
+            margin: 15px auto;
+            transition: all 0.3s ease;
+            display: flex;
+            flex-direction: column;
+        }
+
+        /* أحجام الورق */
+        .size-A4 { width: 210mm; min-height: 297mm; }
+        .size-A5 { width: 148mm; min-height: 210mm; }
+        .size-A6 { width: 105mm; min-height: 148mm; }
+        .size-thermal { width: 80mm; min-height: auto; }
+
+        @media screen and (max-width: 850px) {
+            .size-A4 { width: 100%; }
+            .size-A5 { width: 90%; }
+            .size-A6 { width: 70%; }
+            .size-thermal { width: 80%; }
+        }
+
+        .invoice-content {
+            padding: 15mm 12mm;
+            font-family: 'Cairo', sans-serif;
+            color: #1a1a1a;
+            display: flex;
+            flex-direction: column;
+        }
+
+        .thermal .invoice-content {
+            padding: 4mm 3mm;
+            font-size: 11px;
         }
 
         .invoice-header {
             display: flex;
             justify-content: space-between;
             align-items: flex-start;
-            border-bottom: 3px solid #f5af19;
-            padding-bottom: 20px;
-            margin-bottom: 25px;
-            flex-wrap: wrap;
-            gap: 20px;
+            margin-bottom: 6mm;
+            border-bottom: 2px dashed #ccc;
+            padding-bottom: 4mm;
         }
+        .store-name { font-size: 1.6em; font-weight: bold; color: #b87c2c; }
+        .thermal .store-name { font-size: 1.3em; }
 
-        .invoice-logo {
-            font-size: 2rem;
-            font-weight: bold;
-            color: #1a1a2e;
-        }
-
-        .invoice-title {
-            font-size: 2.5rem;
-            font-weight: bold;
-            color: #f5af19;
-            text-align: left;
-        }
-
-        .invoice-info {
-            display: grid;
-            grid-template-columns: 1fr 1fr;
-            gap: 25px;
-            margin-bottom: 30px;
-        }
-
-        @media (max-width: 500px) {
-            .invoice-info {
-                grid-template-columns: 1fr;
-            }
-        }
-
-        .info-box {
-            background: #f9fafb;
-            padding: 18px;
-            border-radius: 12px;
-            border-right: 4px solid #f5af19;
-        }
-
-        .info-box h4 {
-            color: #f5af19;
-            margin-bottom: 10px;
-            font-size: 0.9rem;
-            text-transform: uppercase;
-            letter-spacing: 1px;
-        }
-
-        .info-box p {
-            margin: 4px 0;
+        .invoice-meta {
+            display: flex;
+            justify-content: space-between;
+            margin-bottom: 6mm;
+            font-size: 0.9em;
             color: #444;
-            font-size: 0.95rem;
         }
 
-        .invoice-table {
+        table {
             width: 100%;
             border-collapse: collapse;
-            margin: 25px 0;
+            margin: 5mm 0;
         }
-
-        .invoice-table th {
-            background: #1a1a2e;
-            color: #fff;
-            padding: 14px 12px;
+        th {
+            background: #f0f0f0;
+            padding: 6px;
             text-align: center;
-            font-size: 0.9rem;
-            font-weight: 600;
+            font-weight: bold;
+            font-size: 0.8em;
+            border-bottom: 1px solid #ccc;
         }
-
-        .invoice-table th:first-child {
-            border-radius: 0 10px 0 0;
-        }
-
-        .invoice-table th:last-child {
-            border-radius: 10px 0 0 0;
-        }
-
-        .invoice-table td {
-            padding: 12px;
+        td {
+            padding: 5px;
             text-align: center;
             border-bottom: 1px solid #eee;
-            font-size: 0.9rem;
+            font-size: 0.85em;
         }
+        .thermal table th, .thermal table td { padding: 3px; font-size: 10px; }
 
-        .invoice-table tbody tr:hover {
-            background: #fafafa;
-        }
-
-        .invoice-table .text-right {
-            text-align: right;
-        }
-
-        .invoice-table .text-left {
-            text-align: left;
-        }
-
-        .invoice-total {
+        .total-line {
             display: flex;
-            justify-content: flex-end;
-            margin-top: 20px;
-        }
-
-        .total-box {
-            background: linear-gradient(135deg, #1a1a2e, #2d2d44);
-            color: #fff;
-            padding: 18px 35px;
-            border-radius: 15px;
-            text-align: center;
-            min-width: 250px;
-        }
-
-        .total-box .total-label {
-            font-size: 0.85rem;
-            opacity: 0.8;
-            margin-bottom: 5px;
-        }
-
-        .total-box .total-amount {
-            font-size: 2rem;
+            justify-content: space-between;
             font-weight: bold;
-            color: #f5af19;
+            margin-top: 5mm;
+            font-size: 1.2em;
+            border-top: 2px solid #333;
+            padding-top: 3mm;
         }
+        .thermal .total-line { font-size: 1em; }
 
-        .invoice-footer {
-            margin-top: 30px;
-            padding-top: 20px;
-            border-top: 2px solid #eee;
+        .note-text {
+            margin-top: 6mm;
+            font-size: 0.8em;
+            color: #5a5a5a;
             text-align: center;
-            color: #888;
-            font-size: 0.85rem;
+            border-top: 1px dashed #ddd;
+            padding-top: 3mm;
         }
 
-        .invoice-note {
-            background: #fff8e1;
-            padding: 12px 18px;
-            border-radius: 10px;
-            margin-top: 20px;
-            border-right: 3px solid #f5af19;
-            font-size: 0.9rem;
-            color: #666;
+        .placeholder-hint {
+            color: #aaa;
+            font-style: italic;
         }
 
-        /* للطباعة */
         @media print {
-            body {
-                background: #fff;
-                padding: 0;
-            }
-            .app-container {
-                grid-template-columns: 1fr;
-                max-width: 100%;
-            }
-            .input-panel,
-            .preview-header,
-            .action-buttons,
-            .btn-add,
-            .btn-remove {
-                display: none !important;
-            }
-            .preview-panel {
-                box-shadow: none;
-                border-radius: 0;
-            }
-            .invoice-preview {
-                padding: 0;
-            }
-            .invoice {
-                max-width: 100%;
-            }
-            @page {
-                margin: 1cm;
-                size: A4;
-            }
+            body { background: white; }
+            .app-container { grid-template-columns: 1fr; box-shadow: none; }
+            .sidebar { display: none; }
+            .preview-area { padding: 0; background: white; }
+            .paper { box-shadow: none; margin: 0 auto; }
+            @page { margin: 0; size: auto; }
         }
     </style>
 </head>
 <body>
 
-    <div class="app-container">
-        <!-- لوحة الإدخال -->
-        <div class="input-panel" id="inputPanel">
-            <h2>📋 إنشاء فاتورة جديدة</h2>
+<div class="app-container">
+    <!-- الشريط الجانبي -->
+    <div class="sidebar">
+        <h3>⚙️ إعدادات الفاتورة</h3>
 
-            <!-- معلومات المكتبة -->
-            <div class="form-row">
-                <div class="form-group">
-                    <label>🏪 اسم المكتبة *</label>
-                    <input type="text" id="storeName" placeholder="اسم مكتبتك" value="مكتبة المصطفى">
-                </div>
-                <div class="form-group">
-                    <label>📞 رقم الهاتف</label>
-                    <input type="text" id="storePhone" placeholder="رقم هاتف المكتبة" value="07813985853">
-                </div>
-            </div>
+        <div class="form-group">
+            <label>🏪 اسم المكتبة</label>
+            <input type="text" id="storeName" placeholder="أدخل اسم المكتبة" oninput="liveUpdate()">
+        </div>
+        <div class="row-2">
             <div class="form-group">
                 <label>📍 العنوان</label>
-                <input type="text" id="storeAddress" placeholder="عنوان المكتبة" value="الرميثة - شارع ام الخيل">
+                <input type="text" id="storeAddress" placeholder="العنوان" oninput="liveUpdate()">
             </div>
-
-            <div class="form-row">
-                <div class="form-group">
-                    <label>👤 اسم العميل (اختياري)</label>
-                    <input type="text" id="customerName" placeholder="اسم العميل">
-                </div>
-                <div class="form-group">
-                    <label>📅 التاريخ</label>
-                    <input type="date" id="invoiceDate">
-                </div>
-            </div>
-
             <div class="form-group">
-                <label>📝 ملاحظة (تظهر أسفل الفاتورة)</label>
-                <textarea id="invoiceNote" placeholder="ملاحظات إضافية...">شكراً لثقتكم بنا - نتمنى لكم قراءة ممتعة</textarea>
-            </div>
-
-            <!-- قسم المواد -->
-            <div class="items-section">
-                <h3>📦 المواد</h3>
-                <div id="itemsContainer">
-                    <!-- الصفوف الديناميكية -->
-                </div>
-                <button class="btn btn-add" onclick="addItem()">
-                    ➕ إضافة مادة جديدة
-                </button>
-            </div>
-
-            <!-- أزرار الإجراءات -->
-            <div class="action-buttons">
-                <button class="btn btn-primary" onclick="generateInvoice()">
-                    👁️ معاينة الفاتورة
-                </button>
-                <button class="btn btn-print" onclick="printInvoice()">
-                    🖨️ طباعة
-                </button>
-                <button class="btn btn-export" onclick="exportAsImage()">
-                    📸 تصدير كصورة
-                </button>
+                <label>📞 الهاتف</label>
+                <input type="text" id="storePhone" placeholder="رقم الهاتف" oninput="liveUpdate()">
             </div>
         </div>
+        <div class="form-group">
+            <label>👤 اسم العميل (اختياري)</label>
+            <input type="text" id="customerName" placeholder="اتركه فارغاً إن لم يوجد" oninput="liveUpdate()">
+        </div>
+        <div class="form-group">
+            <label>📝 ملاحظة</label>
+            <textarea id="invoiceNote" rows="2" placeholder="ملاحظة تظهر أسفل الفاتورة" oninput="liveUpdate()"></textarea>
+        </div>
 
-        <!-- معاينة الفاتورة -->
-        <div class="preview-panel" id="previewPanel">
-            <div class="preview-header">
-                <h2>📄 معاينة الفاتورة</h2>
-                <span style="opacity:0.7;">نسخة للمراجعة</span>
-            </div>
-            <div class="invoice-preview" id="invoicePreview">
-                <div class="invoice" id="invoiceContent">
-                    <!-- محتوى الفاتورة الديناميكي -->
-                </div>
+        <h3 style="margin-top: 10px;">📦 المواد</h3>
+        <div class="items-list" id="itemsContainer">
+            <!-- يتم إنشاء العناصر ديناميكياً -->
+        </div>
+        <button class="btn btn-outline" onclick="addNewItem()" style="width:100%;">➕ إضافة مادة</button>
+
+        <h3 style="margin-top: 10px;">📐 إعدادات الطباعة</h3>
+        <div class="form-group">
+            <label>حجم الورق</label>
+            <select id="paperSize" onchange="changePaperSize()">
+                <option value="A4">A4 (افتراضي)</option>
+                <option value="A5">A5 - نصف ورقة</option>
+                <option value="A6">A6 - ربع ورقة</option>
+                <option value="thermal">🖨️ طابعة حرارية (80mm)</option>
+            </select>
+        </div>
+
+        <div class="action-row">
+            <button class="btn btn-primary" onclick="printInvoice()">🖨️ طباعة</button>
+            <button class="btn btn-outline" onclick="exportAsImage()">📸 صورة</button>
+        </div>
+        <p style="font-size:0.7rem; color:#888; text-align:center;">يدعم البلوتوث الحراري عبر خيار الحجم المناسب</p>
+    </div>
+
+    <!-- المعاينة -->
+    <div class="preview-area" id="previewArea">
+        <div class="paper size-A4" id="paperElement">
+            <div class="invoice-content" id="invoiceDisplay">
+                <!-- المحتوى الديناميكي -->
             </div>
         </div>
     </div>
+</div>
 
-    <!-- مكتبة html2canvas للتصدير كصورة -->
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js">
-    </script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
+<script>
+    let itemsData = [];
 
-    <script>
-        // عداد المواد
-        let itemCounter = 0;
+    window.onload = function() {
+        // إضافة صفين فارغين افتراضياً
+        addNewItem(true);
+        addNewItem(true);
+        liveUpdate();
+    };
 
-        // تهيئة الصفحة
-        document.addEventListener('DOMContentLoaded', function() {
-            // تعيين تاريخ اليوم
-            const today = new Date().toISOString().split('T')[0];
-            document.getElementById('invoiceDate').value = today;
+    function addNewItem(silent = false) {
+        const container = document.getElementById('itemsContainer');
+        const itemDiv = document.createElement('div');
+        itemDiv.className = 'item-entry';
+        itemDiv.innerHTML = `
+            <input type="text" class="item-desc" placeholder="المادة" oninput="liveUpdate()">
+            <input type="number" class="item-price" placeholder="سعر" value="" min="0" step="0.01" oninput="liveUpdate()">
+            <input type="number" class="item-qty" placeholder="عدد" value="" min="1" step="1" oninput="liveUpdate()">
+            <button class="btn-remove-item" onclick="removeItem(this)">✕</button>
+        `;
+        container.appendChild(itemDiv);
+        if (!silent) liveUpdate();
+    }
 
-            // إضافة أول مادتين افتراضياً
-            addItem();
-            addItem();
-
-            // توليد معاينة أولية
-            generateInvoice();
-        });
-
-        // إضافة صف مادة جديد
-        function addItem() {
-            itemCounter++;
-            const container = document.getElementById('itemsContainer');
-
-            const row = document.createElement('div');
-            row.className = 'item-row';
-            row.id = `item-row-${itemCounter}`;
-            row.innerHTML = `
-                <span style="color:#888;font-size:0.8rem;text-align:center;">${itemCounter}</span>
-                <input type="text" class="item-desc" placeholder="اسم المادة" oninput="generateInvoice()">
-                <input type="number" class="item-price" placeholder="السعر" min="السعر" step="0.01" value="0" oninput="generateInvoice()">
-                <input type="number" class="item-qty" placeholder="العدد" min="العدد" value="1" oninput="generateInvoice()">
-                <span class="item-total-display" style="font-weight:bold;color:#f5af19;text-align:center;">0</span>
-                <button class="btn-remove" onclick="removeItem(${itemCounter})" title="حذف">✕</button>
-            `;
-
-            container.appendChild(row);
-            updateItemNumbers();
+    function removeItem(btn) {
+        const entry = btn.closest('.item-entry');
+        if (entry) {
+            entry.remove();
+            liveUpdate();
         }
+    }
 
-        // حذف صف مادة
-        function removeItem(id) {
-            const row = document.getElementById(`item-row-${id}`);
-            if (row) {
-                row.remove();
-                updateItemNumbers();
-                generateInvoice();
-            }
-        }
-
-        // تحديث الترقيم التلقائي
-        function updateItemNumbers() {
-            const rows = document.querySelectorAll('.item-row');
-            rows.forEach((row, index) => {
-                const numberSpan = row.querySelector('span:first-child');
-                if (numberSpan) {
-                    numberSpan.textContent = index + 1;
-                }
-                // تحديث id
-                const oldId = row.id;
-                const newId = `item-row-${index + 1}`;
-                row.id = newId;
-                // تحديث زر الحذف
-                const removeBtn = row.querySelector('.btn-remove');
-                if (removeBtn) {
-                    removeBtn.setAttribute('onclick', `removeItem(${index + 1})`);
-                }
-            });
-            itemCounter = rows.length;
-        }
-
-        // جمع بيانات المواد
-        function getItemsData() {
-            const rows = document.querySelectorAll('.item-row');
-            const items = [];
-
-            rows.forEach(row => {
-                const desc = row.querySelector('.item-desc')?.value || '';
-                const price = parseFloat(row.querySelector('.item-price')?.value) || 0;
-                const qty = parseInt(row.querySelector('.item-qty')?.value) || 0;
-                const total = price * qty;
-
-                // تحديث العرض المباشر للمجموع
-                const totalDisplay = row.querySelector('.item-total-display');
-                if (totalDisplay) {
-                    totalDisplay.textContent = total.toLocaleString('ar-IQ') + ' د.ع';
-                }
-
-                if (desc.trim() !== '' || price > 0 || qty > 0) {
-                    items.push({
-                        number: items.length + 1,
-                        description: desc || '—',
-                        price: price,
-                        quantity: qty,
-                        total: total
-                    });
-                }
-            });
-
-            return items;
-        }
-
-        // حساب المجموع الكلي
-        function calculateGrandTotal(items) {
-            return items.reduce((sum, item) => sum + item.total, 0);
-        }
-
-        // توليد الفاتورة
-        function generateInvoice() {
-            const storeName = document.getElementById('storeName').value || 'اسم المكتبة';
-            const storePhone = document.getElementById('storePhone').value || '';
-            const storeAddress = document.getElementById('storeAddress').value || '';
-            const customerName = document.getElementById('customerName').value || 'عميل';
-            const invoiceDate = document.getElementById('invoiceDate').value || '';
-            const invoiceNote = document.getElementById('invoiceNote').value || '';
-
-            const items = getItemsData();
-            const grandTotal = calculateGrandTotal(items);
-
-            // تاريخ اليوم للعرض
-            const dateDisplay = invoiceDate ? new Date(invoiceDate).toLocaleDateString('ar-IQ', {
-                year: 'numeric',
-                month: 'long',
-                day: 'numeric'
-            }) : '';
-
-            // بناء الفاتورة
-            let invoiceHTML = `
-                <div class="invoice-header">
-                    <div>
-                        <div class="invoice-logo">📚 ${storeName}</div>
-                        ${storeAddress ? `<p style="color:#666;margin-top:5px;">📍 ${storeAddress}</p>` : ''}
-                        ${storePhone ? `<p style="color:#666;">📞 ${storePhone}</p>` : ''}
-                    </div>
-                    <div class="invoice-title">فاتورة</div>
-                </div>
-
-                <div class="invoice-info">
-                    <div class="info-box">
-                        <h4>👤 معلومات العميل</h4>
-                        <p><strong>الاسم:</strong> ${customerName}</p>
-                        <p><strong>التاريخ:</strong> ${dateDisplay}</p>
-                    </div>
-                    <div class="info-box">
-                        <h4>🧾 تفاصيل الفاتورة</h4>
-                        <p><strong>عدد المواد:</strong> ${items.length} مادة</p>
-                        <p><strong>رقم الفاتورة:</strong> ${generateInvoiceNumber()}</p>
-                    </div>
-                </div>
-
-                <table class="invoice-table">
-                    <thead>
-                        <tr>
-                            <th>#</th>
-                            <th>المادة</th>
-                            <th>سعر المفرد</th>
-                            <th>العدد</th>
-                            <th>المجموع</th>
-                        </tr>
-                    </thead>
-                    <tbody>
-            `;
-
-            if (items.length === 0) {
-                invoiceHTML += `
-                    <tr>
-                        <td colspan="5" style="padding:30px;color:#aaa;">لا توجد مواد مضافة بعد</td>
-                    </tr>
-                `;
-            } else {
-                items.forEach(item => {
-                    invoiceHTML += `
-                        <tr>
-                            <td>${item.number}</td>
-                            <td class="text-right">${item.description}</td>
-                            <td>${item.price.toLocaleString('ar-IQ')} د.ع</td>
-                            <td>${item.quantity}</td>
-                            <td><strong>${item.total.toLocaleString('ar-IQ')} د.ع</strong></td>
-                        </tr>
-                    `;
+    function gatherItems() {
+        const entries = document.querySelectorAll('.item-entry');
+        const items = [];
+        entries.forEach((entry, idx) => {
+            const desc = entry.querySelector('.item-desc').value.trim();
+            const price = parseFloat(entry.querySelector('.item-price').value) || 0;
+            const qty = parseInt(entry.querySelector('.item-qty').value) || 0;
+            if (desc !== '' || price > 0 || qty > 0) {
+                items.push({
+                    number: idx + 1,
+                    desc: desc || '—',
+                    price: price,
+                    qty: qty,
+                    total: price * qty
                 });
             }
-
-            invoiceHTML += `
-                    </tbody>
-                </table>
-
-                <div class="invoice-total">
-                    <div class="total-box">
-                        <div class="total-label">المجموع الكلي</div>
-                        <div class="total-amount">${grandTotal.toLocaleString('ar-IQ')} د.ع</div>
-                    </div>
-                </div>
-            `;
-
-            if (invoiceNote) {
-                invoiceHTML += `
-                    <div class="invoice-note">
-                        📝 ${invoiceNote}
-                    </div>
-                `;
-            }
-
-            invoiceHTML += `
-                <div class="invoice-footer">
-                    <p>شكراً لتعاملكم مع ${storeName} 📚</p>
-                    <p>نتشرف بخدمتكم دائماً</p>
-                </div>
-            `;
-
-            document.getElementById('invoiceContent').innerHTML = invoiceHTML;
-        }
-
-        // توليد رقم فاتورة فريد
-        function generateInvoiceNumber() {
-            const now = new Date();
-            const year = now.getFullYear();
-            const month = String(now.getMonth() + 1).padStart(2, '0');
-            const day = String(now.getDate()).padStart(2, '0');
-            const random = Math.floor(Math.random() * 9000) + 1000;
-            return `INV-${year}${month}${day}-${random}`;
-        }
-
-        // طباعة الفاتورة
-        function printInvoice() {
-            generateInvoice();
-            setTimeout(() => {
-                window.print();
-            }, 300);
-        }
-
-        // تصدير كصورة
-        function exportAsImage() {
-            generateInvoice();
-            const invoiceElement = document.getElementById('invoiceContent');
-
-            setTimeout(() => {
-                html2canvas(invoiceElement, {
-                    backgroundColor: '#ffffff',
-                    scale: 2,
-                    useCORS: true,
-                    logging: false
-                }).then(canvas => {
-                    // تحويل إلى صورة وتحميلها
-                    const link = document.createElement('a');
-                    link.download = `فاتورة-${generateInvoiceNumber()}.png`;
-                    link.href = canvas.toDataURL('image/png');
-                    link.click();
-
-                    // رسالة نجاح
-                    showToast('✅ تم تصدير الفاتورة كصورة بنجاح');
-                }).catch(error => {
-                    console.error('خطأ في التصدير:', error);
-                    alert('⚠️ حدث خطأ أثناء تصدير الصورة. تأكد من اتصالك بالإنترنت لتحميل المكتبة.');
-                });
-            }, 300);
-        }
-
-        // رسالة منبثقة بسيطة
-        function showToast(message) {
-            const toast = document.createElement('div');
-            toast.style.cssText = `
-                position: fixed;
-                bottom: 30px;
-                left: 50%;
-                transform: translateX(-50%);
-                background: #1a1a2e;
-                color: #fff;
-                padding: 14px 28px;
-                border-radius: 30px;
-                font-family: 'Cairo', sans-serif;
-                font-weight: bold;
-                z-index: 9999;
-                box-shadow: 0 10px 30px rgba(0,0,0,0.3);
-                animation: fadeInUp 0.4s ease;
-            `;
-            toast.textContent = message;
-            document.body.appendChild(toast);
-
-            setTimeout(() => {
-                toast.style.opacity = '0';
-                toast.style.transition = 'opacity 0.3s';
-                setTimeout(() => toast.remove(), 300);
-            }, 2500);
-        }
-
-        // تحديث مباشر عند تغيير المدخلات
-        document.addEventListener('input', function(e) {
-            if (e.target.closest('#inputPanel')) {
-                generateInvoice();
-            }
         });
-    </script>
+        return items;
+    }
 
-    <style>
-        @keyframes fadeInUp {
-            from {
-                opacity: 0;
-                transform: translateX(-50%) translateY(20px);
-            }
-            to {
-                opacity: 1;
-                transform: translateX(-50%) translateY(0);
-            }
+    function liveUpdate() {
+        const store = document.getElementById('storeName').value || 'اسم المكتبة';
+        const addr = document.getElementById('storeAddress').value || '';
+        const phone = document.getElementById('storePhone').value || '';
+        const customer = document.getElementById('customerName').value || '';
+        const note = document.getElementById('invoiceNote').value || '';
+        const items = gatherItems();
+        const grandTotal = items.reduce((sum, i) => sum + i.total, 0);
+
+        let html = `
+            <div class="invoice-header">
+                <div class="store-name">📚 ${store}</div>
+                <div style="text-align:left;"><strong>فاتورة</strong></div>
+            </div>
+            <div class="invoice-meta">
+                <div>${addr ? '📍 ' + addr : ''} ${phone ? '| 📞 ' + phone : ''}</div>
+                <div>${customer ? '👤 ' + customer : ''}</div>
+            </div>
+        `;
+
+        if (items.length > 0) {
+            html += `<table><thead><tr><th>#</th><th>المادة</th><th>السعر</th><th>العدد</th><th>المجموع</th></tr></thead><tbody>`;
+            items.forEach(item => {
+                html += `<tr>
+                    <td>${item.number}</td>
+                    <td style="text-align:right;">${item.desc}</td>
+                    <td>${item.price.toLocaleString()}</td>
+                    <td>${item.qty}</td>
+                    <td><strong>${item.total.toLocaleString()}</strong></td>
+                </tr>`;
+            });
+            html += `</tbody></table>`;
+            html += `<div class="total-line"><span>المجموع الكلي</span><span>${grandTotal.toLocaleString()} د.ع</span></div>`;
+        } else {
+            html += `<p style="text-align:center; color:#aaa; margin:20px;">لا توجد مواد مضافة</p>`;
         }
-    </style>
 
+        if (note) {
+            html += `<div class="note-text">📌 ${note}</div>`;
+        }
+
+        document.getElementById('invoiceDisplay').innerHTML = html;
+    }
+
+    function changePaperSize() {
+        const paper = document.getElementById('paperElement');
+        const size = document.getElementById('paperSize').value;
+        paper.className = 'paper'; // إعادة تعيين
+        switch(size) {
+            case 'A4': paper.classList.add('size-A4'); break;
+            case 'A5': paper.classList.add('size-A5'); break;
+            case 'A6': paper.classList.add('size-A6'); break;
+            case 'thermal': paper.classList.add('size-thermal', 'thermal'); break;
+        }
+    }
+
+    function printInvoice() {
+        liveUpdate();
+        window.print();
+    }
+
+    function exportAsImage() {
+        liveUpdate();
+        const element = document.getElementById('paperElement');
+        html2canvas(element, {
+            backgroundColor: '#ffffff',
+            scale: 2,
+            allowTaint: false,
+            useCORS: true
+        }).then(canvas => {
+            const link = document.createElement('a');
+            link.download = `فاتورة-${Date.now()}.png`;
+            link.href = canvas.toDataURL('image/png');
+            link.click();
+        }).catch(() => alert('تعذر التصدير، تحقق من الاتصال'));
+    }
+</script>
 </body>
 </html>
