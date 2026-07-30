@@ -1,0 +1,838 @@
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>📄 مولد الفواتير | مكتبتك</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Segoe UI', 'Cairo', 'Tahoma', sans-serif;
+            background: #f0f2f5;
+            min-height: 100vh;
+            padding: 20px;
+            direction: rtl;
+        }
+
+        .app-container {
+            max-width: 1100px;
+            margin: 0 auto;
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 25px;
+        }
+
+        @media (max-width: 900px) {
+            .app-container {
+                grid-template-columns: 1fr;
+            }
+        }
+
+        /* لوحة الإدخال */
+        .input-panel {
+            background: #fff;
+            border-radius: 20px;
+            padding: 28px;
+            box-shadow: 0 10px 40px rgba(0,0,0,0.08);
+            height: fit-content;
+            position: sticky;
+            top: 20px;
+        }
+
+        .input-panel h2 {
+            font-size: 1.5rem;
+            color: #1a1a2e;
+            margin-bottom: 25px;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            border-bottom: 3px solid #f5af19;
+            padding-bottom: 15px;
+        }
+
+        .form-row {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 15px;
+            margin-bottom: 15px;
+        }
+
+        .form-row.full {
+            grid-template-columns: 1fr;
+        }
+
+        .form-group {
+            margin-bottom: 15px;
+        }
+
+        .form-group label {
+            display: block;
+            margin-bottom: 6px;
+            font-weight: 600;
+            color: #444;
+            font-size: 0.9rem;
+        }
+
+        .form-group input,
+        .form-group textarea,
+        .form-group select {
+            width: 100%;
+            padding: 11px 14px;
+            border: 2px solid #e0e0e0;
+            border-radius: 10px;
+            font-size: 0.95rem;
+            font-family: 'Cairo', sans-serif;
+            transition: all 0.3s;
+            background: #fafafa;
+            outline: none;
+            text-align: right;
+        }
+
+        .form-group input:focus,
+        .form-group textarea:focus {
+            border-color: #f5af19;
+            background: #fff;
+            box-shadow: 0 0 15px rgba(245,175,25,0.1);
+        }
+
+        .form-group textarea {
+            resize: vertical;
+            min-height: 70px;
+        }
+
+        /* قسم المواد */
+        .items-section {
+            background: #f9fafb;
+            border-radius: 14px;
+            padding: 18px;
+            margin: 20px 0;
+            border: 2px dashed #ddd;
+        }
+
+        .items-section h3 {
+            color: #1a1a2e;
+            margin-bottom: 15px;
+            font-size: 1.1rem;
+        }
+
+        .item-row {
+            display: grid;
+            grid-template-columns: 2fr 1fr 1fr 1fr 40px;
+            gap: 8px;
+            margin-bottom: 10px;
+            align-items: center;
+        }
+
+        .item-row input {
+            width: 100%;
+            padding: 10px;
+            border: 2px solid #e0e0e0;
+            border-radius: 8px;
+            font-family: 'Cairo', sans-serif;
+            font-size: 0.9rem;
+            text-align: center;
+            background: #fff;
+            outline: none;
+        }
+
+        .item-row input:focus {
+            border-color: #f5af19;
+        }
+
+        .item-row .item-desc {
+            text-align: right;
+        }
+
+        .btn {
+            padding: 11px 22px;
+            border-radius: 10px;
+            border: none;
+            font-weight: bold;
+            cursor: pointer;
+            font-family: 'Cairo', sans-serif;
+            font-size: 0.95rem;
+            transition: all 0.3s;
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            gap: 6px;
+        }
+
+        .btn-add {
+            background: #e8f5e9;
+            color: #2e7d32;
+            width: 100%;
+            margin-top: 8px;
+            border: 2px dashed #4caf50;
+        }
+
+        .btn-add:hover {
+            background: #c8e6c9;
+        }
+
+        .btn-remove {
+            background: #ffebee;
+            color: #c62828;
+            padding: 8px;
+            border-radius: 8px;
+            min-width: 35px;
+            font-size: 1.1rem;
+            cursor: pointer;
+            border: none;
+        }
+
+        .btn-remove:hover {
+            background: #ffcdd2;
+        }
+
+        .action-buttons {
+            display: flex;
+            gap: 12px;
+            margin-top: 20px;
+            flex-wrap: wrap;
+        }
+
+        .btn-primary {
+            background: linear-gradient(135deg, #f5af19, #f12711);
+            color: #fff;
+            flex: 1;
+            box-shadow: 0 8px 25px rgba(245,175,25,0.3);
+        }
+
+        .btn-primary:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 12px 35px rgba(245,175,25,0.5);
+        }
+
+        .btn-print {
+            background: #1a1a2e;
+            color: #fff;
+            flex: 1;
+        }
+
+        .btn-print:hover {
+            background: #333;
+        }
+
+        .btn-export {
+            background: #fff;
+            color: #1a1a2e;
+            border: 2px solid #1a1a2e;
+            flex: 1;
+        }
+
+        .btn-export:hover {
+            background: #f5f5f5;
+        }
+
+        /* معاينة الفاتورة */
+        .preview-panel {
+            background: #fff;
+            border-radius: 20px;
+            padding: 0;
+            box-shadow: 0 10px 40px rgba(0,0,0,0.08);
+            overflow: hidden;
+        }
+
+        .preview-header {
+            background: #1a1a2e;
+            color: #fff;
+            padding: 15px 25px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        .preview-header h2 {
+            font-size: 1.2rem;
+        }
+
+        .invoice-preview {
+            padding: 30px;
+            background: #fff;
+            min-height: 500px;
+        }
+
+        /* تصميم الفاتورة للطباعة */
+        .invoice {
+            font-family: 'Cairo', 'Segoe UI', sans-serif;
+            color: #1a1a2e;
+            max-width: 800px;
+            margin: 0 auto;
+        }
+
+        .invoice-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: flex-start;
+            border-bottom: 3px solid #f5af19;
+            padding-bottom: 20px;
+            margin-bottom: 25px;
+            flex-wrap: wrap;
+            gap: 20px;
+        }
+
+        .invoice-logo {
+            font-size: 2rem;
+            font-weight: bold;
+            color: #1a1a2e;
+        }
+
+        .invoice-title {
+            font-size: 2.5rem;
+            font-weight: bold;
+            color: #f5af19;
+            text-align: left;
+        }
+
+        .invoice-info {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 25px;
+            margin-bottom: 30px;
+        }
+
+        @media (max-width: 500px) {
+            .invoice-info {
+                grid-template-columns: 1fr;
+            }
+        }
+
+        .info-box {
+            background: #f9fafb;
+            padding: 18px;
+            border-radius: 12px;
+            border-right: 4px solid #f5af19;
+        }
+
+        .info-box h4 {
+            color: #f5af19;
+            margin-bottom: 10px;
+            font-size: 0.9rem;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+        }
+
+        .info-box p {
+            margin: 4px 0;
+            color: #444;
+            font-size: 0.95rem;
+        }
+
+        .invoice-table {
+            width: 100%;
+            border-collapse: collapse;
+            margin: 25px 0;
+        }
+
+        .invoice-table th {
+            background: #1a1a2e;
+            color: #fff;
+            padding: 14px 12px;
+            text-align: center;
+            font-size: 0.9rem;
+            font-weight: 600;
+        }
+
+        .invoice-table th:first-child {
+            border-radius: 0 10px 0 0;
+        }
+
+        .invoice-table th:last-child {
+            border-radius: 10px 0 0 0;
+        }
+
+        .invoice-table td {
+            padding: 12px;
+            text-align: center;
+            border-bottom: 1px solid #eee;
+            font-size: 0.9rem;
+        }
+
+        .invoice-table tbody tr:hover {
+            background: #fafafa;
+        }
+
+        .invoice-table .text-right {
+            text-align: right;
+        }
+
+        .invoice-table .text-left {
+            text-align: left;
+        }
+
+        .invoice-total {
+            display: flex;
+            justify-content: flex-end;
+            margin-top: 20px;
+        }
+
+        .total-box {
+            background: linear-gradient(135deg, #1a1a2e, #2d2d44);
+            color: #fff;
+            padding: 18px 35px;
+            border-radius: 15px;
+            text-align: center;
+            min-width: 250px;
+        }
+
+        .total-box .total-label {
+            font-size: 0.85rem;
+            opacity: 0.8;
+            margin-bottom: 5px;
+        }
+
+        .total-box .total-amount {
+            font-size: 2rem;
+            font-weight: bold;
+            color: #f5af19;
+        }
+
+        .invoice-footer {
+            margin-top: 30px;
+            padding-top: 20px;
+            border-top: 2px solid #eee;
+            text-align: center;
+            color: #888;
+            font-size: 0.85rem;
+        }
+
+        .invoice-note {
+            background: #fff8e1;
+            padding: 12px 18px;
+            border-radius: 10px;
+            margin-top: 20px;
+            border-right: 3px solid #f5af19;
+            font-size: 0.9rem;
+            color: #666;
+        }
+
+        /* للطباعة */
+        @media print {
+            body {
+                background: #fff;
+                padding: 0;
+            }
+            .app-container {
+                grid-template-columns: 1fr;
+                max-width: 100%;
+            }
+            .input-panel,
+            .preview-header,
+            .action-buttons,
+            .btn-add,
+            .btn-remove {
+                display: none !important;
+            }
+            .preview-panel {
+                box-shadow: none;
+                border-radius: 0;
+            }
+            .invoice-preview {
+                padding: 0;
+            }
+            .invoice {
+                max-width: 100%;
+            }
+            @page {
+                margin: 1cm;
+                size: A4;
+            }
+        }
+    </style>
+</head>
+<body>
+
+    <div class="app-container">
+        <!-- لوحة الإدخال -->
+        <div class="input-panel" id="inputPanel">
+            <h2>📋 إنشاء فاتورة جديدة</h2>
+
+            <!-- معلومات المكتبة -->
+            <div class="form-row">
+                <div class="form-group">
+                    <label>🏪 اسم المكتبة *</label>
+                    <input type="text" id="storeName" placeholder="اسم مكتبتك" value="مكتبة المعرفة">
+                </div>
+                <div class="form-group">
+                    <label>📞 رقم الهاتف</label>
+                    <input type="text" id="storePhone" placeholder="رقم هاتف المكتبة" value="0770 123 4567">
+                </div>
+            </div>
+            <div class="form-group">
+                <label>📍 العنوان</label>
+                <input type="text" id="storeAddress" placeholder="عنوان المكتبة" value="الناصرية - شارع الحبوبي">
+            </div>
+
+            <div class="form-row">
+                <div class="form-group">
+                    <label>👤 اسم العميل (اختياري)</label>
+                    <input type="text" id="customerName" placeholder="اسم العميل">
+                </div>
+                <div class="form-group">
+                    <label>📅 التاريخ</label>
+                    <input type="date" id="invoiceDate">
+                </div>
+            </div>
+
+            <div class="form-group">
+                <label>📝 ملاحظة (تظهر أسفل الفاتورة)</label>
+                <textarea id="invoiceNote" placeholder="ملاحظات إضافية...">شكراً لثقتكم بنا - نتمنى لكم قراءة ممتعة</textarea>
+            </div>
+
+            <!-- قسم المواد -->
+            <div class="items-section">
+                <h3>📦 المواد</h3>
+                <div id="itemsContainer">
+                    <!-- الصفوف الديناميكية -->
+                </div>
+                <button class="btn btn-add" onclick="addItem()">
+                    ➕ إضافة مادة جديدة
+                </button>
+            </div>
+
+            <!-- أزرار الإجراءات -->
+            <div class="action-buttons">
+                <button class="btn btn-primary" onclick="generateInvoice()">
+                    👁️ معاينة الفاتورة
+                </button>
+                <button class="btn btn-print" onclick="printInvoice()">
+                    🖨️ طباعة
+                </button>
+                <button class="btn btn-export" onclick="exportAsImage()">
+                    📸 تصدير كصورة
+                </button>
+            </div>
+        </div>
+
+        <!-- معاينة الفاتورة -->
+        <div class="preview-panel" id="previewPanel">
+            <div class="preview-header">
+                <h2>📄 معاينة الفاتورة</h2>
+                <span style="opacity:0.7;">نسخة للمراجعة</span>
+            </div>
+            <div class="invoice-preview" id="invoicePreview">
+                <div class="invoice" id="invoiceContent">
+                    <!-- محتوى الفاتورة الديناميكي -->
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- مكتبة html2canvas للتصدير كصورة -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js">
+    </script>
+
+    <script>
+        // عداد المواد
+        let itemCounter = 0;
+
+        // تهيئة الصفحة
+        document.addEventListener('DOMContentLoaded', function() {
+            // تعيين تاريخ اليوم
+            const today = new Date().toISOString().split('T')[0];
+            document.getElementById('invoiceDate').value = today;
+
+            // إضافة أول مادتين افتراضياً
+            addItem();
+            addItem();
+
+            // توليد معاينة أولية
+            generateInvoice();
+        });
+
+        // إضافة صف مادة جديد
+        function addItem() {
+            itemCounter++;
+            const container = document.getElementById('itemsContainer');
+
+            const row = document.createElement('div');
+            row.className = 'item-row';
+            row.id = `item-row-${itemCounter}`;
+            row.innerHTML = `
+                <span style="color:#888;font-size:0.8rem;text-align:center;">${itemCounter}</span>
+                <input type="text" class="item-desc" placeholder="اسم المادة" oninput="generateInvoice()">
+                <input type="number" class="item-price" placeholder="السعر" min="0" step="0.01" value="0" oninput="generateInvoice()">
+                <input type="number" class="item-qty" placeholder="العدد" min="1" value="1" oninput="generateInvoice()">
+                <span class="item-total-display" style="font-weight:bold;color:#f5af19;text-align:center;">0</span>
+                <button class="btn-remove" onclick="removeItem(${itemCounter})" title="حذف">✕</button>
+            `;
+
+            container.appendChild(row);
+            updateItemNumbers();
+        }
+
+        // حذف صف مادة
+        function removeItem(id) {
+            const row = document.getElementById(`item-row-${id}`);
+            if (row) {
+                row.remove();
+                updateItemNumbers();
+                generateInvoice();
+            }
+        }
+
+        // تحديث الترقيم التلقائي
+        function updateItemNumbers() {
+            const rows = document.querySelectorAll('.item-row');
+            rows.forEach((row, index) => {
+                const numberSpan = row.querySelector('span:first-child');
+                if (numberSpan) {
+                    numberSpan.textContent = index + 1;
+                }
+                // تحديث id
+                const oldId = row.id;
+                const newId = `item-row-${index + 1}`;
+                row.id = newId;
+                // تحديث زر الحذف
+                const removeBtn = row.querySelector('.btn-remove');
+                if (removeBtn) {
+                    removeBtn.setAttribute('onclick', `removeItem(${index + 1})`);
+                }
+            });
+            itemCounter = rows.length;
+        }
+
+        // جمع بيانات المواد
+        function getItemsData() {
+            const rows = document.querySelectorAll('.item-row');
+            const items = [];
+
+            rows.forEach(row => {
+                const desc = row.querySelector('.item-desc')?.value || '';
+                const price = parseFloat(row.querySelector('.item-price')?.value) || 0;
+                const qty = parseInt(row.querySelector('.item-qty')?.value) || 0;
+                const total = price * qty;
+
+                // تحديث العرض المباشر للمجموع
+                const totalDisplay = row.querySelector('.item-total-display');
+                if (totalDisplay) {
+                    totalDisplay.textContent = total.toLocaleString('ar-IQ') + ' د.ع';
+                }
+
+                if (desc.trim() !== '' || price > 0 || qty > 0) {
+                    items.push({
+                        number: items.length + 1,
+                        description: desc || '—',
+                        price: price,
+                        quantity: qty,
+                        total: total
+                    });
+                }
+            });
+
+            return items;
+        }
+
+        // حساب المجموع الكلي
+        function calculateGrandTotal(items) {
+            return items.reduce((sum, item) => sum + item.total, 0);
+        }
+
+        // توليد الفاتورة
+        function generateInvoice() {
+            const storeName = document.getElementById('storeName').value || 'اسم المكتبة';
+            const storePhone = document.getElementById('storePhone').value || '';
+            const storeAddress = document.getElementById('storeAddress').value || '';
+            const customerName = document.getElementById('customerName').value || 'عميل';
+            const invoiceDate = document.getElementById('invoiceDate').value || '';
+            const invoiceNote = document.getElementById('invoiceNote').value || '';
+
+            const items = getItemsData();
+            const grandTotal = calculateGrandTotal(items);
+
+            // تاريخ اليوم للعرض
+            const dateDisplay = invoiceDate ? new Date(invoiceDate).toLocaleDateString('ar-IQ', {
+                year: 'numeric',
+                month: 'long',
+                day: 'numeric'
+            }) : '';
+
+            // بناء الفاتورة
+            let invoiceHTML = `
+                <div class="invoice-header">
+                    <div>
+                        <div class="invoice-logo">📚 ${storeName}</div>
+                        ${storeAddress ? `<p style="color:#666;margin-top:5px;">📍 ${storeAddress}</p>` : ''}
+                        ${storePhone ? `<p style="color:#666;">📞 ${storePhone}</p>` : ''}
+                    </div>
+                    <div class="invoice-title">فاتورة</div>
+                </div>
+
+                <div class="invoice-info">
+                    <div class="info-box">
+                        <h4>👤 معلومات العميل</h4>
+                        <p><strong>الاسم:</strong> ${customerName}</p>
+                        <p><strong>التاريخ:</strong> ${dateDisplay}</p>
+                    </div>
+                    <div class="info-box">
+                        <h4>🧾 تفاصيل الفاتورة</h4>
+                        <p><strong>عدد المواد:</strong> ${items.length} مادة</p>
+                        <p><strong>رقم الفاتورة:</strong> ${generateInvoiceNumber()}</p>
+                    </div>
+                </div>
+
+                <table class="invoice-table">
+                    <thead>
+                        <tr>
+                            <th>#</th>
+                            <th>المادة</th>
+                            <th>سعر المفرد</th>
+                            <th>العدد</th>
+                            <th>المجموع</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+            `;
+
+            if (items.length === 0) {
+                invoiceHTML += `
+                    <tr>
+                        <td colspan="5" style="padding:30px;color:#aaa;">لا توجد مواد مضافة بعد</td>
+                    </tr>
+                `;
+            } else {
+                items.forEach(item => {
+                    invoiceHTML += `
+                        <tr>
+                            <td>${item.number}</td>
+                            <td class="text-right">${item.description}</td>
+                            <td>${item.price.toLocaleString('ar-IQ')} د.ع</td>
+                            <td>${item.quantity}</td>
+                            <td><strong>${item.total.toLocaleString('ar-IQ')} د.ع</strong></td>
+                        </tr>
+                    `;
+                });
+            }
+
+            invoiceHTML += `
+                    </tbody>
+                </table>
+
+                <div class="invoice-total">
+                    <div class="total-box">
+                        <div class="total-label">المجموع الكلي</div>
+                        <div class="total-amount">${grandTotal.toLocaleString('ar-IQ')} د.ع</div>
+                    </div>
+                </div>
+            `;
+
+            if (invoiceNote) {
+                invoiceHTML += `
+                    <div class="invoice-note">
+                        📝 ${invoiceNote}
+                    </div>
+                `;
+            }
+
+            invoiceHTML += `
+                <div class="invoice-footer">
+                    <p>شكراً لتعاملكم مع ${storeName} 📚</p>
+                    <p>نتشرف بخدمتكم دائماً</p>
+                </div>
+            `;
+
+            document.getElementById('invoiceContent').innerHTML = invoiceHTML;
+        }
+
+        // توليد رقم فاتورة فريد
+        function generateInvoiceNumber() {
+            const now = new Date();
+            const year = now.getFullYear();
+            const month = String(now.getMonth() + 1).padStart(2, '0');
+            const day = String(now.getDate()).padStart(2, '0');
+            const random = Math.floor(Math.random() * 9000) + 1000;
+            return `INV-${year}${month}${day}-${random}`;
+        }
+
+        // طباعة الفاتورة
+        function printInvoice() {
+            generateInvoice();
+            setTimeout(() => {
+                window.print();
+            }, 300);
+        }
+
+        // تصدير كصورة
+        function exportAsImage() {
+            generateInvoice();
+            const invoiceElement = document.getElementById('invoiceContent');
+
+            setTimeout(() => {
+                html2canvas(invoiceElement, {
+                    backgroundColor: '#ffffff',
+                    scale: 2,
+                    useCORS: true,
+                    logging: false
+                }).then(canvas => {
+                    // تحويل إلى صورة وتحميلها
+                    const link = document.createElement('a');
+                    link.download = `فاتورة-${generateInvoiceNumber()}.png`;
+                    link.href = canvas.toDataURL('image/png');
+                    link.click();
+
+                    // رسالة نجاح
+                    showToast('✅ تم تصدير الفاتورة كصورة بنجاح');
+                }).catch(error => {
+                    console.error('خطأ في التصدير:', error);
+                    alert('⚠️ حدث خطأ أثناء تصدير الصورة. تأكد من اتصالك بالإنترنت لتحميل المكتبة.');
+                });
+            }, 300);
+        }
+
+        // رسالة منبثقة بسيطة
+        function showToast(message) {
+            const toast = document.createElement('div');
+            toast.style.cssText = `
+                position: fixed;
+                bottom: 30px;
+                left: 50%;
+                transform: translateX(-50%);
+                background: #1a1a2e;
+                color: #fff;
+                padding: 14px 28px;
+                border-radius: 30px;
+                font-family: 'Cairo', sans-serif;
+                font-weight: bold;
+                z-index: 9999;
+                box-shadow: 0 10px 30px rgba(0,0,0,0.3);
+                animation: fadeInUp 0.4s ease;
+            `;
+            toast.textContent = message;
+            document.body.appendChild(toast);
+
+            setTimeout(() => {
+                toast.style.opacity = '0';
+                toast.style.transition = 'opacity 0.3s';
+                setTimeout(() => toast.remove(), 300);
+            }, 2500);
+        }
+
+        // تحديث مباشر عند تغيير المدخلات
+        document.addEventListener('input', function(e) {
+            if (e.target.closest('#inputPanel')) {
+                generateInvoice();
+            }
+        });
+    </script>
+
+    <style>
+        @keyframes fadeInUp {
+            from {
+                opacity: 0;
+                transform: translateX(-50%) translateY(20px);
+            }
+            to {
+                opacity: 1;
+                transform: translateX(-50%) translateY(0);
+            }
+        }
+    </style>
+
+</body>
+</html>
