@@ -457,16 +457,16 @@
             <div class="form-row">
                 <div class="form-group">
                     <label>🏪 اسم المكتبة *</label>
-                    <input type="text" id="storeName" placeholder="اسم مكتبتك" value="مكتبة المعرفة">
+                    <input type="text" id="storeName" placeholder="اسم مكتبتك" value="مكتبة المصطفى">
                 </div>
                 <div class="form-group">
                     <label>📞 رقم الهاتف</label>
-                    <input type="text" id="storePhone" placeholder="رقم هاتف المكتبة" value="0770 123 4567">
+                    <input type="text" id="storePhone" placeholder="رقم هاتف المكتبة" value="07813985853">
                 </div>
             </div>
             <div class="form-group">
                 <label>📍 العنوان</label>
-                <input type="text" id="storeAddress" placeholder="عنوان المكتبة" value="الناصرية - شارع الحبوبي">
+                <input type="text" id="storeAddress" placeholder="عنوان المكتبة" value="الرميثة - شارع ام الخيل">
             </div>
 
             <div class="form-row">
@@ -557,8 +557,8 @@
             row.innerHTML = `
                 <span style="color:#888;font-size:0.8rem;text-align:center;">${itemCounter}</span>
                 <input type="text" class="item-desc" placeholder="اسم المادة" oninput="generateInvoice()">
-                <input type="number" class="item-price" placeholder="السعر" min="0" step="0.01" value="0" oninput="generateInvoice()">
-                <input type="number" class="item-qty" placeholder="العدد" min="1" value="1" oninput="generateInvoice()">
+                <input type="number" class="item-price" placeholder="السعر" min="السعر" step="0.01" value="0" oninput="generateInvoice()">
+                <input type="number" class="item-qty" placeholder="العدد" min="العدد" value="1" oninput="generateInvoice()">
                 <span class="item-total-display" style="font-weight:bold;color:#f5af19;text-align:center;">0</span>
                 <button class="btn-remove" onclick="removeItem(${itemCounter})" title="حذف">✕</button>
             `;
