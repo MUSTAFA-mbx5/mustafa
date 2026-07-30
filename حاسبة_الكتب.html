@@ -1,0 +1,481 @@
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>📚 حاسبة تكلفة الكتاب | مكتبتك</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Segoe UI', 'Cairo', Tahoma, sans-serif;
+            background: linear-gradient(135deg, #1a1a2e 0%, #16213e 50%, #0f3460 100%);
+            min-height: 100vh;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            padding: 20px;
+            direction: rtl;
+        }
+
+        .calculator-container {
+            background: rgba(255, 255, 255, 0.05);
+            backdrop-filter: blur(25px);
+            border-radius: 30px;
+            padding: 35px 30px;
+            width: 100%;
+            max-width: 500px;
+            border: 1px solid rgba(255, 255, 255, 0.12);
+            box-shadow: 0 25px 60px rgba(0, 0, 0, 0.5), 0 0 30px rgba(245, 175, 25, 0.08);
+        }
+
+        .header {
+            text-align: center;
+            margin-bottom: 30px;
+        }
+
+        .header .icon {
+            font-size: 3.5rem;
+            margin-bottom: 10px;
+        }
+
+        .header h1 {
+            font-size: 2rem;
+            background: linear-gradient(135deg, #f5af19, #f12711);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+            margin-bottom: 5px;
+        }
+
+        .header p {
+            color: #999;
+            font-size: 0.95rem;
+        }
+
+        .form-group {
+            margin-bottom: 22px;
+        }
+
+        .form-group label {
+            display: block;
+            margin-bottom: 8px;
+            color: #ddd;
+            font-weight: 600;
+            font-size: 1rem;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+
+        .form-group label .emoji {
+            font-size: 1.3rem;
+        }
+
+        .input-wrapper {
+            position: relative;
+        }
+
+        .form-group input {
+            width: 100%;
+            padding: 14px 18px;
+            border-radius: 14px;
+            border: 2px solid rgba(255, 255, 255, 0.15);
+            background: rgba(0, 0, 0, 0.35);
+            color: #fff;
+            font-size: 1.1rem;
+            font-family: 'Cairo', sans-serif;
+            transition: all 0.3s ease;
+            outline: none;
+            text-align: right;
+        }
+
+        .form-group input:focus {
+            border-color: #f5af19;
+            box-shadow: 0 0 25px rgba(245, 175, 25, 0.2);
+            background: rgba(0, 0, 0, 0.5);
+        }
+
+        .form-group input::placeholder {
+            color: #666;
+        }
+
+        .currency-symbol {
+            position: absolute;
+            left: 15px;
+            top: 50%;
+            transform: translateY(-50%);
+            color: #f5af19;
+            font-weight: bold;
+            font-size: 1rem;
+            pointer-events: none;
+        }
+
+        .divider {
+            height: 1px;
+            background: linear-gradient(90deg, transparent, rgba(255,255,255,0.15), transparent);
+            margin: 25px 0;
+        }
+
+        .result-box {
+            background: rgba(245, 175, 25, 0.08);
+            border: 2px solid rgba(245, 175, 25, 0.3);
+            border-radius: 18px;
+            padding: 22px;
+            text-align: center;
+            margin: 20px 0;
+            transition: all 0.3s ease;
+        }
+
+        .result-box.has-value {
+            background: rgba(245, 175, 25, 0.12);
+            border-color: rgba(245, 175, 25, 0.5);
+            box-shadow: 0 0 30px rgba(245, 175, 25, 0.15);
+        }
+
+        .result-label {
+            font-size: 0.9rem;
+            color: #aaa;
+            margin-bottom: 8px;
+        }
+
+        .result-value {
+            font-size: 2.8rem;
+            font-weight: bold;
+            color: #f5af19;
+            text-shadow: 0 0 20px rgba(245, 175, 25, 0.4);
+        }
+
+        .result-value span {
+            font-size: 1.2rem;
+            color: #ccc;
+            margin-right: 5px;
+        }
+
+        .breakdown {
+            display: flex;
+            justify-content: space-around;
+            flex-wrap: wrap;
+            gap: 12px;
+            margin-top: 15px;
+        }
+
+        .breakdown-item {
+            background: rgba(255, 255, 255, 0.04);
+            border-radius: 12px;
+            padding: 12px 18px;
+            text-align: center;
+            border: 1px solid rgba(255, 255, 255, 0.08);
+            flex: 1;
+            min-width: 100px;
+        }
+
+        .breakdown-item .bi-label {
+            font-size: 0.8rem;
+            color: #888;
+            margin-bottom: 4px;
+        }
+
+        .breakdown-item .bi-value {
+            font-size: 1.1rem;
+            font-weight: bold;
+            color: #e0e0e0;
+        }
+
+        .btn-row {
+            display: flex;
+            gap: 12px;
+            margin-top: 20px;
+        }
+
+        .btn {
+            flex: 1;
+            padding: 14px 20px;
+            border-radius: 14px;
+            border: none;
+            font-size: 1rem;
+            font-weight: bold;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            font-family: 'Cairo', sans-serif;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 8px;
+        }
+
+        .btn-calculate {
+            background: linear-gradient(135deg, #f5af19, #f12711);
+            color: #fff;
+            box-shadow: 0 10px 30px rgba(245, 175, 25, 0.3);
+        }
+
+        .btn-calculate:hover {
+            transform: translateY(-3px);
+            box-shadow: 0 15px 40px rgba(245, 175, 25, 0.5);
+        }
+
+        .btn-reset {
+            background: rgba(255, 255, 255, 0.08);
+            color: #ccc;
+            border: 1px solid rgba(255, 255, 255, 0.2);
+        }
+
+        .btn-reset:hover {
+            background: rgba(255, 255, 255, 0.15);
+            color: #fff;
+        }
+
+        .tips {
+            margin-top: 25px;
+            background: rgba(255, 255, 255, 0.03);
+            border-radius: 14px;
+            padding: 18px;
+            border: 1px solid rgba(255, 255, 255, 0.06);
+        }
+
+        .tips h4 {
+            color: #f5af19;
+            margin-bottom: 10px;
+            font-size: 0.95rem;
+        }
+
+        .tips ul {
+            list-style: none;
+            padding: 0;
+        }
+
+        .tips ul li {
+            color: #999;
+            font-size: 0.85rem;
+            padding: 4px 0;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+
+        .tips ul li::before {
+            content: "💡";
+            font-size: 0.9rem;
+        }
+
+        @media (max-width: 400px) {
+            .calculator-container {
+                padding: 25px 18px;
+            }
+            .result-value {
+                font-size: 2.2rem;
+            }
+        }
+    </style>
+</head>
+<body>
+
+    <div class="calculator-container">
+        <!-- الرأس -->
+        <div class="header">
+            <div class="icon">📚</div>
+            <h1>حاسبة تكلفة الكتاب</h1>
+            <p>احسب سعر الكتاب بسهولة وسرعة</p>
+        </div>
+
+        <!-- المدخلات -->
+        <div class="form-group">
+            <label>
+                <span class="emoji">📄</span> سعر الصفحة الواحدة
+            </label>
+            <div class="input-wrapper">
+                <input type="number" id="pagePrice" placeholder="مثال: 50" min="0" step="0.01">
+                <span class="currency-symbol">د.ع</span>
+            </div>
+        </div>
+
+        <div class="form-group">
+            <label>
+                <span class="emoji">📖</span> عدد الصفحات
+            </label>
+            <div class="input-wrapper">
+                <input type="number" id="pageCount" placeholder="مثال: 200" min="0" step="1">
+                <span class="currency-symbol">صفحة</span>
+            </div>
+        </div>
+
+        <div class="form-group">
+            <label>
+                <span class="emoji">🛡️</span> سعر الجلاد (التجليد)
+            </label>
+            <div class="input-wrapper">
+                <input type="number" id="bindingPrice" placeholder="مثال: 3000" min="0" step="0.01">
+                <span class="currency-symbol">د.ع</span>
+            </div>
+        </div>
+
+        <!-- الفاصل -->
+        <div class="divider"></div>
+
+        <!-- النتيجة -->
+        <div class="result-box" id="resultBox">
+            <div class="result-label">💰 السعر الإجمالي للكتاب</div>
+            <div class="result-value" id="totalPrice">
+                0 <span>دينار</span>
+            </div>
+            <div class="breakdown" id="breakdownSection" style="display: none;">
+                <div class="breakdown-item">
+                    <div class="bi-label">📄 تكلفة الصفحات</div>
+                    <div class="bi-value" id="pagesCost">0 د.ع</div>
+                </div>
+                <div class="breakdown-item">
+                    <div class="bi-label">🛡️ تكلفة الجلاد</div>
+                    <div class="bi-value" id="bindingCost">0 د.ع</div>
+                </div>
+            </div>
+        </div>
+
+        <!-- الأزرار -->
+        <div class="btn-row">
+            <button class="btn btn-calculate" onclick="calculatePrice()">
+                🧮 احسب السعر
+            </button>
+            <button class="btn btn-reset" onclick="resetCalculator()">
+                🔄 إعادة تعيين
+            </button>
+        </div>
+
+        <!-- نصائح -->
+        <div class="tips">
+            <h4>📌 نصائح للتسعير</h4>
+            <ul>
+                <li>سعر الصفحة يشمل تكلفة الورق والطباعة</li>
+                <li>الجلاد يشمل الغلاف والتجليد</li>
+                <li>يمكنك إضافة هامش ربح لاحقاً</li>
+                <li>الأسعار بالدينار العراقي</li>
+            </ul>
+        </div>
+    </div>
+
+    <script>
+        // دالة الحساب الرئيسية
+        function calculatePrice() {
+            // جلب القيم من المدخلات
+            const pagePrice = parseFloat(document.getElementById('pagePrice').value) || 0;
+            const pageCount = parseInt(document.getElementById('pageCount').value) || 0;
+            const bindingPrice = parseFloat(document.getElementById('bindingPrice').value) || 0;
+
+            // التحقق من صحة المدخلات
+            if (pagePrice < 0 || pageCount < 0 || bindingPrice < 0) {
+                alert('⚠️ الرجاء إدخال أرقام موجبة فقط');
+                return;
+            }
+
+            // حساب تكلفة الصفحات
+            const pagesTotalCost = pagePrice * pageCount;
+
+            // حساب السعر الإجمالي
+            const totalCost = pagesTotalCost + bindingPrice;
+
+            // تنسيق الأرقام (إضافة فواصل الآلاف)
+            const formattedTotal = totalCost.toLocaleString('ar-IQ', {
+                minimumFractionDigits: 0,
+                maximumFractionDigits: 2
+            });
+
+            const formattedPagesCost = pagesTotalCost.toLocaleString('ar-IQ', {
+                minimumFractionDigits: 0,
+                maximumFractionDigits: 2
+            });
+
+            const formattedBindingCost = bindingPrice.toLocaleString('ar-IQ', {
+                minimumFractionDigits: 0,
+                maximumFractionDigits: 2
+            });
+
+            // تحديث واجهة النتيجة
+            document.getElementById('totalPrice').innerHTML = 
+                `${formattedTotal} <span>دينار</span>`;
+
+            document.getElementById('pagesCost').textContent = 
+                `${formattedPagesCost} د.ع`;
+
+            document.getElementById('bindingCost').textContent = 
+                `${formattedBindingCost} د.ع`;
+
+            // إظهار قسم التفاصيل إذا كان هناك قيمة
+            const breakdownSection = document.getElementById('breakdownSection');
+            const resultBox = document.getElementById('resultBox');
+
+            if (totalCost > 0) {
+                breakdownSection.style.display = 'flex';
+                resultBox.classList.add('has-value');
+            } else {
+                breakdownSection.style.display = 'none';
+                resultBox.classList.remove('has-value');
+            }
+
+            // تأثير بصري للنتيجة
+            animateResult();
+        }
+
+        // تأثير حركي للنتيجة
+        function animateResult() {
+            const resultBox = document.getElementById('resultBox');
+            resultBox.style.transform = 'scale(1.05)';
+            resultBox.style.transition = 'transform 0.2s ease';
+            
+            setTimeout(() => {
+                resultBox.style.transform = 'scale(1)';
+            }, 200);
+        }
+
+        // إعادة تعيين جميع الحقول
+        function resetCalculator() {
+            document.getElementById('pagePrice').value = '';
+            document.getElementById('pageCount').value = '';
+            document.getElementById('bindingPrice').value = '';
+
+            document.getElementById('totalPrice').innerHTML = '0 <span>دينار</span>';
+            document.getElementById('breakdownSection').style.display = 'none';
+            document.getElementById('resultBox').classList.remove('has-value');
+
+            document.getElementById('pagesCost').textContent = '0 د.ع';
+            document.getElementById('bindingCost').textContent = '0 د.ع';
+
+            // تركيز المؤشر على أول حقل
+            document.getElementById('pagePrice').focus();
+        }
+
+        // الحساب التلقائي عند تغيير أي قيمة (اختياري)
+        function autoCalculate() {
+            const pagePrice = document.getElementById('pagePrice').value;
+            const pageCount = document.getElementById('pageCount').value;
+            const bindingPrice = document.getElementById('bindingPrice').value;
+
+            // إذا كانت جميع الحقول ممتلئة، احسب تلقائياً
+            if (pagePrice !== '' && pageCount !== '' && bindingPrice !== '') {
+                calculatePrice();
+            }
+        }
+
+        // إضافة مستمعي الأحداث للحساب التلقائي
+        document.getElementById('pagePrice').addEventListener('input', autoCalculate);
+        document.getElementById('pageCount').addEventListener('input', autoCalculate);
+        document.getElementById('bindingPrice').addEventListener('input', autoCalculate);
+
+        // الحساب عند الضغط على Enter
+        document.addEventListener('keydown', function(event) {
+            if (event.key === 'Enter') {
+                calculatePrice();
+            }
+        });
+
+        // تركيز المؤشر على أول حقل عند تحميل الصفحة
+        window.addEventListener('load', function() {
+            document.getElementById('pagePrice').focus();
+        });
+    </script>
+
+</body>
+</html>
