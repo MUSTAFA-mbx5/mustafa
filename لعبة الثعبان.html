@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=yes, maximum-scale=1.5">
-  <title>🐍 لعبة الثعبان المميزة | ألوان ومراحل</title>
+  <title>🐍 لعبة الثعبان |  اتونس لضوجة</title>
   <style>
     * {
       margin: 0;
@@ -32,6 +32,8 @@
       display: flex;
       flex-direction: column;
       align-items: center;
+      max-width: 500px;
+      width: 100%;
     }
 
     .header {
@@ -41,6 +43,8 @@
       width: 100%;
       margin-bottom: 20px;
       padding: 0 8px;
+      flex-wrap: wrap;
+      gap: 10px;
     }
 
     .score-panel {
@@ -75,6 +79,50 @@
       align-items: center;
       gap: 6px;
       background: linear-gradient(180deg, #ff9f5b 0%, #e55d2b 100%);
+    }
+
+    .difficulty-selector {
+      display: flex;
+      gap: 8px;
+      background: rgba(10, 20, 30, 0.8);
+      border-radius: 40px;
+      padding: 6px;
+      backdrop-filter: blur(12px);
+      margin-bottom: 15px;
+      width: 100%;
+      justify-content: center;
+    }
+
+    .diff-btn {
+      background: #2a3544;
+      border: none;
+      color: #c0b090;
+      font-size: 1rem;
+      font-weight: bold;
+      padding: 10px 22px;
+      border-radius: 30px;
+      cursor: pointer;
+      transition: all 0.2s ease;
+      font-family: 'Cairo', sans-serif;
+      box-shadow: 0 3px 0 #10161e;
+      white-space: nowrap;
+    }
+
+    .diff-btn.active {
+      background: #f08a4b;
+      color: #0a0f1c;
+      box-shadow: 0 4px 0 #7b3f1f, 0 6px 14px rgba(255, 130, 30, 0.6);
+      transform: scale(1.05);
+      font-weight: bold;
+    }
+
+    .diff-btn:hover {
+      background: #3e4d5e;
+      color: #f5e0b0;
+    }
+
+    .diff-btn.active:hover {
+      background: #f59a5c;
     }
 
     canvas {
@@ -143,6 +191,7 @@
       width: auto;
       height: auto;
       gap: 6px;
+      white-space: nowrap;
     }
 
     .message-area {
@@ -151,6 +200,84 @@
       margin-right: 15px;
       font-weight: bold;
       text-shadow: 0 2px 5px black;
+      text-align: center;
+    }
+
+    /* نافذة الفوز */
+    .win-overlay {
+      position: fixed;
+      top: 0;
+      left: 0;
+      width: 100%;
+      height: 100%;
+      background: rgba(0, 0, 0, 0.85);
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      z-index: 1000;
+      backdrop-filter: blur(8px);
+    }
+
+    .win-message {
+      background: linear-gradient(135deg, #1b3a1b, #0d2b0d);
+      border: 3px solid #fbbf24;
+      border-radius: 30px;
+      padding: 40px 30px;
+      text-align: center;
+      box-shadow: 0 0 60px #fbbf24, 0 20px 40px black;
+      animation: pulse 1.5s infinite;
+    }
+
+    @keyframes pulse {
+      0% { transform: scale(1); box-shadow: 0 0 40px #fbbf24; }
+      50% { transform: scale(1.03); box-shadow: 0 0 80px #ffd700; }
+      100% { transform: scale(1); box-shadow: 0 0 40px #fbbf24; }
+    }
+
+    .win-message h2 {
+      color: #ffd700;
+      font-size: 2.5rem;
+      margin-bottom: 15px;
+      text-shadow: 0 0 20px gold;
+    }
+
+    .win-message .alawi-text {
+      color: #ffffff;
+      font-size: 1.8rem;
+      font-weight: bold;
+      margin: 15px 0;
+      background: linear-gradient(90deg, #ff6b6b, #ffd93d, #6bcb77, #4d96ff);
+      -webkit-background-clip: text;
+      -webkit-text-fill-color: transparent;
+      background-clip: text;
+      text-shadow: none;
+      filter: drop-shadow(0 0 15px gold);
+    }
+
+    .win-message .nassriya {
+      color: #ffb703;
+      font-size: 1.5rem;
+      margin: 10px 0;
+    }
+
+    .win-message button {
+      background: #fbbf24;
+      color: #1a1a1a;
+      border: none;
+      padding: 15px 40px;
+      font-size: 1.3rem;
+      font-weight: bold;
+      border-radius: 50px;
+      cursor: pointer;
+      margin-top: 20px;
+      box-shadow: 0 6px 0 #b45309;
+      transition: 0.1s;
+      font-family: 'Cairo', sans-serif;
+    }
+
+    .win-message button:active {
+      transform: translateY(4px);
+      box-shadow: 0 2px 0 #b45309;
     }
 
     @media (max-width: 550px) {
@@ -163,19 +290,30 @@
         padding: 10px 20px;
         font-size: 1.2rem;
       }
+      .diff-btn {
+        padding: 8px 14px;
+        font-size: 0.85rem;
+      }
     }
   </style>
 </head>
 <body>
-<div style="display: flex; flex-direction: column; align-items: center;">
+<div style="display: flex; flex-direction: column; align-items: center; width: 100%; max-width: 500px;">
   <div class="game-container">
     <div class="header">
       <div class="score-panel">
         🍎 <span id="scoreDisplay">0</span>
       </div>
       <div class="level-badge">
-        ⚡ مرحلة <span id="levelDisplay">1</span>
+        ⚡ <span id="difficultyLabel">متوسط</span>
       </div>
+    </div>
+
+    <!-- اختيار الصعوبة -->
+    <div class="difficulty-selector">
+      <button class="diff-btn" data-diff="easy">🐢 سهل</button>
+      <button class="diff-btn active" data-diff="medium">⚡ متوسط</button>
+      <button class="diff-btn" data-diff="hard">🔥 صعب</button>
     </div>
 
     <canvas id="snakeCanvas" width="400" height="400" aria-label="لعبة الثعبان"></canvas>
@@ -191,9 +329,9 @@
         <span>↺</span> جديدة
       </button>
     </div>
-    <div class="message-area" id="statusMessage">🎮 استخدم الأسهم أو الأزرار</div>
+    <div class="message-area" id="statusMessage">🎮 اجمع ١٠٠ تفاحة للفوز!</div>
   </div>
-  <div style="color:#b9a577; margin-top: 12px; font-size: 0.9rem;">✨ فواكه مميزة تمنح نقاط إضافية | السرعة تزداد مع المراحل</div>
+  <div style="color:#b9a577; margin-top: 12px; font-size: 0.9rem; text-align: center;">✨ الهدف: ١٠٠ تفاحة | فواكه ذهبية = +٥ نقاط</div>
 </div>
 
 <script>
@@ -203,12 +341,20 @@
 
     // عناصر واجهة المستخدم
     const scoreSpan = document.getElementById('scoreDisplay');
-    const levelSpan = document.getElementById('levelDisplay');
+    const difficultyLabel = document.getElementById('difficultyLabel');
     const statusDiv = document.getElementById('statusMessage');
 
     // إعدادات اللوحة
-    const GRID_SIZE = 20;        // 20x20 خلية
-    const CELL_SIZE = canvas.width / GRID_SIZE; // 20px
+    const GRID_SIZE = 20;
+    const CELL_SIZE = canvas.width / GRID_SIZE;
+
+    // إعدادات الصعوبة
+    const difficulties = {
+      easy: { name: 'سهل', speed: 150, label: '🐢 سهل' },
+      medium: { name: 'متوسط', speed: 110, label: '⚡ متوسط' },
+      hard: { name: 'صعب', speed: 70, label: '🔥 صعب' }
+    };
+    let currentDifficulty = 'medium';
 
     // متغيرات اللعبة
     let snake = [
@@ -217,17 +363,16 @@
       {x: 8, y: 10}
     ];
     let food = {x: 15, y: 10};
-    // فاكهة خاصة (ذهبية) تظهر أحياناً
     let specialFood = null;
     let specialFoodTimer = 0;
 
-    let direction = 'right';     // الاتجاه الحالي
+    let direction = 'right';
     let nextDirection = 'right';
     let score = 0;
-    let level = 1;
     let gameOver = false;
+    let gameWon = false;
     let gameLoopInterval = null;
-    let gameSpeed = 130;        // ميلي ثانية (يقل مع المستوى)
+    let gameSpeed = difficulties[currentDifficulty].speed;
 
     // منع الانعكاس الذاتي
     const oppositeDirections = {
@@ -245,22 +390,17 @@
       };
     }
 
-    // التحقق مما إذا كانت الإحداثيات تشغلها أفعى أو طعام عادي
     function isPositionOccupied(pos, includeSpecial = true) {
-      // فحص جسم الأفعى
       for (let segment of snake) {
         if (segment.x === pos.x && segment.y === pos.y) return true;
       }
-      // فحص طعام عادي
       if (food && food.x === pos.x && food.y === pos.y) return true;
-      // فحص طعام خاص إذا وجد
       if (includeSpecial && specialFood && specialFood.x === pos.x && specialFood.y === pos.y) return true;
       return false;
     }
 
     function generateFood() {
       if (!food) {
-        // توليد طعام عادي جديد
         let newFood = randomGridPosition();
         while (isPositionOccupied(newFood, true)) {
           newFood = randomGridPosition();
@@ -269,11 +409,9 @@
       }
     }
 
-    // توليد طعام خاص (ذهبي) يعطي نقاط إضافية
     function trySpawnSpecialFood() {
-      if (specialFood !== null) return; // موجود بالفعل
-      // احتمال 35% للظهور تقريباً (نتحكم حسب الظروف)
-      if (Math.random() < 0.4 && !gameOver) {
+      if (specialFood !== null) return;
+      if (Math.random() < 0.4 && !gameOver && !gameWon) {
         let candidate = randomGridPosition();
         let attempts = 0;
         while (isPositionOccupied(candidate, true) && attempts < 100) {
@@ -282,14 +420,57 @@
         }
         if (!isPositionOccupied(candidate, true)) {
           specialFood = candidate;
-          specialFoodTimer = 60; // يختفي بعد عدد معين من الحركات (حوالي 6-8 ثواني حسب السرعة)
+          specialFoodTimer = 60;
         }
       }
     }
 
-    // إعادة تعيين كاملة
+    // دالة الفوز
+    function checkWinCondition() {
+      if (score >= 100 && !gameWon && !gameOver) {
+        gameWon = true;
+        gameOver = true; // نوقف الحركة أيضاً
+        if (gameLoopInterval) {
+          clearInterval(gameLoopInterval);
+          gameLoopInterval = null;
+        }
+        showWinScreen();
+        return true;
+      }
+      return false;
+    }
+
+    function showWinScreen() {
+      // إزالة أي نافذة فوز سابقة
+      const existingOverlay = document.querySelector('.win-overlay');
+      if (existingOverlay) existingOverlay.remove();
+
+      const overlay = document.createElement('div');
+      overlay.className = 'win-overlay';
+      overlay.innerHTML = `
+        <div class="win-message">
+          <h2>🎉 مبروك ربحت! 🎉</h2>
+          <div class="alawi-text">علاوي الناصرية</div>
+          <div class="nassriya">🇮🇶 يا بطل يا ناصري 🇮🇶</div>
+          <p style="color:#ffd700; font-size:1.2rem;">جمعت ١٠٠ تفاحة!</p>
+          <button id="playAgainFromWin">🔄 العب من جديد</button>
+        </div>
+      `;
+      document.body.appendChild(overlay);
+
+      document.getElementById('playAgainFromWin').addEventListener('click', () => {
+        overlay.remove();
+        resetGame();
+      });
+
+      statusDiv.textContent = '🏆 فوز عظيم! علاوي الناصرية يبارك لك';
+    }
+
     function resetGame() {
-      // إيقاف الحلقة السابقة
+      // إزالة نافذة الفوز إن وجدت
+      const overlay = document.querySelector('.win-overlay');
+      if (overlay) overlay.remove();
+
       if (gameLoopInterval) {
         clearInterval(gameLoopInterval);
         gameLoopInterval = null;
@@ -303,52 +484,31 @@
       direction = 'right';
       nextDirection = 'right';
       score = 0;
-      level = 1;
-      gameSpeed = 130;
+      gameSpeed = difficulties[currentDifficulty].speed;
       gameOver = false;
+      gameWon = false;
       food = null;
       specialFood = null;
       specialFoodTimer = 0;
 
       updateUI();
-      generateFood();           // ضمان وجود طعام
-      trySpawnSpecialFood();    // فرصة لظهور طعام مميز
+      generateFood();
+      trySpawnSpecialFood();
 
-      statusDiv.textContent = '🎮 العب بحرية! فواكه ذهبية = +5 نقاط';
+      statusDiv.textContent = '🎮 اجمع ١٠٠ تفاحة للفوز!';
       startGameLoop();
       drawCanvas();
     }
 
-    function increaseLevel() {
-      // كل 5 نقاط نرتقي لمستوى (يمكن تعديلها)
-      const newLevel = Math.floor(score / 5) + 1;
-      if (newLevel > level && newLevel <= 10) {
-        level = newLevel;
-        // زيادة السرعة: كلما زاد المستوى قلت المدة (أسرع)
-        gameSpeed = Math.max(55, 130 - (level - 1) * 9);
-        // إعادة ضبط حلقة اللعبة بالسرعة الجديدة
-        if (gameLoopInterval) {
-          clearInterval(gameLoopInterval);
-          gameLoopInterval = setInterval(step, gameSpeed);
-        }
-        statusDiv.textContent = `🔥 مستوى ${level}! السرعة ازدادت.`;
-        updateUI();
-      } else if (newLevel > level) {
-        level = newLevel;
-        updateUI();
-      }
-    }
-
     function updateUI() {
       scoreSpan.textContent = score;
-      levelSpan.textContent = level;
+      difficultyLabel.textContent = difficulties[currentDifficulty].label;
     }
 
-    // ========== حركة الثعبان والمنطق ==========
+    // ========== حركة الثعبان ==========
     function moveSnake() {
-      if (gameOver) return false;
+      if (gameOver || gameWon) return false;
 
-      // تطبيق الاتجاه الجديد مع منع العكس
       if (nextDirection && oppositeDirections[nextDirection] !== direction) {
         direction = nextDirection;
       }
@@ -364,26 +524,23 @@
         default: break;
       }
 
-      // التحقق من الاصطدام بالجدران
+      // اصطدام بالجدران
       if (newHead.x < 0 || newHead.x >= GRID_SIZE || newHead.y < 0 || newHead.y >= GRID_SIZE) {
         gameOver = true;
         statusDiv.textContent = '💥 اصطدمت بالحائط! اضغط "جديدة"';
         return false;
       }
 
-      // التحقق من الاصطدام بالجسم (باستثناء الذيل الذي قد يتحرك)
-      // ملاحظة: نفحص إذا كان الرأس الجديد موجود في جسم الأفعى الحالي (قبل إزالة الذيل إذا لم نأكل)
       const willEatFood = (food && newHead.x === food.x && newHead.y === food.y);
       const willEatSpecial = (specialFood && newHead.x === specialFood.x && newHead.y === specialFood.y);
 
-      // فحص التصادم مع الجسم: إذا لم نأكل، سنزيل الذيل لاحقاً، لذا يجب استثناء آخر قطعة إذا لم نأكل
+      // فحص التصادم مع الجسم
       let bodyCollision = false;
       for (let i = 0; i < snake.length; i++) {
         const segment = snake[i];
         if (segment.x === newHead.x && segment.y === newHead.y) {
-          // إذا كان الذيل وهو آخر عنصر، ولم نأكل أي طعام، فإن الذيل سيزول؛ لذا لا يعتبر تصادمًا
           if (i === snake.length - 1 && !willEatFood && !willEatSpecial) {
-            continue; // آمن، الذيل سيتحرك
+            continue;
           }
           bodyCollision = true;
           break;
@@ -396,38 +553,31 @@
         return false;
       }
 
-      // إضافة الرأس الجديد
       snake.unshift(newHead);
 
-      // معالجة الطعام العادي
       if (willEatFood) {
         score += 1;
-        food = null;          // سيتم توليد طعام جديد لاحقاً
+        food = null;
         updateUI();
-        increaseLevel();
-        // لا نزيل الذيل (ينمو الثعبان)
-        generateFood();       // طعام جديد فوراً
-        trySpawnSpecialFood(); // فرصة لظهور الخاص
-        statusDiv.textContent = '🍎 +1 نقطة!';
+        generateFood();
+        trySpawnSpecialFood();
+        statusDiv.textContent = `🍎 +1 نقطة | المجموع: ${score} | الهدف: ١٠٠`;
+        checkWinCondition();
       }
-      // معالجة الطعام الخاص (الذهبي)
       else if (willEatSpecial) {
-        score += 5;           // نقاط إضافية كبيرة
+        score += 5;
         specialFood = null;
         specialFoodTimer = 0;
         updateUI();
-        increaseLevel();
-        // لا نزيل الذيل أيضاً (ينمو)
-        generateFood();       // التأكيد على وجود طعام عادي
-        statusDiv.textContent = '✨ +5 نقاط! فاكهة ذهبية رائعة.';
-        // لا ننشئ طعام خاص فوراً حتى لا يتكدس
+        generateFood();
+        statusDiv.textContent = `✨ +5 نقاط! المجموع: ${score} | الهدف: ١٠٠`;
+        checkWinCondition();
       }
       else {
-        // لم نأكل شيئاً: إزالة الذيل
         snake.pop();
       }
 
-      // التعامل مع مؤقت الطعام الخاص (يتلاشى بعد فترة)
+      // مؤقت الطعام الخاص
       if (specialFood !== null) {
         specialFoodTimer--;
         if (specialFoodTimer <= 0) {
@@ -435,8 +585,7 @@
           specialFoodTimer = 0;
         }
       } else {
-        // محاولة إظهار طعام خاص بشكل دوري إذا لم يكن موجوداً
-        if (Math.random() < 0.08 && !gameOver) { // فرصة صغيرة كل خطوة
+        if (Math.random() < 0.08 && !gameOver && !gameWon) {
           trySpawnSpecialFood();
         }
       }
@@ -445,28 +594,31 @@
     }
 
     function step() {
-      if (gameOver) {
-        return;
-      }
-
-      const moveSuccess = moveSnake();
-      drawCanvas();
-
-      if (!moveSuccess) {
-        // توقف اللعبة
+      if (gameOver || gameWon) {
         if (gameLoopInterval) {
           clearInterval(gameLoopInterval);
           gameLoopInterval = null;
         }
-        drawCanvas(); // تحديث الرسم لإظهار حالة النهاية
+        return;
+      }
+
+      moveSnake();
+      drawCanvas();
+
+      if (gameOver && !gameWon) {
+        if (gameLoopInterval) {
+          clearInterval(gameLoopInterval);
+          gameLoopInterval = null;
+        }
+        drawCanvas();
       }
     }
 
-    // ========== الرسم والألوان الجميلة ==========
+    // ========== الرسم ==========
     function drawCanvas() {
       ctx.clearRect(0, 0, canvas.width, canvas.height);
 
-      // رسم شبكة خفيفة
+      // شبكة خفيفة
       ctx.strokeStyle = 'rgba(200, 170, 110, 0.12)';
       ctx.lineWidth = 0.6;
       for (let i = 0; i <= GRID_SIZE; i++) {
@@ -479,7 +631,7 @@
         ctx.stroke();
       }
 
-      // رسم الطعام العادي (تفاحة لامعة)
+      // طعام عادي
       if (food) {
         const fx = food.x * CELL_SIZE, fy = food.y * CELL_SIZE;
         ctx.shadowColor = '#ff5e4d';
@@ -497,14 +649,13 @@
         ctx.fill();
         ctx.shadowBlur = 0;
         ctx.shadowColor = 'transparent';
-        // ورقة صغيرة
         ctx.fillStyle = '#7ec850';
         ctx.beginPath();
         ctx.ellipse(fx + CELL_SIZE/1.8, fy + CELL_SIZE/4, 3, 5, 0.2, 0, Math.PI*2);
         ctx.fill();
       }
 
-      // رسم الطعام الخاص (ذهبي لامع)
+      // طعام خاص
       if (specialFood) {
         const sx = specialFood.x * CELL_SIZE, sy = specialFood.y * CELL_SIZE;
         ctx.shadowColor = '#fbbf24';
@@ -520,7 +671,6 @@
         ctx.shadowBlur = 10;
         ctx.arc(sx + CELL_SIZE/2.4, sy + CELL_SIZE/3.2, CELL_SIZE/13, 0, 2*Math.PI);
         ctx.fill();
-        // نجمة صغيرة
         ctx.font = `${CELL_SIZE*0.7}px "Segoe UI"`;
         ctx.fillStyle = '#ffd966';
         ctx.shadowBlur = 8;
@@ -529,26 +679,20 @@
         ctx.shadowColor = 'transparent';
       }
 
-      // رسم الثعبان بتدرج لوني جذاب
+      // ثعبان
       for (let i = 0; i < snake.length; i++) {
         const seg = snake[i];
         const segX = seg.x * CELL_SIZE, segY = seg.y * CELL_SIZE;
-        const padding = i === 0 ? 2 : 3;
-        const radius = (CELL_SIZE/2.5) - (i === 0 ? 0.5 : 1);
-
-        // تدرج لوني: الرأس بلون مختلف، ثم يتغير تدريجياً
         let gradient;
         if (i === 0) {
           gradient = ctx.createRadialGradient(segX+4, segY+4, 2, segX+12, segY+12, 14);
           gradient.addColorStop(0, '#b5ff7a');
           gradient.addColorStop(0.7, '#2e8b57');
         } else {
-          const intensity = 0.7 - (i / snake.length) * 0.4;
           gradient = ctx.createRadialGradient(segX+5, segY+5, 2, segX+12, segY+12, 13);
           gradient.addColorStop(0, '#c7f0a4');
           gradient.addColorStop(0.8, '#1f6d4a');
         }
-
         ctx.shadowColor = '#101010';
         ctx.shadowBlur = 6;
         ctx.fillStyle = gradient;
@@ -556,7 +700,6 @@
         ctx.roundRect(segX + 2, segY + 2, CELL_SIZE - 4, CELL_SIZE - 4, i===0 ? 8 : 7);
         ctx.fill();
 
-        // عيون للرأس
         if (i === 0) {
           ctx.fillStyle = 'white';
           ctx.shadowBlur = 4;
@@ -581,8 +724,18 @@
       ctx.shadowBlur = 0;
       ctx.shadowColor = 'transparent';
 
-      // إذا انتهت اللعبة كتابة نص
-      if (gameOver) {
+      // شريط التقدم
+      const progressWidth = (score / 100) * canvas.width;
+      if (progressWidth > 0 && !gameWon) {
+        ctx.fillStyle = 'rgba(255, 215, 0, 0.25)';
+        ctx.fillRect(0, canvas.height - 8, Math.min(progressWidth, canvas.width), 8);
+        ctx.strokeStyle = '#ffd700';
+        ctx.lineWidth = 1.5;
+        ctx.strokeRect(0, canvas.height - 8, canvas.width, 8);
+      }
+
+      // نص النهاية
+      if (gameOver && !gameWon) {
         ctx.globalAlpha = 0.8;
         ctx.fillStyle = '#1e1b2c';
         ctx.fillRect(0, 0, canvas.width, canvas.height);
@@ -596,9 +749,18 @@
         ctx.shadowBlur = 0;
         ctx.shadowColor = 'transparent';
       }
+
+      if (gameWon) {
+        ctx.fillStyle = 'rgba(255, 215, 0, 0.3)';
+        ctx.fillRect(0, 0, canvas.width, canvas.height);
+        ctx.font = 'bold 20px "Cairo"';
+        ctx.fillStyle = '#ffd700';
+        ctx.textAlign = 'center';
+        ctx.fillText('🏆 فوز! 🏆', canvas.width/2, canvas.height/2);
+      }
     }
 
-    // دالة مساعدة لرسم مستطيل مستدير
+    // roundRect
     CanvasRenderingContext2D.prototype.roundRect = function (x, y, w, h, r) {
       if (w < 2 * r) r = w / 2;
       if (h < 2 * r) r = h / 2;
@@ -615,13 +777,34 @@
       return this;
     };
 
-    // ========== التحكم بالأزرار ولوحة المفاتيح ==========
+    // ========== التحكم ==========
     function changeDirection(newDir) {
-      if (gameOver) return;
-      // منع الاتجاه المعاكس مباشرة
+      if (gameOver || gameWon) return;
       if (oppositeDirections[newDir] !== direction) {
         nextDirection = newDir;
       }
+    }
+
+    // تغيير الصعوبة
+    function setDifficulty(diff) {
+      if (currentDifficulty === diff) return;
+      currentDifficulty = diff;
+      gameSpeed = difficulties[diff].speed;
+      updateUI();
+
+      // تحديث الأزرار
+      document.querySelectorAll('.diff-btn').forEach(btn => {
+        btn.classList.remove('active');
+        if (btn.dataset.diff === diff) btn.classList.add('active');
+      });
+
+      // إعادة تشغيل الحلقة بالسرعة الجديدة
+      if (!gameOver && !gameWon && gameLoopInterval) {
+        clearInterval(gameLoopInterval);
+        gameLoopInterval = setInterval(step, gameSpeed);
+      }
+
+      statusDiv.textContent = `⚙️ الصعوبة: ${difficulties[diff].name} | اجمع ١٠٠ تفاحة!`;
     }
 
     // لوحة المفاتيح
@@ -642,28 +825,32 @@
     document.getElementById('btnRight').addEventListener('click', () => changeDirection('right'));
     document.getElementById('restartButton').addEventListener('click', resetGame);
 
-    // منع التمرير عند الضغط على الأسهم داخل الصفحة
+    // أزرار الصعوبة
+    document.querySelectorAll('.diff-btn').forEach(btn => {
+      btn.addEventListener('click', () => {
+        setDifficulty(btn.dataset.diff);
+      });
+    });
+
     window.addEventListener('keydown', function(e) {
       if (e.key.startsWith('Arrow')) {
         e.preventDefault();
       }
     }, {passive: false});
 
-    // بدء الحلقة
     function startGameLoop() {
       if (gameLoopInterval) clearInterval(gameLoopInterval);
-      if (!gameOver) {
+      if (!gameOver && !gameWon) {
         gameLoopInterval = setInterval(step, gameSpeed);
       }
     }
 
-    // تهيئة أولية
+    // تهيئة
     generateFood();
     trySpawnSpecialFood();
     updateUI();
     drawCanvas();
     startGameLoop();
-
   })();
 </script>
 </body>
