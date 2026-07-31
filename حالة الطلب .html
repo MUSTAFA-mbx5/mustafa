@@ -3,188 +3,314 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>نظام إدارة الطلبات والصيانة</title>
+  <title>نظام إدارة الصيانة والمكتبة | iOS Glass</title>
   <style>
+    /* متغيرات الألوان وثيمات الزجاج */
     :root {
-      --bg-color: #f4f6f9;
-      --card-bg: #ffffff;
-      --text-color: #1a202c;
-      --primary-color: #1e88e5;
-      --primary-hover: #1565c0;
-      --border-color: #e2e8f0;
-      --shadow: 0 4px 15px rgba(0,0,0,0.05);
+      --bg-gradient: linear-gradient(135deg, #e0c3fc 0%, #8ec5fc 100%);
+      --glass-bg: rgba(255, 255, 255, 0.45);
+      --glass-card: rgba(255, 255, 255, 0.6);
+      --glass-border: rgba(255, 255, 255, 0.7);
+      --glass-shadow: 0 8px 32px 0 rgba(31, 38, 135, 0.12);
+      --text-color: #1c1c1e;
+      --primary-color: #007aff;
+      --primary-glow: rgba(0, 122, 255, 0.3);
+      --input-bg: rgba(255, 255, 255, 0.5);
     }
 
     body.dark-theme {
-      --bg-color: #120e17;
-      --card-bg: #1f1929;
-      --text-color: #f0eaf8;
-      --primary-color: #9c27b0;
-      --primary-hover: #7b1fa2;
-      --border-color: #322842;
-      --shadow: 0 4px 20px rgba(0,0,0,0.4);
+      --bg-gradient: radial-gradient(circle at top left, #2a0845, #10002b 70%);
+      --glass-bg: rgba(26, 18, 38, 0.5);
+      --glass-card: rgba(36, 23, 56, 0.65);
+      --glass-border: rgba(255, 255, 255, 0.12);
+      --glass-shadow: 0 8px 32px 0 rgba(0, 0, 0, 0.45);
+      --text-color: #f2f2f7;
+      --primary-color: #af52de;
+      --primary-glow: rgba(175, 82, 222, 0.4);
+      --input-bg: rgba(0, 0, 0, 0.3);
     }
 
-    * { box-sizing: border-box; margin: 0; padding: 0; font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; }
-    body { background-color: var(--bg-color); color: var(--text-color); transition: all 0.3s ease; padding-bottom: 50px; }
+    * { box-sizing: border-box; margin: 0; padding: 0; font-family: -apple-system, BlinkMacSystemFont, "SF Pro Display", "Segoe UI", Roboto, sans-serif; }
+    
+    body {
+      background: var(--bg-gradient);
+      background-attachment: fixed;
+      color: var(--text-color);
+      min-height: 100vh;
+      padding-bottom: 60px;
+      transition: all 0.4s ease;
+    }
 
+    /* خلفية متوهجة ديكورية للزجاج */
+    .glow-blob {
+      position: fixed;
+      width: 300px;
+      height: 300px;
+      border-radius: 50%;
+      background: var(--primary-color);
+      filter: blur(120px);
+      opacity: 0.35;
+      z-index: -1;
+      pointer-events: none;
+    }
+    .blob-1 { top: -50px; right: -50px; }
+    .blob-2 { bottom: -50px; left: -50px; }
+
+    /* الهيدر الزجاجي */
     header {
-      background-color: var(--card-bg);
-      border-bottom: 1px solid var(--border-color);
-      padding: 15px 20px;
+      background: var(--glass-bg);
+      backdrop-filter: blur(20px) saturate(180%);
+      -webkit-backdrop-filter: blur(20px) saturate(180%);
+      border-bottom: 1px solid var(--glass-border);
+      padding: 16px 24px;
       display: flex;
       justify-content: space-between;
       align-items: center;
       position: sticky;
       top: 0;
       z-index: 100;
+      box-shadow: var(--glass-shadow);
     }
 
+    header h2 { font-weight: 700; font-size: 20px; letter-spacing: -0.5px; }
+
     .theme-btn {
-      background: var(--primary-color);
-      color: white;
-      border: none;
+      background: var(--glass-card);
+      border: 1px solid var(--glass-border);
+      color: var(--text-color);
       padding: 8px 16px;
       border-radius: 20px;
       cursor: pointer;
-      font-weight: bold;
+      font-weight: 600;
+      backdrop-filter: blur(10px);
+      transition: 0.3s;
     }
+    .theme-btn:hover { transform: scale(1.05); box-shadow: 0 0 15px var(--primary-glow); }
 
-    .tabs { display: flex; justify-content: center; gap: 10px; margin: 20px 0; }
+    /* تبويبات الأيفون Segmented Control */
+    .tabs-container {
+      display: flex;
+      justify-content: center;
+      margin: 25px 0;
+    }
+    .tabs {
+      background: var(--glass-bg);
+      backdrop-filter: blur(25px);
+      padding: 5px;
+      border-radius: 20px;
+      border: 1px solid var(--glass-border);
+      display: flex;
+      gap: 5px;
+      box-shadow: var(--glass-shadow);
+    }
     .tab-btn {
-      padding: 12px 30px;
-      border: 2px solid var(--primary-color);
+      padding: 10px 24px;
+      border: none;
       background: transparent;
       color: var(--text-color);
-      font-size: 16px;
-      font-weight: bold;
-      border-radius: 25px;
+      font-size: 15px;
+      font-weight: 600;
+      border-radius: 16px;
       cursor: pointer;
-      transition: 0.2s;
+      transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
     }
-    .tab-btn.active { background: var(--primary-color); color: white; }
+    .tab-btn.active {
+      background: var(--glass-card);
+      border: 1px solid var(--glass-border);
+      color: var(--primary-color);
+      box-shadow: 0 4px 15px rgba(0,0,0,0.1);
+    }
 
-    .container { max-width: 900px; margin: 0 auto; padding: 0 15px; }
+    .container { max-width: 900px; margin: 0 auto; padding: 0 20px; }
 
-    .form-card {
-      background: var(--card-bg);
-      padding: 20px;
-      border-radius: 15px;
-      box-shadow: var(--shadow);
-      border: 1px solid var(--border-color);
+    /* الكروت الزجاجية */
+    .glass-card {
+      background: var(--glass-card);
+      backdrop-filter: blur(25px) saturate(190%);
+      -webkit-backdrop-filter: blur(25px) saturate(190%);
+      border: 1px solid var(--glass-border);
+      border-radius: 24px;
+      padding: 24px;
+      box-shadow: var(--glass-shadow);
       margin-bottom: 30px;
     }
 
-    .form-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 15px; }
-    .input-group { display: flex; flex-direction: column; gap: 5px; }
-    .input-group label { font-size: 14px; font-weight: bold; }
+    .form-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 16px; }
+    
+    .input-group { display: flex; flex-direction: column; gap: 6px; }
+    .input-group label { font-size: 13px; font-weight: 600; opacity: 0.9; }
+    
     .input-group input, .input-group select {
-      padding: 10px;
-      border: 1px solid var(--border-color);
-      border-radius: 8px;
-      background: var(--bg-color);
+      padding: 12px 16px;
+      border: 1px solid var(--glass-border);
+      border-radius: 14px;
+      background: var(--input-bg);
       color: var(--text-color);
       outline: none;
+      font-size: 15px;
+      backdrop-filter: blur(10px);
+      transition: 0.3s;
+    }
+    .input-group input:focus, .input-group select:focus {
+      border-color: var(--primary-color);
+      box-shadow: 0 0 12px var(--primary-glow);
     }
 
-    .faults-section { margin-top: 15px; border-top: 1px dashed var(--border-color); padding-top: 15px; }
+    .faults-section { margin-top: 20px; border-top: 1px solid var(--glass-border); padding-top: 15px; }
     .fault-row { display: flex; gap: 10px; margin-bottom: 10px; }
     .fault-row input { flex: 1; }
 
-    .btn-add { background: #4caf50; color: white; border: none; padding: 6px 12px; border-radius: 5px; cursor: pointer; }
-    .btn-submit { background: var(--primary-color); color: white; border: none; padding: 12px; border-radius: 8px; font-size: 16px; font-weight: bold; cursor: pointer; width: 100%; margin-top: 15px; }
+    .btn-add {
+      background: rgba(52, 199, 89, 0.2);
+      border: 1px solid #34c759;
+      color: #34c759;
+      padding: 8px 14px;
+      border-radius: 12px;
+      cursor: pointer;
+      font-weight: 600;
+      backdrop-filter: blur(10px);
+    }
 
-    /* فقاعات الطلبات */
-    .orders-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(280px, 1fr)); gap: 20px; }
+    .btn-submit {
+      background: var(--primary-color);
+      color: white;
+      border: none;
+      padding: 14px;
+      border-radius: 16px;
+      font-size: 16px;
+      font-weight: 700;
+      cursor: pointer;
+      width: 100%;
+      margin-top: 20px;
+      box-shadow: 0 8px 20px var(--primary-glow);
+      transition: 0.3s;
+    }
+    .btn-submit:hover { transform: translateY(-2px); opacity: 0.95; }
+
+    /* فقاعات كروت الطلبات (Glass Bubble Cards) */
+    .orders-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(270px, 1fr)); gap: 20px; }
     
     .order-bubble {
-      background: var(--card-bg);
-      border-radius: 15px;
-      padding: 18px;
-      box-shadow: var(--shadow);
-      border-right: 8px solid #ef5350; /* افتراضي أحمر */
+      background: var(--glass-card);
+      backdrop-filter: blur(20px);
+      border-radius: 22px;
+      padding: 20px;
+      border: 1px solid var(--glass-border);
+      box-shadow: var(--glass-shadow);
       position: relative;
       cursor: pointer;
-      transition: transform 0.2s;
+      transition: all 0.3s cubic-bezier(0.25, 0.8, 0.25, 1);
+      overflow: hidden;
     }
-    .order-bubble:hover { transform: translateY(-3px); }
+    .order-bubble:hover {
+      transform: translateY(-5px) scale(1.02);
+      box-shadow: 0 12px 30px rgba(0,0,0,0.15);
+    }
 
-    .order-bubble.status-pending { border-right-color: #ef5350; } /* أحمر */
-    .order-bubble.status-progress { border-right-color: #fbc02d; } /* أصفر */
-    .order-bubble.status-done { border-right-color: #4caf50; } /* أخضر */
+    /* ألوان حالات الزجاج */
+    .order-bubble.status-pending { border-right: 6px solid #ff3b30; }
+    .order-bubble.status-progress { border-right: 6px solid #ffcc00; }
+    .order-bubble.status-done { border-right: 6px solid #34c759; }
 
     .badge {
-      display: inline-block;
-      padding: 4px 10px;
+      padding: 5px 12px;
       border-radius: 12px;
       font-size: 12px;
-      color: white;
-      font-weight: bold;
+      font-weight: 700;
+      backdrop-filter: blur(10px);
     }
-    .bg-pending { background: #ef5350; }
-    .bg-progress { background: #fbc02d; color: #000; }
-    .bg-done { background: #4caf50; }
+    .bg-pending { background: rgba(255, 59, 48, 0.2); color: #ff3b30; border: 1px solid #ff3b30; }
+    .bg-progress { background: rgba(255, 204, 0, 0.2); color: #d69e00; border: 1px solid #ffcc00; }
+    .bg-done { background: rgba(52, 199, 89, 0.2); color: #34c759; border: 1px solid #34c759; }
 
-    /* النافذة المنبثقة التفاصيل */
+    /* النافذة المنبثقة (iOS Glass Modal) */
     .modal {
       display: none;
       position: fixed;
       top: 0; left: 0; width: 100%; height: 100%;
-      background: rgba(0,0,0,0.6);
+      background: rgba(0, 0, 0, 0.4);
+      backdrop-filter: blur(15px);
       justify-content: center;
       align-items: center;
       z-index: 1000;
+      animation: fadeIn 0.3s ease;
     }
+
     .modal-content {
-      background: var(--card-bg);
-      padding: 25px;
-      border-radius: 15px;
+      background: var(--glass-card);
+      backdrop-filter: blur(30px) saturate(200%);
+      border: 1px solid var(--glass-border);
+      padding: 28px;
+      border-radius: 28px;
       width: 90%;
-      max-width: 500px;
-      max-height: 90vh;
+      max-width: 520px;
+      max-height: 85vh;
       overflow-y: auto;
+      box-shadow: 0 20px 50px rgba(0,0,0,0.3);
     }
 
     .whatsapp-btn {
       background: #25D366;
       color: white;
       border: none;
-      padding: 10px 15px;
-      border-radius: 8px;
+      padding: 12px;
+      border-radius: 16px;
       display: flex;
       align-items: center;
       justify-content: center;
       gap: 8px;
       text-decoration: none;
-      font-weight: bold;
+      font-weight: 700;
       margin-top: 15px;
+      box-shadow: 0 6px 20px rgba(37, 211, 102, 0.3);
+      transition: 0.3s;
+    }
+    .whatsapp-btn:hover { transform: scale(1.02); }
+
+    .action-btn-danger {
+      background: rgba(255, 59, 48, 0.15);
+      border: 1px solid #ff3b30;
+      color: #ff3b30;
+      padding: 10px;
+      border-radius: 12px;
+      cursor: pointer;
+      margin-top: 12px;
       width: 100%;
+      font-weight: 600;
     }
 
-    .action-btn-danger { background: #d32f2f; color: white; border: none; padding: 8px; border-radius: 5px; cursor: pointer; margin-top: 10px; width: 100%; }
+    @keyframes fadeIn {
+      from { opacity: 0; transform: scale(0.95); }
+      to { opacity: 1; transform: scale(1); }
+    }
   </style>
 </head>
 <body>
 
+  <div class="glow-blob blob-1"></div>
+  <div class="glow-blob blob-2"></div>
+
   <header>
-    <h2>نظام إدارة الطلبات</h2>
-    <button class="theme-btn" onclick="toggleTheme()">تغيير الثيم 🌙/☀️</button>
+    <h2>نظام إدارة الصيانة والطلبات</h2>
+    <button class="theme-btn" onclick="toggleTheme()">الثيم 🌙/☀️</button>
   </header>
 
-  <div class="tabs">
-    <button class="tab-btn active" id="tab-devices" onclick="switchTab('devices')">📱 الأجهزة والصيانة</button>
-    <button class="tab-btn" id="tab-library" onclick="switchTab('library')">📚 المكتبة والطباعة</button>
+  <div class="tabs-container">
+    <div class="tabs">
+      <button class="tab-btn active" id="tab-devices" onclick="switchTab('devices')">📱 الأجهزة والصيانة</button>
+      <button class="tab-btn" id="tab-library" onclick="switchTab('library')">📚 المكتبة والطباعة</button>
+    </div>
   </div>
 
   <div class="container">
     
-    <!-- نموذج إضافة طلب -->
-    <div class="form-card">
-      <h3 id="form-title" style="margin-bottom: 15px;">تسجيل جهاز جديد للصيانة</h3>
+    <!-- نموذج تسجيل طلب -->
+    <div class="glass-card">
+      <h3 id="form-title" style="margin-bottom: 18px;">تسجيل جهاز جديد للصيانة</h3>
       <form id="orderForm" onsubmit="handleFormSubmit(event)">
         <div class="form-grid">
           <div class="input-group">
-            <label>اسم صاحب الطلب:</label>
+            <label>اسم الزبون:</label>
             <input type="text" id="custName" required placeholder="مثال: أحمد علي">
           </div>
           <div class="input-group">
@@ -193,7 +319,7 @@
           </div>
           <div class="input-group" id="group-color">
             <label id="lbl-color">لون الجهاز:</label>
-            <input type="text" id="itemColor" placeholder="مثال: أسود">
+            <input type="text" id="itemColor" placeholder="مثال: أزرق">
           </div>
           <div class="input-group">
             <label>رقم الهاتف (عراقي):</label>
@@ -201,68 +327,71 @@
           </div>
         </div>
 
-        <!-- تفاصيل الأعطال / الخدمات -->
         <div class="faults-section">
-          <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 10px;">
+          <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 12px;">
             <label id="lbl-faults">قائمة الأعطال والتكاليف:</label>
             <button type="button" class="btn-add" onclick="addFaultInput()">+ إضافة بند</button>
           </div>
-          <div id="faultsContainer">
-            <!-- سيتم إضافة البنود هنا تلقائياً -->
-          </div>
+          <div id="faultsContainer"></div>
         </div>
 
         <button type="submit" class="btn-submit">حفظ وتسجيل الطلب</button>
       </form>
     </div>
 
-    <!-- قائمة عرض الطلبات (الفقاعات) -->
-    <h3 style="margin-bottom: 15px;">الطلبات المسجلة:</h3>
-    <div class="orders-grid" id="ordersGrid">
-      <!-- تظهر الكروت هنا -->
-    </div>
+    <!-- قائمة عرض الطلبات -->
+    <h3 style="margin-bottom: 16px; font-size: 18px;">الطلبات الحالية:</h3>
+    <div class="orders-grid" id="ordersGrid"></div>
 
   </div>
 
-  <!-- النافذة المنبثقة للتفاصيل والتعديل -->
+  <!-- النافذة المنبثقة التفاصيل والتعديل الفوري -->
   <div class="modal" id="detailsModal">
     <div class="modal-content">
       <h3 id="modalTitle" style="margin-bottom: 15px;">تفاصيل الطلب</h3>
-      <div id="modalBody"></div>
       
-      <div class="input-group" style="margin-top: 15px;">
+      <div id="modalStaticInfo"></div>
+
+      <div class="input-group" style="margin: 15px 0;">
         <label>تغيير حالة الطلب:</label>
-        <select id="modalStatusSelect" onchange="changeOrderStatus()">
+        <select id="modalStatusSelect" onchange="onModalStatusChange()">
           <option value="pending">🔴 قيد الانتظار</option>
-          <option value="progress">🟡 جاري الصيانة / العمل</option>
+          <option value="progress">🟡 قيد الصيانة / العمل</option>
           <option value="done">🟢 مكتمل</option>
         </select>
       </div>
 
+      <!-- قسم تعديل/إضافة الأعطال داخل النافذة -->
+      <div class="faults-section" style="margin-bottom: 15px;">
+        <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 10px;">
+          <label style="font-size: 14px; font-weight: bold;">تعديل الأعطال والملاحظات:</label>
+          <button type="button" class="btn-add" onclick="addModalFaultRow()">+ إضافة عطل جديد</button>
+        </div>
+        <div id="modalItemsContainer"></div>
+        <h4 id="modalTotalCostDisplay" style="margin-top: 10px; color: var(--primary-color);"></h4>
+      </div>
+
       <div id="whatsappContainer"></div>
 
-      <button class="action-btn-danger" onclick="deleteCurrentOrder()">حذف الطلب</button>
-      <button style="margin-top: 10px; width: 100%; padding: 8px; border-radius: 5px; border: 1px solid var(--border-color); background: transparent; color: var(--text-color); cursor: pointer;" onclick="closeModal()">إغلاق</button>
+      <button class="action-btn-danger" onclick="deleteCurrentOrder()">حذف الطلب نهائياً</button>
+      <button style="margin-top: 10px; width: 100%; padding: 10px; border-radius: 12px; border: 1px solid var(--glass-border); background: transparent; color: var(--text-color); cursor: pointer; font-weight: 600;" onclick="closeModal()">إغلاق</button>
     </div>
   </div>
 
   <script>
-    let currentTab = 'devices'; // 'devices' or 'library'
+    let currentTab = 'devices';
     let orders = JSON.parse(localStorage.getItem('my_orders_data')) || [];
     let activeOrderId = null;
 
-    // تهيئة الصفحة
     window.onload = () => {
       addFaultInput();
       renderOrders();
     };
 
-    // تحويل الثيم
     function toggleTheme() {
       document.body.classList.toggle('dark-theme');
     }
 
-    // التبديل بين التبويبات
     function switchTab(tab) {
       currentTab = tab;
       document.getElementById('tab-devices').classList.toggle('active', tab === 'devices');
@@ -277,23 +406,21 @@
       renderOrders();
     }
 
-    // إضافة حقل عطل جديد
     function addFaultInput(name = '', cost = '') {
       const div = document.createElement('div');
       div.className = 'fault-row';
       div.innerHTML = `
         <input type="text" placeholder="${currentTab === 'devices' ? 'اسم العطل' : 'اسم الخدمة/الطباعة'}" value="${name}" class="f-name" required>
         <input type="number" placeholder="التكلفة (د.ع)" value="${cost}" class="f-cost" required>
-        <button type="button" style="background:#ef5350; color:white; border:none; padding:0 10px; border-radius:5px; cursor:pointer;" onclick="this.parentElement.remove()">✕</button>
+        <button type="button" style="background:rgba(255,59,48,0.2); border:1px solid #ff3b30; color:#ff3b30; padding:0 10px; border-radius:10px; cursor:pointer;" onclick="this.parentElement.remove()">✕</button>
       `;
       document.getElementById('faultsContainer').appendChild(div);
     }
 
-    // حفظ الطلب الجديد
     function handleFormSubmit(e) {
       e.preventDefault();
       
-      const faultRows = document.querySelectorAll('.fault-row');
+      const faultRows = document.querySelectorAll('#faultsContainer .fault-row');
       let items = [];
       let total = 0;
 
@@ -311,7 +438,7 @@
         itemType: document.getElementById('itemType').value,
         itemColor: currentTab === 'devices' ? document.getElementById('itemColor').value : '',
         custPhone: document.getElementById('custPhone').value,
-        status: 'pending', // قيد الانتظار افتراضياً
+        status: 'pending',
         items: items,
         totalCost: total
       };
@@ -319,19 +446,16 @@
       orders.push(newOrder);
       saveAndRefresh();
       
-      // إعادة تعيين النموذج
       document.getElementById('orderForm').reset();
       document.getElementById('faultsContainer').innerHTML = '';
       addFaultInput();
     }
 
-    // حفظ في LocalStorage وإعادة الرسم
     function saveAndRefresh() {
       localStorage.setItem('my_orders_data', JSON.stringify(orders));
       renderOrders();
     }
 
-    // رسم كروت الطلبات (الفقاعات)
     function renderOrders() {
       const grid = document.getElementById('ordersGrid');
       grid.innerHTML = '';
@@ -347,16 +471,16 @@
         const bubble = document.createElement('div');
         bubble.className = `order-bubble status-${o.status}`;
         
-        let statusText = o.status === 'pending' ? '🔴 قيد الانتظار' : (o.status === 'progress' ? '🟡 قيد العمل' : '🟢 مكتمل');
+        let statusText = o.status === 'pending' ? '🔴 قيد الانتظار' : (o.status === 'progress' ? '🟡 قيد الصيانة' : '🟢 مكتمل');
         let statusBg = o.status === 'pending' ? 'bg-pending' : (o.status === 'progress' ? 'bg-progress' : 'bg-done');
 
         bubble.innerHTML = `
-          <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:10px;">
-            <strong>${o.custName}</strong>
+          <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:12px;">
+            <strong style="font-size: 16px;">${o.custName}</strong>
             <span class="badge ${statusBg}">${statusText}</span>
           </div>
-          <p style="font-size: 14px; margin-bottom: 5px;">📌 ${o.itemType} ${o.itemColor ? '(' + o.itemColor + ')' : ''}</p>
-          <p style="font-size: 16px; font-weight: bold; color: var(--primary-color);">المجموع: ${o.totalCost.toLocaleString()} د.ع</p>
+          <p style="font-size: 14px; margin-bottom: 6px; opacity:0.9;">📌 ${o.itemType} ${o.itemColor ? '(' + o.itemColor + ')' : ''}</p>
+          <p style="font-size: 16px; font-weight: 700; color: var(--primary-color);">المجموع: ${o.totalCost.toLocaleString()} د.ع</p>
         `;
 
         bubble.onclick = () => openModal(o.id);
@@ -364,7 +488,6 @@
       });
     }
 
-    // فتح التفاصيل
     function openModal(id) {
       activeOrderId = id;
       const order = orders.find(o => o.id === id);
@@ -373,28 +496,76 @@
       document.getElementById('modalTitle').innerText = `طلب: ${order.custName}`;
       document.getElementById('modalStatusSelect').value = order.status;
 
-      let itemsHtml = order.items.map((it, idx) => `<li>${idx + 1}. ${it.name} - <strong>${it.cost.toLocaleString()} د.ع</strong></li>`).join('');
-
-      document.getElementById('modalBody').innerHTML = `
+      document.getElementById('modalStaticInfo').innerHTML = `
         <p><strong>نوع الطلب:</strong> ${order.itemType} ${order.itemColor ? '- لون ' + order.itemColor : ''}</p>
         <p><strong>رقم الهاتف:</strong> ${order.custPhone}</p>
-        <hr style="margin: 10px 0; border:0; border-top:1px solid var(--border-color);">
-        <p><strong>التفاصيل والتكاليف:</strong></p>
-        <ul style="padding-right: 20px; margin: 5px 0 10px 0;">${itemsHtml}</ul>
-        <h4 style="color: var(--primary-color);">السعر الإجمالي: ${order.totalCost.toLocaleString()} د.ع</h4>
+        <hr style="margin: 12px 0; border:0; border-top:1px solid var(--glass-border);">
       `;
 
+      renderModalItemsEditor(order);
       updateWhatsAppButton(order);
       document.getElementById('detailsModal').style.display = 'flex';
     }
 
-    // إغلاق النافذة
-    function closeModal() {
-      document.getElementById('detailsModal').style.display = 'none';
+    /* عرض وتعديل الأعطال داخل النافذة مباشرة */
+    function renderModalItemsEditor(order) {
+      const container = document.getElementById('modalItemsContainer');
+      container.innerHTML = '';
+
+      order.items.forEach((it, index) => {
+        const div = document.createElement('div');
+        div.className = 'fault-row';
+        div.innerHTML = `
+          <input type="text" value="${it.name}" class="m-f-name" onchange="updateOrderFromModal()">
+          <input type="number" value="${it.cost}" class="m-f-cost" onchange="updateOrderFromModal()">
+          <button type="button" style="background:rgba(255,59,48,0.2); border:1px solid #ff3b30; color:#ff3b30; padding:0 8px; border-radius:8px; cursor:pointer;" onclick="removeModalFaultRow(${index})">✕</button>
+        `;
+        container.appendChild(div);
+      });
+
+      document.getElementById('modalTotalCostDisplay').innerText = `المجموع الكلي: ${order.totalCost.toLocaleString()} د.ع`;
     }
 
-    // تغيير حالة الطلب من النافذة
-    function changeOrderStatus() {
+    function addModalFaultRow() {
+      const order = orders.find(o => o.id === activeOrderId);
+      if (order) {
+        order.items.push({ name: 'عطل إضافي / ملاحظة', cost: 0 });
+        updateOrderFromModal();
+      }
+    }
+
+    function removeModalFaultRow(index) {
+      const order = orders.find(o => o.id === activeOrderId);
+      if (order) {
+        order.items.splice(index, 1);
+        updateOrderFromModal();
+      }
+    }
+
+    function updateOrderFromModal() {
+      const order = orders.find(o => o.id === activeOrderId);
+      if (!order) return;
+
+      const rows = document.querySelectorAll('#modalItemsContainer .fault-row');
+      let items = [];
+      let total = 0;
+
+      rows.forEach(row => {
+        const name = row.querySelector('.m-f-name').value;
+        const cost = parseFloat(row.querySelector('.m-f-cost').value) || 0;
+        items.push({ name, cost });
+        total += cost;
+      });
+
+      order.items = items;
+      order.totalCost = total;
+
+      saveAndRefresh();
+      renderModalItemsEditor(order);
+      updateWhatsAppButton(order);
+    }
+
+    function onModalStatusChange() {
       const order = orders.find(o => o.id === activeOrderId);
       if (order) {
         order.status = document.getElementById('modalStatusSelect').value;
@@ -403,9 +574,12 @@
       }
     }
 
-    // تحويل رقم الهاتف العراقي للصيغة الدولية (+964)
+    function closeModal() {
+      document.getElementById('detailsModal').style.display = 'none';
+    }
+
     function formatIraqiPhone(phone) {
-      let cleaned = phone.replace(/\D/g, ''); // إزالة الأشكال والرموز
+      let cleaned = phone.replace(/\D/g, '');
       if (cleaned.startsWith('07')) {
         cleaned = '964' + cleaned.substring(1);
       } else if (cleaned.startsWith('7')) {
@@ -414,21 +588,21 @@
       return cleaned;
     }
 
-    // تحديث وتوليد رابط الواتساب بناءً على الحالة
+    /* تحديث صيغة رسائل الواتساب المطلوبة بالضبط */
     function updateWhatsAppButton(order) {
       const container = document.getElementById('whatsappContainer');
       container.innerHTML = '';
 
-      if (order.status === 'pending') return; // لا حاجة لزر الواتساب في حالة قيد الانتظار
+      if (order.status === 'pending') return;
 
       const phoneFormatted = formatIraqiPhone(order.custPhone);
       let msg = '';
 
       if (order.status === 'progress') {
-        msg = `تحية طيبة\nجهازك/طلبك نوع (${order.itemType}) قيد ${order.category === 'devices' ? 'الصيانة' : 'التجهيز'}، سوف يتم إعلامك فور اكتمال العمل.`;
+        msg = `مرحبا ${order.custName}\nنوع ${order.category === 'devices' ? 'جهازك' : 'طلبك'}: (${order.itemType})\nحالة الطلب: ${order.category === 'devices' ? 'قيد الصيانة' : 'قيد التجهيز'}\nسوف يتم إعلامك حين اكتماله.`;
       } else if (order.status === 'done') {
         let itemsList = order.items.map(i => `- ${i.name}: ${i.cost.toLocaleString()} د.ع`).join('\n');
-        msg = `مرحبا ${order.custName}\nاكتمل ${order.category === 'devices' ? 'جهازك' : 'طلبك'} (${order.itemType})\n\nالتفاصيل:\n${itemsList}\n\nالمجموع الكلي: ${order.totalCost.toLocaleString()} د.ع\n\nشكراً لثقتكم بنا! ❤️`;
+        msg = `مرحبا ${order.custName}\nاكتمل ${order.category === 'devices' ? 'جهازك' : 'طلبك'} (${order.itemType})\n\nالتفاصيل والأعطال:\n${itemsList}\n\nالمجموع الكلي: ${order.totalCost.toLocaleString()} د.ع\n\nشكراً لثقتكم بنا! ❤️`;
       }
 
       const encodedMsg = encodeURIComponent(msg);
@@ -436,12 +610,11 @@
 
       container.innerHTML = `
         <a href="${waUrl}" target="_blank" class="whatsapp-btn">
-          💬 إرسال تحديث عبر الواتساب
+          💬 إرسال التحديث عبر الواتساب
         </a>
       `;
     }
 
-    // حذف الطلب
     function deleteCurrentOrder() {
       if (confirm('هل أنت تأكد من حذف هذا الطلب؟')) {
         orders = orders.filter(o => o.id !== activeOrderId);
@@ -452,4 +625,3 @@
   </script>
 </body>
 </html>
-
