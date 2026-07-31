@@ -1,0 +1,455 @@
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>نظام إدارة الطلبات والصيانة</title>
+  <style>
+    :root {
+      --bg-color: #f4f6f9;
+      --card-bg: #ffffff;
+      --text-color: #1a202c;
+      --primary-color: #1e88e5;
+      --primary-hover: #1565c0;
+      --border-color: #e2e8f0;
+      --shadow: 0 4px 15px rgba(0,0,0,0.05);
+    }
+
+    body.dark-theme {
+      --bg-color: #120e17;
+      --card-bg: #1f1929;
+      --text-color: #f0eaf8;
+      --primary-color: #9c27b0;
+      --primary-hover: #7b1fa2;
+      --border-color: #322842;
+      --shadow: 0 4px 20px rgba(0,0,0,0.4);
+    }
+
+    * { box-sizing: border-box; margin: 0; padding: 0; font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; }
+    body { background-color: var(--bg-color); color: var(--text-color); transition: all 0.3s ease; padding-bottom: 50px; }
+
+    header {
+      background-color: var(--card-bg);
+      border-bottom: 1px solid var(--border-color);
+      padding: 15px 20px;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      position: sticky;
+      top: 0;
+      z-index: 100;
+    }
+
+    .theme-btn {
+      background: var(--primary-color);
+      color: white;
+      border: none;
+      padding: 8px 16px;
+      border-radius: 20px;
+      cursor: pointer;
+      font-weight: bold;
+    }
+
+    .tabs { display: flex; justify-content: center; gap: 10px; margin: 20px 0; }
+    .tab-btn {
+      padding: 12px 30px;
+      border: 2px solid var(--primary-color);
+      background: transparent;
+      color: var(--text-color);
+      font-size: 16px;
+      font-weight: bold;
+      border-radius: 25px;
+      cursor: pointer;
+      transition: 0.2s;
+    }
+    .tab-btn.active { background: var(--primary-color); color: white; }
+
+    .container { max-width: 900px; margin: 0 auto; padding: 0 15px; }
+
+    .form-card {
+      background: var(--card-bg);
+      padding: 20px;
+      border-radius: 15px;
+      box-shadow: var(--shadow);
+      border: 1px solid var(--border-color);
+      margin-bottom: 30px;
+    }
+
+    .form-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 15px; }
+    .input-group { display: flex; flex-direction: column; gap: 5px; }
+    .input-group label { font-size: 14px; font-weight: bold; }
+    .input-group input, .input-group select {
+      padding: 10px;
+      border: 1px solid var(--border-color);
+      border-radius: 8px;
+      background: var(--bg-color);
+      color: var(--text-color);
+      outline: none;
+    }
+
+    .faults-section { margin-top: 15px; border-top: 1px dashed var(--border-color); padding-top: 15px; }
+    .fault-row { display: flex; gap: 10px; margin-bottom: 10px; }
+    .fault-row input { flex: 1; }
+
+    .btn-add { background: #4caf50; color: white; border: none; padding: 6px 12px; border-radius: 5px; cursor: pointer; }
+    .btn-submit { background: var(--primary-color); color: white; border: none; padding: 12px; border-radius: 8px; font-size: 16px; font-weight: bold; cursor: pointer; width: 100%; margin-top: 15px; }
+
+    /* فقاعات الطلبات */
+    .orders-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(280px, 1fr)); gap: 20px; }
+    
+    .order-bubble {
+      background: var(--card-bg);
+      border-radius: 15px;
+      padding: 18px;
+      box-shadow: var(--shadow);
+      border-right: 8px solid #ef5350; /* افتراضي أحمر */
+      position: relative;
+      cursor: pointer;
+      transition: transform 0.2s;
+    }
+    .order-bubble:hover { transform: translateY(-3px); }
+
+    .order-bubble.status-pending { border-right-color: #ef5350; } /* أحمر */
+    .order-bubble.status-progress { border-right-color: #fbc02d; } /* أصفر */
+    .order-bubble.status-done { border-right-color: #4caf50; } /* أخضر */
+
+    .badge {
+      display: inline-block;
+      padding: 4px 10px;
+      border-radius: 12px;
+      font-size: 12px;
+      color: white;
+      font-weight: bold;
+    }
+    .bg-pending { background: #ef5350; }
+    .bg-progress { background: #fbc02d; color: #000; }
+    .bg-done { background: #4caf50; }
+
+    /* النافذة المنبثقة التفاصيل */
+    .modal {
+      display: none;
+      position: fixed;
+      top: 0; left: 0; width: 100%; height: 100%;
+      background: rgba(0,0,0,0.6);
+      justify-content: center;
+      align-items: center;
+      z-index: 1000;
+    }
+    .modal-content {
+      background: var(--card-bg);
+      padding: 25px;
+      border-radius: 15px;
+      width: 90%;
+      max-width: 500px;
+      max-height: 90vh;
+      overflow-y: auto;
+    }
+
+    .whatsapp-btn {
+      background: #25D366;
+      color: white;
+      border: none;
+      padding: 10px 15px;
+      border-radius: 8px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 8px;
+      text-decoration: none;
+      font-weight: bold;
+      margin-top: 15px;
+      width: 100%;
+    }
+
+    .action-btn-danger { background: #d32f2f; color: white; border: none; padding: 8px; border-radius: 5px; cursor: pointer; margin-top: 10px; width: 100%; }
+  </style>
+</head>
+<body>
+
+  <header>
+    <h2>نظام إدارة الطلبات</h2>
+    <button class="theme-btn" onclick="toggleTheme()">تغيير الثيم 🌙/☀️</button>
+  </header>
+
+  <div class="tabs">
+    <button class="tab-btn active" id="tab-devices" onclick="switchTab('devices')">📱 الأجهزة والصيانة</button>
+    <button class="tab-btn" id="tab-library" onclick="switchTab('library')">📚 المكتبة والطباعة</button>
+  </div>
+
+  <div class="container">
+    
+    <!-- نموذج إضافة طلب -->
+    <div class="form-card">
+      <h3 id="form-title" style="margin-bottom: 15px;">تسجيل جهاز جديد للصيانة</h3>
+      <form id="orderForm" onsubmit="handleFormSubmit(event)">
+        <div class="form-grid">
+          <div class="input-group">
+            <label>اسم صاحب الطلب:</label>
+            <input type="text" id="custName" required placeholder="مثال: أحمد علي">
+          </div>
+          <div class="input-group">
+            <label id="lbl-itemType">نوع الجهاز:</label>
+            <input type="text" id="itemType" required placeholder="مثال: آيفون 13 برو">
+          </div>
+          <div class="input-group" id="group-color">
+            <label id="lbl-color">لون الجهاز:</label>
+            <input type="text" id="itemColor" placeholder="مثال: أسود">
+          </div>
+          <div class="input-group">
+            <label>رقم الهاتف (عراقي):</label>
+            <input type="text" id="custPhone" required placeholder="مثال: 07801234567">
+          </div>
+        </div>
+
+        <!-- تفاصيل الأعطال / الخدمات -->
+        <div class="faults-section">
+          <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 10px;">
+            <label id="lbl-faults">قائمة الأعطال والتكاليف:</label>
+            <button type="button" class="btn-add" onclick="addFaultInput()">+ إضافة بند</button>
+          </div>
+          <div id="faultsContainer">
+            <!-- سيتم إضافة البنود هنا تلقائياً -->
+          </div>
+        </div>
+
+        <button type="submit" class="btn-submit">حفظ وتسجيل الطلب</button>
+      </form>
+    </div>
+
+    <!-- قائمة عرض الطلبات (الفقاعات) -->
+    <h3 style="margin-bottom: 15px;">الطلبات المسجلة:</h3>
+    <div class="orders-grid" id="ordersGrid">
+      <!-- تظهر الكروت هنا -->
+    </div>
+
+  </div>
+
+  <!-- النافذة المنبثقة للتفاصيل والتعديل -->
+  <div class="modal" id="detailsModal">
+    <div class="modal-content">
+      <h3 id="modalTitle" style="margin-bottom: 15px;">تفاصيل الطلب</h3>
+      <div id="modalBody"></div>
+      
+      <div class="input-group" style="margin-top: 15px;">
+        <label>تغيير حالة الطلب:</label>
+        <select id="modalStatusSelect" onchange="changeOrderStatus()">
+          <option value="pending">🔴 قيد الانتظار</option>
+          <option value="progress">🟡 جاري الصيانة / العمل</option>
+          <option value="done">🟢 مكتمل</option>
+        </select>
+      </div>
+
+      <div id="whatsappContainer"></div>
+
+      <button class="action-btn-danger" onclick="deleteCurrentOrder()">حذف الطلب</button>
+      <button style="margin-top: 10px; width: 100%; padding: 8px; border-radius: 5px; border: 1px solid var(--border-color); background: transparent; color: var(--text-color); cursor: pointer;" onclick="closeModal()">إغلاق</button>
+    </div>
+  </div>
+
+  <script>
+    let currentTab = 'devices'; // 'devices' or 'library'
+    let orders = JSON.parse(localStorage.getItem('my_orders_data')) || [];
+    let activeOrderId = null;
+
+    // تهيئة الصفحة
+    window.onload = () => {
+      addFaultInput();
+      renderOrders();
+    };
+
+    // تحويل الثيم
+    function toggleTheme() {
+      document.body.classList.toggle('dark-theme');
+    }
+
+    // التبديل بين التبويبات
+    function switchTab(tab) {
+      currentTab = tab;
+      document.getElementById('tab-devices').classList.toggle('active', tab === 'devices');
+      document.getElementById('tab-library').classList.toggle('active', tab === 'library');
+
+      const isDev = tab === 'devices';
+      document.getElementById('form-title').innerText = isDev ? 'تسجيل جهاز جديد للصيانة' : 'تسجيل طلب مكتبة / طباعة جديد';
+      document.getElementById('lbl-itemType').innerText = isDev ? 'نوع الجهاز:' : 'نوع الكتاب / المادة:';
+      document.getElementById('group-color').style.display = isDev ? 'flex' : 'none';
+      document.getElementById('lbl-faults').innerText = isDev ? 'قائمة الأعطال والتكاليف:' : 'قائمة الخدمات والأسعار:';
+      
+      renderOrders();
+    }
+
+    // إضافة حقل عطل جديد
+    function addFaultInput(name = '', cost = '') {
+      const div = document.createElement('div');
+      div.className = 'fault-row';
+      div.innerHTML = `
+        <input type="text" placeholder="${currentTab === 'devices' ? 'اسم العطل' : 'اسم الخدمة/الطباعة'}" value="${name}" class="f-name" required>
+        <input type="number" placeholder="التكلفة (د.ع)" value="${cost}" class="f-cost" required>
+        <button type="button" style="background:#ef5350; color:white; border:none; padding:0 10px; border-radius:5px; cursor:pointer;" onclick="this.parentElement.remove()">✕</button>
+      `;
+      document.getElementById('faultsContainer').appendChild(div);
+    }
+
+    // حفظ الطلب الجديد
+    function handleFormSubmit(e) {
+      e.preventDefault();
+      
+      const faultRows = document.querySelectorAll('.fault-row');
+      let items = [];
+      let total = 0;
+
+      faultRows.forEach(row => {
+        const name = row.querySelector('.f-name').value;
+        const cost = parseFloat(row.querySelector('.f-cost').value) || 0;
+        items.push({ name, cost });
+        total += cost;
+      });
+
+      const newOrder = {
+        id: Date.now(),
+        category: currentTab,
+        custName: document.getElementById('custName').value,
+        itemType: document.getElementById('itemType').value,
+        itemColor: currentTab === 'devices' ? document.getElementById('itemColor').value : '',
+        custPhone: document.getElementById('custPhone').value,
+        status: 'pending', // قيد الانتظار افتراضياً
+        items: items,
+        totalCost: total
+      };
+
+      orders.push(newOrder);
+      saveAndRefresh();
+      
+      // إعادة تعيين النموذج
+      document.getElementById('orderForm').reset();
+      document.getElementById('faultsContainer').innerHTML = '';
+      addFaultInput();
+    }
+
+    // حفظ في LocalStorage وإعادة الرسم
+    function saveAndRefresh() {
+      localStorage.setItem('my_orders_data', JSON.stringify(orders));
+      renderOrders();
+    }
+
+    // رسم كروت الطلبات (الفقاعات)
+    function renderOrders() {
+      const grid = document.getElementById('ordersGrid');
+      grid.innerHTML = '';
+
+      const filtered = orders.filter(o => o.category === currentTab);
+
+      if (filtered.length === 0) {
+        grid.innerHTML = '<p style="grid-column: 1/-1; text-align: center; opacity: 0.7;">لا توجد طلبات مسجلة في هذا القسم.</p>';
+        return;
+      }
+
+      filtered.forEach(o => {
+        const bubble = document.createElement('div');
+        bubble.className = `order-bubble status-${o.status}`;
+        
+        let statusText = o.status === 'pending' ? '🔴 قيد الانتظار' : (o.status === 'progress' ? '🟡 قيد العمل' : '🟢 مكتمل');
+        let statusBg = o.status === 'pending' ? 'bg-pending' : (o.status === 'progress' ? 'bg-progress' : 'bg-done');
+
+        bubble.innerHTML = `
+          <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:10px;">
+            <strong>${o.custName}</strong>
+            <span class="badge ${statusBg}">${statusText}</span>
+          </div>
+          <p style="font-size: 14px; margin-bottom: 5px;">📌 ${o.itemType} ${o.itemColor ? '(' + o.itemColor + ')' : ''}</p>
+          <p style="font-size: 16px; font-weight: bold; color: var(--primary-color);">المجموع: ${o.totalCost.toLocaleString()} د.ع</p>
+        `;
+
+        bubble.onclick = () => openModal(o.id);
+        grid.appendChild(bubble);
+      });
+    }
+
+    // فتح التفاصيل
+    function openModal(id) {
+      activeOrderId = id;
+      const order = orders.find(o => o.id === id);
+      if (!order) return;
+
+      document.getElementById('modalTitle').innerText = `طلب: ${order.custName}`;
+      document.getElementById('modalStatusSelect').value = order.status;
+
+      let itemsHtml = order.items.map((it, idx) => `<li>${idx + 1}. ${it.name} - <strong>${it.cost.toLocaleString()} د.ع</strong></li>`).join('');
+
+      document.getElementById('modalBody').innerHTML = `
+        <p><strong>نوع الطلب:</strong> ${order.itemType} ${order.itemColor ? '- لون ' + order.itemColor : ''}</p>
+        <p><strong>رقم الهاتف:</strong> ${order.custPhone}</p>
+        <hr style="margin: 10px 0; border:0; border-top:1px solid var(--border-color);">
+        <p><strong>التفاصيل والتكاليف:</strong></p>
+        <ul style="padding-right: 20px; margin: 5px 0 10px 0;">${itemsHtml}</ul>
+        <h4 style="color: var(--primary-color);">السعر الإجمالي: ${order.totalCost.toLocaleString()} د.ع</h4>
+      `;
+
+      updateWhatsAppButton(order);
+      document.getElementById('detailsModal').style.display = 'flex';
+    }
+
+    // إغلاق النافذة
+    function closeModal() {
+      document.getElementById('detailsModal').style.display = 'none';
+    }
+
+    // تغيير حالة الطلب من النافذة
+    function changeOrderStatus() {
+      const order = orders.find(o => o.id === activeOrderId);
+      if (order) {
+        order.status = document.getElementById('modalStatusSelect').value;
+        saveAndRefresh();
+        updateWhatsAppButton(order);
+      }
+    }
+
+    // تحويل رقم الهاتف العراقي للصيغة الدولية (+964)
+    function formatIraqiPhone(phone) {
+      let cleaned = phone.replace(/\D/g, ''); // إزالة الأشكال والرموز
+      if (cleaned.startsWith('07')) {
+        cleaned = '964' + cleaned.substring(1);
+      } else if (cleaned.startsWith('7')) {
+        cleaned = '964' + cleaned;
+      }
+      return cleaned;
+    }
+
+    // تحديث وتوليد رابط الواتساب بناءً على الحالة
+    function updateWhatsAppButton(order) {
+      const container = document.getElementById('whatsappContainer');
+      container.innerHTML = '';
+
+      if (order.status === 'pending') return; // لا حاجة لزر الواتساب في حالة قيد الانتظار
+
+      const phoneFormatted = formatIraqiPhone(order.custPhone);
+      let msg = '';
+
+      if (order.status === 'progress') {
+        msg = `تحية طيبة\nجهازك/طلبك نوع (${order.itemType}) قيد ${order.category === 'devices' ? 'الصيانة' : 'التجهيز'}، سوف يتم إعلامك فور اكتمال العمل.`;
+      } else if (order.status === 'done') {
+        let itemsList = order.items.map(i => `- ${i.name}: ${i.cost.toLocaleString()} د.ع`).join('\n');
+        msg = `مرحبا ${order.custName}\nاكتمل ${order.category === 'devices' ? 'جهازك' : 'طلبك'} (${order.itemType})\n\nالتفاصيل:\n${itemsList}\n\nالمجموع الكلي: ${order.totalCost.toLocaleString()} د.ع\n\nشكراً لثقتكم بنا! ❤️`;
+      }
+
+      const encodedMsg = encodeURIComponent(msg);
+      const waUrl = `https://wa.me/${phoneFormatted}?text=${encodedMsg}`;
+
+      container.innerHTML = `
+        <a href="${waUrl}" target="_blank" class="whatsapp-btn">
+          💬 إرسال تحديث عبر الواتساب
+        </a>
+      `;
+    }
+
+    // حذف الطلب
+    function deleteCurrentOrder() {
+      if (confirm('هل أنت تأكد من حذف هذا الطلب؟')) {
+        orders = orders.filter(o => o.id !== activeOrderId);
+        saveAndRefresh();
+        closeModal();
+      }
+    }
+  </script>
+</body>
+</html>
+
