@@ -1,0 +1,371 @@
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>مُستخرج النصوص</title>
+    
+    <link href="https://fonts.googleapis.com/css2?family=Cairo:wght@400;600;700;800&display=swap" rel="stylesheet">
+    <script src="https://cdn.jsdelivr.net/npm/tesseract.js@5/dist/tesseract.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/pdf.js/2.16.105/pdf.min.js"></script>
+    
+    <style>
+        :root {
+            --primary-blue: #3b82f6;
+            --bg-color: #f4f6fb;
+            --purple-grad-1: #9f7aea;
+            --purple-grad-2: #7f9cf5;
+            --orange-grad-1: #fbd38d;
+            --orange-grad-2: #f6ad55;
+        }
+
+        body {
+            font-family: 'Cairo', sans-serif;
+            background-color: #e2e8f0;
+            margin: 0;
+            padding: 0;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            height: 100dvh; 
+            overflow: hidden;
+        }
+
+        .app-container {
+            width: 100%;
+            max-width: 450px;
+            height: 100dvh;
+            background-color: var(--bg-color);
+            display: flex;
+            flex-direction: column;
+            box-sizing: border-box;
+            position: relative;
+        }
+
+        @media (min-width: 451px) {
+            .app-container {
+                height: 95dvh;
+                border-radius: 30px;
+                box-shadow: 0 10px 30px rgba(0,0,0,0.1);
+                overflow: hidden;
+            }
+        }
+
+        .header-title {
+            text-align: center;
+            padding: 15px 0 10px 0;
+        }
+
+        .header-title h1 {
+            margin: 0;
+            font-size: 20px;
+            font-weight: 800;
+            color: #1e3a8a;
+        }
+
+        .header-title p {
+            margin: 0;
+            font-size: 12px;
+            color: #64748b;
+            font-weight: 600;
+        }
+
+        .cards-grid {
+            display: flex;
+            gap: 10px;
+            padding: 0 15px 15px 15px;
+        }
+
+        .card {
+            flex: 1;
+            border-radius: 15px;
+            padding: 15px 10px;
+            text-align: center;
+            cursor: pointer;
+            transition: transform 0.2s;
+        }
+
+        .card:active { transform: scale(0.95); }
+
+        .card-purple {
+            background: linear-gradient(135deg, var(--purple-grad-2), var(--purple-grad-1));
+            color: white;
+        }
+
+        .card-orange {
+            background: linear-gradient(135deg, var(--orange-grad-1), var(--orange-grad-2));
+            color: #7b341e;
+        }
+
+        .card-icon {
+            font-size: 26px;
+            margin-bottom: 5px;
+        }
+
+        .card h3 {
+            margin: 0;
+            font-size: 13px;
+            font-weight: 800;
+        }
+
+        .result-section {
+            flex-grow: 1;
+            background-color: white;
+            border-radius: 25px 25px 0 0;
+            padding: 15px;
+            display: flex;
+            flex-direction: column;
+            box-shadow: 0 -5px 20px rgba(0,0,0,0.03);
+            margin-bottom: 0; 
+        }
+
+        #status {
+            font-size: 13px;
+            font-weight: 700;
+            margin-bottom: 10px;
+            text-align: center;
+            color: var(--primary-blue);
+            min-height: 20px;
+        }
+
+        #imagePreview {
+            max-height: 80px;
+            object-fit: contain;
+            margin-bottom: 10px;
+            display: none;
+            border-radius: 8px;
+        }
+
+        textarea {
+            flex-grow: 1;
+            width: 100%;
+            padding: 12px;
+            border: 1px solid #e2e8f0;
+            border-radius: 12px;
+            font-family: inherit;
+            font-size: 14px;
+            resize: none;
+            box-sizing: border-box;
+            background-color: #f8fafc;
+            color: #1e293b;
+            margin-bottom: 12px;
+        }
+
+        textarea:focus {
+            outline: none;
+            border-color: var(--primary-blue);
+        }
+
+        .action-buttons {
+            display: flex;
+            gap: 10px;
+            flex-shrink: 0;
+            margin-bottom: 10px;
+        }
+
+        .btn-copy {
+            background-color: var(--primary-blue);
+            color: white;
+            border: none;
+            padding: 12px;
+            flex-grow: 2; 
+            border-radius: 12px;
+            font-family: inherit;
+            font-size: 15px;
+            font-weight: 700;
+            cursor: pointer;
+            transition: background-color 0.3s;
+        }
+        .btn-copy:hover { background-color: #2563eb; }
+
+        .btn-clear {
+            background-color: #ef4444; 
+            color: white;
+            border: none;
+            padding: 12px;
+            flex-grow: 1; 
+            border-radius: 12px;
+            font-family: inherit;
+            font-size: 15px;
+            font-weight: 700;
+            cursor: pointer;
+            transition: background-color 0.3s;
+        }
+        .btn-clear:hover { background-color: #dc2626; }
+
+        .developer-credit {
+            background: linear-gradient(to right, #1e293b, #0f172a);
+            color: #ffffff;
+            text-align: center;
+            padding: 12px;
+            font-size: 14px;
+            font-weight: 700;
+            text-decoration: none;
+            display: block;
+            flex-shrink: 0; 
+            transition: background 0.3s;
+        }
+
+        .developer-credit:hover, .developer-credit:active {
+            background: #0f172a;
+            color: #60a5fa;
+        }
+
+        #hiddenFileInput { display: none; }
+
+    </style>
+</head>
+<body>
+
+    <div class="app-container">
+        
+        <div class="header-title">
+            <h1>مُستخرج النصوص</h1>
+            <p>حوّل الصور وملفات PDF إلى نصوص بسهولة</p>
+        </div>
+
+        <input type="file" id="hiddenFileInput">
+
+        <div class="cards-grid">
+            <div class="card card-purple" onclick="triggerFileSelect('image/*')">
+                <div class="card-icon">🖼️</div>
+                <h3>استخراج من الصور</h3>
+            </div>
+
+            <div class="card card-orange" onclick="triggerFileSelect('application/pdf')">
+                <div class="card-icon">📄</div>
+                <h3>استخراج من PDF</h3>
+            </div>
+        </div>
+
+        <div class="result-section">
+            <img id="imagePreview" alt="معاينة الصورة">
+            <div id="status">جاهز للبدء...</div>
+            <textarea id="resultText" placeholder="سيظهر النص المستخرج هنا..."></textarea>
+            
+            <div class="action-buttons">
+                <button class="btn-copy" onclick="copyText()">نسخ النص</button>
+                <button class="btn-clear" onclick="clearAll()">مسح وإعادة</button>
+            </div>
+        </div>
+
+        <a href="https://www.facebook.com/share/19SigUb8QB/" target="_blank" class="developer-credit">
+            ✨ برمجة وتطوير الاستاذ احمد حسن
+        </a>
+
+    </div>
+
+    <script>
+        pdfjsLib.GlobalWorkerOptions.workerSrc = 'https://cdnjs.cloudflare.com/ajax/libs/pdf.js/2.16.105/pdf.worker.min.js';
+
+        const fileInput = document.getElementById('hiddenFileInput');
+        const imagePreview = document.getElementById('imagePreview');
+        const resultText = document.getElementById('resultText');
+        const statusDiv = document.getElementById('status');
+
+        function triggerFileSelect(acceptType) {
+            fileInput.accept = acceptType;
+            fileInput.click();
+        }
+
+        fileInput.addEventListener('change', async function(event) {
+            const file = event.target.files[0];
+            if (!file) return;
+
+            resultText.value = '';
+            statusDiv.style.color = 'var(--primary-blue)';
+            imagePreview.style.display = 'none';
+
+            if (file.type.startsWith('image/')) {
+                statusDiv.innerText = 'جاري المعالجة... يرجى الانتظار ⏳';
+                
+                const reader = new FileReader();
+                reader.onload = function(e) {
+                    imagePreview.src = e.target.result;
+                    imagePreview.style.display = 'block';
+                }
+                reader.readAsDataURL(file);
+
+                try {
+                    const { data: { text } } = await Tesseract.recognize(file, 'ara+eng');
+                    resultText.value = text;
+                    statusDiv.style.color = '#10b981'; 
+                    statusDiv.innerText = '✅ تم استخراج النص بنجاح!';
+                } catch (err) {
+                    statusDiv.style.color = '#ef4444'; 
+                    statusDiv.innerText = '❌ حدث خطأ أثناء الاستخراج.';
+                }
+            } 
+            else if (file.type === 'application/pdf') {
+                statusDiv.innerText = 'جاري تحضير الملف... ⏳';
+                
+                try {
+                    const arrayBuffer = await file.arrayBuffer();
+                    const pdf = await pdfjsLib.getDocument(arrayBuffer).promise;
+                    let fullText = '';
+
+                    for (let pageNum = 1; pageNum <= pdf.numPages; pageNum++) {
+                        statusDiv.innerText = `جاري المعالجة: صفحة ${pageNum} من ${pdf.numPages} ⏳`;
+                        
+                        const page = await pdf.getPage(pageNum);
+                        const viewport = page.getViewport({ scale: 1.5 });
+                        
+                        const canvas = document.createElement('canvas');
+                        const ctx = canvas.getContext('2d');
+                        canvas.height = viewport.height;
+                        canvas.width = viewport.width;
+                        
+                        await page.render({ canvasContext: ctx, viewport: viewport }).promise;
+                        
+                        const { data: { text } } = await Tesseract.recognize(canvas, 'ara+eng');
+                        
+                        fullText += `\n--- صفحة ${pageNum} ---\n` + text + '\n';
+                        resultText.value = fullText;
+                        resultText.scrollTop = resultText.scrollHeight;
+                    }
+
+                    statusDiv.style.color = '#10b981';
+                    statusDiv.innerText = '✅ اكتمل استخراج النص!';
+                } catch (err) {
+                    statusDiv.style.color = '#ef4444';
+                    statusDiv.innerText = '❌ حدث خطأ أثناء القراءة.';
+                }
+            }
+            fileInput.value = '';
+        });
+
+        // دالة النسخ المعدلة لتعمل في جميع الحالات
+        function copyText() {
+            if (resultText.value.trim() === '') {
+                alert('لا يوجد نص لنسخه!');
+                return;
+            }
+
+            // تحديد النص داخل المربع
+            resultText.select();
+            resultText.setSelectionRange(0, 99999); // لضمان التحديد في الهواتف
+
+            try {
+                // تنفيذ أمر النسخ الكلاسيكي
+                document.execCommand('copy');
+                alert('تم نسخ النص بنجاح!');
+            } catch (err) {
+                console.error('فشل النسخ: ', err);
+                alert('فشل النسخ التلقائي. يرجى التحديد والنسخ يدوياً.');
+            }
+
+            // إزالة التظليل عن النص بعد نسخه
+            window.getSelection().removeAllRanges();
+        }
+
+        function clearAll() {
+            resultText.value = ''; 
+            imagePreview.src = ''; 
+            imagePreview.style.display = 'none'; 
+            statusDiv.innerText = 'جاهز للبدء...'; 
+            statusDiv.style.color = 'var(--primary-blue)'; 
+            fileInput.value = ''; 
+        }
+    </script>
+</body>
+</html>

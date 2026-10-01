@@ -1,0 +1,465 @@
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>ضاغط الصور</title>
+    <!-- استدعاء خط تجوال ومكتبة الأيقونات -->
+    <link href="https://fonts.googleapis.com/css2?family=Tajawal:wght@500;700;800;900&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    
+    <style>
+        * {
+            box-sizing: border-box;
+            -webkit-tap-highlight-color: transparent;
+        }
+
+        body, html {
+            margin: 0;
+            padding: 0;
+            height: 100%;
+            height: 100dvh; /* يحل مشكلة شريط المتصفح بالموبايل */
+            width: 100%;
+            overflow: hidden; /* إخفاء أشرطة التمرير نهائياً */
+            font-family: 'Tajawal', sans-serif;
+            background-color: #020617; 
+            display: flex;
+            justify-content: center;
+            align-items: center;
+        }
+
+        .app-container {
+            width: 100%;
+            max-width: 420px;
+            height: 100%;
+            background: radial-gradient(circle at top left, #0a1128, #01040a);
+            display: flex;
+            flex-direction: column;
+            padding: 15px;
+            padding-bottom: 50px; /* مساحة مخصصة لاسمك حتى ميتغطى */
+            position: relative;
+            border-left: 1px solid rgba(0, 195, 255, 0.1);
+            border-right: 1px solid rgba(0, 195, 255, 0.1);
+            box-shadow: 0 0 50px rgba(0, 85, 255, 0.1);
+        }
+
+        /* أزرار النافذة العلوية */
+        .window-controls {
+            display: flex;
+            gap: 6px;
+            margin-bottom: 10px;
+        }
+        .w-dot {
+            width: 12px;
+            height: 12px;
+            border-radius: 50%;
+        }
+        .d-red { background: #ff5f56; box-shadow: 0 0 5px #ff5f56; }
+        .d-yellow { background: #ffbd2e; box-shadow: 0 0 5px #ffbd2e; }
+        .d-green { background: #27c93f; box-shadow: 0 0 5px #27c93f; }
+
+        /* الهيدر والعنوان */
+        .header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 15px;
+        }
+        .header-icon {
+            font-size: 65px;
+            color: #00e5ff;
+            text-shadow: 0 0 25px rgba(0, 229, 255, 0.6), inset 0 0 10px #fff;
+        }
+        .header-titles {
+            text-align: left;
+            flex-grow: 1;
+            padding-right: 10px;
+        }
+        .title-cyan {
+            font-size: 34px;
+            font-weight: 900;
+            color: #00e5ff;
+            margin: 0;
+            line-height: 1;
+            text-shadow: 0 0 15px rgba(0, 229, 255, 0.8), 2px 2px 0px #000;
+        }
+        .title-purple {
+            font-size: 38px;
+            font-weight: 900;
+            color: #b520ff;
+            margin: 0;
+            line-height: 1;
+            text-shadow: 0 0 20px rgba(181, 32, 255, 0.8), 2px 2px 0px #000;
+            margin-top: -2px;
+        }
+        .subtitle {
+            color: #a0aec0;
+            font-size: 11px;
+            font-weight: 700;
+            margin-top: 5px;
+            line-height: 1.4;
+        }
+
+        /* منطقة الرفع */
+        .upload-area {
+            flex: 1; /* يخلي المربع يتمدد ويتقلص حسب حجم الشاشة */
+            max-height: 140px;
+            min-height: 100px;
+            border: 2px dashed #00e5ff;
+            border-radius: 15px;
+            background: rgba(0, 195, 255, 0.03);
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            align-items: center;
+            margin-bottom: 15px;
+            cursor: pointer;
+            box-shadow: inset 0 0 20px rgba(0, 229, 255, 0.1), 0 0 10px rgba(0, 229, 255, 0.05);
+            transition: all 0.3s;
+            position: relative;
+        }
+        .upload-area:active {
+            transform: scale(0.98);
+            background: rgba(0, 195, 255, 0.08);
+        }
+        .upload-icon {
+            font-size: 35px;
+            color: #007bff;
+            text-shadow: 0 0 20px rgba(0, 123, 255, 0.8);
+            margin-bottom: 10px;
+        }
+        .upload-text {
+            color: #ffffff;
+            font-size: 16px;
+            font-weight: 800;
+            margin: 0 0 5px 0;
+        }
+        .upload-sub {
+            color: #64748b;
+            font-size: 12px;
+        }
+        #fileInput { display: none; }
+
+        /* منطقة الإعدادات */
+        .settings-box {
+            background: rgba(10, 15, 40, 0.6);
+            border: 1px solid rgba(0, 123, 255, 0.4);
+            border-radius: 15px;
+            padding: 12px;
+            margin-bottom: 15px;
+            box-shadow: 0 0 15px rgba(0, 85, 255, 0.1);
+            flex-shrink: 0;
+        }
+        
+        .slider-row {
+            display: flex;
+            align-items: center;
+            margin-bottom: 15px;
+            gap: 10px;
+        }
+        .slider-label {
+            color: #ffffff;
+            font-weight: 700;
+            font-size: 13px;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+        input[type=range] {
+            flex-grow: 1;
+            -webkit-appearance: none;
+            height: 6px;
+            background: linear-gradient(90deg, #00e5ff, #b520ff);
+            border-radius: 5px;
+            outline: none;
+        }
+        input[type=range]::-webkit-slider-thumb {
+            -webkit-appearance: none;
+            appearance: none;
+            width: 18px;
+            height: 18px;
+            border-radius: 50%;
+            background: #ffffff;
+            box-shadow: 0 0 10px #b520ff;
+            cursor: pointer;
+        }
+        .percent-badge {
+            background: #b520ff;
+            color: white;
+            padding: 4px 8px;
+            border-radius: 8px;
+            font-weight: 800;
+            font-size: 12px;
+            box-shadow: 0 0 10px rgba(181, 32, 255, 0.5);
+        }
+
+        /* أزرار الجودة */
+        .presets-grid {
+            display: flex;
+            justify-content: space-between;
+            gap: 5px;
+        }
+        .preset-btn {
+            flex: 1;
+            background: rgba(0, 0, 0, 0.4);
+            border: 1px solid rgba(0, 123, 255, 0.3);
+            border-radius: 10px;
+            padding: 8px 2px;
+            color: #a0aec0;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            cursor: pointer;
+            transition: all 0.2s;
+        }
+        .preset-btn i {
+            font-size: 15px;
+            margin-bottom: 4px;
+        }
+        .preset-btn span { font-size: 11px; font-weight: 800; }
+        .preset-btn small { font-size: 9px; opacity: 0.7; }
+        
+        .preset-btn.active {
+            border-color: #00e5ff;
+            color: #00e5ff;
+            box-shadow: 0 0 10px rgba(0, 229, 255, 0.2), inset 0 0 10px rgba(0, 229, 255, 0.1);
+        }
+        .preset-btn.active i {
+            text-shadow: 0 0 8px #00e5ff;
+        }
+
+        /* زر المعالجة الرئيسي */
+        .action-btn {
+            width: 100%;
+            padding: 14px;
+            background: linear-gradient(90deg, #9b00ff, #ff00ff, #9b00ff);
+            background-size: 200% 100%;
+            border: none;
+            border-radius: 30px;
+            color: #ffffff;
+            font-family: inherit;
+            font-size: 20px;
+            font-weight: 900;
+            cursor: pointer;
+            box-shadow: 0 0 20px rgba(181, 32, 255, 0.6), inset 0 3px 5px rgba(255,255,255,0.4);
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            gap: 10px;
+            transition: all 0.2s;
+            margin-bottom: 10px;
+            flex-shrink: 0;
+        }
+        .action-btn:active {
+            transform: scale(0.96);
+            box-shadow: 0 0 10px rgba(181, 32, 255, 0.4);
+        }
+
+        /* حقوق المبرمج - ثابتة في الأسفل */
+        .credit-text {
+            position: absolute;
+            bottom: 15px;
+            left: 0;
+            right: 0;
+            text-align: center;
+            font-size: 13px;
+            color: rgba(255, 255, 255, 0.6);
+            text-decoration: none;
+            font-weight: 800;
+            transition: color 0.3s;
+            z-index: 10;
+        }
+        .credit-text:active {
+            color: #00e5ff;
+        }
+        
+        /* مؤشر عدد الصور */
+        .files-count {
+            display: none;
+            background: linear-gradient(90deg, #00e5ff, #007bff);
+            color: white;
+            padding: 5px 15px;
+            border-radius: 20px;
+            font-weight: 800;
+            margin-top: 10px;
+            font-size: 12px;
+        }
+    </style>
+</head>
+<body>
+
+    <div class="app-container">
+        
+        <div class="window-controls">
+            <div class="w-dot d-red"></div>
+            <div class="w-dot d-yellow"></div>
+            <div class="w-dot d-green"></div>
+        </div>
+
+        <div class="header">
+            <div class="header-icon">
+                <i class="fa-solid fa-compress"></i>
+            </div>
+            <div class="header-titles">
+                <h1 class="title-cyan">ضاغط</h1>
+                <h1 class="title-purple">الصور</h1>
+                <div class="subtitle">
+                    قلل حجم صورك بسهولة وسرعة<br>
+                    <span style="color:#00e5ff">جودة عالية .. حجم أصغر .. مشاركة أسهل</span>
+                </div>
+            </div>
+        </div>
+
+        <div class="upload-area" onclick="document.getElementById('fileInput').click()">
+            <i class="fa-solid fa-cloud-arrow-up upload-icon"></i>
+            <h3 class="upload-text">اسحب وأفلت صورك هنا</h3>
+            <span class="upload-sub">أو اضغط لاختيار الصور</span>
+            <div class="files-count" id="filesCountLabel">تم اختيار 0 صور</div>
+        </div>
+        <input type="file" id="fileInput" multiple accept="image/*">
+
+        <div class="settings-box">
+            <div class="slider-row">
+                <div class="slider-label">
+                    <i class="fa-solid fa-wand-magic-sparkles"></i> نسبة الضغط
+                </div>
+                <input type="range" id="qualitySlider" min="10" max="100" value="70">
+                <div class="percent-badge" id="percentValue">70%</div>
+            </div>
+
+            <div class="presets-grid">
+                <div class="preset-btn active" data-val="70" onclick="setPreset(this)">
+                    <i class="fa-solid fa-rocket"></i>
+                    <span>عادي</span>
+                    <small>(توازن مثالي)</small>
+                </div>
+                <div class="preset-btn" data-val="50" onclick="setPreset(this)">
+                    <i class="fa-solid fa-leaf"></i>
+                    <span>متوسط</span>
+                    <small>(حجم أصغر)</small>
+                </div>
+                <div class="preset-btn" data-val="30" onclick="setPreset(this)">
+                    <i class="fa-solid fa-bolt"></i>
+                    <span>قوي</span>
+                    <small>(أقل حجم)</small>
+                </div>
+                <div class="preset-btn" data-val="90" onclick="setPreset(this)">
+                    <i class="fa-solid fa-gem"></i>
+                    <span>جودة عالية</span>
+                    <small>(أفضل جودة)</small>
+                </div>
+            </div>
+        </div>
+
+        <button class="action-btn" id="actionBtn" onclick="processAndSave()">
+            <i class="fa-solid fa-expand"></i> ضغط الصور <i class="fa-solid fa-chevron-left" style="font-size: 16px;"></i>
+        </button>
+
+        <a href="https://www.facebook.com/share/1HVLH3oqtC/" target="_blank" class="credit-text">
+            برمجة أ. احمد حسن
+        </a>
+
+    </div>
+
+    <script>
+        const fileInput = document.getElementById('fileInput');
+        const qualitySlider = document.getElementById('qualitySlider');
+        const percentValue = document.getElementById('percentValue');
+        const presetBtns = document.querySelectorAll('.preset-btn');
+        const filesCountLabel = document.getElementById('filesCountLabel');
+        const actionBtn = document.getElementById('actionBtn');
+        const uploadSub = document.querySelector('.upload-sub');
+        
+        let selectedFiles = [];
+        let currentQuality = 0.7;
+
+        qualitySlider.addEventListener('input', function() {
+            percentValue.innerText = this.value + '%';
+            currentQuality = this.value / 100;
+            presetBtns.forEach(btn => btn.classList.remove('active'));
+        });
+
+        function setPreset(element) {
+            presetBtns.forEach(btn => btn.classList.remove('active'));
+            element.classList.add('active');
+            let val = element.getAttribute('data-val');
+            qualitySlider.value = val;
+            percentValue.innerText = val + '%';
+            currentQuality = val / 100;
+        }
+
+        fileInput.addEventListener('change', function(event) {
+            selectedFiles = event.target.files;
+            if (selectedFiles.length > 0) {
+                uploadSub.style.display = 'none';
+                filesCountLabel.style.display = 'block';
+                filesCountLabel.innerText = `تم اختيار ${selectedFiles.length} صور`;
+                filesCountLabel.style.background = 'linear-gradient(90deg, #b520ff, #ff00ff)';
+            } else {
+                uploadSub.style.display = 'block';
+                filesCountLabel.style.display = 'none';
+            }
+        });
+
+        function compressImage(file, quality) {
+            return new Promise((resolve) => {
+                const reader = new FileReader();
+                reader.readAsDataURL(file);
+                reader.onload = (e) => {
+                    const img = new Image();
+                    img.src = e.target.result;
+                    img.onload = () => {
+                        const canvas = document.createElement('canvas');
+                        canvas.width = img.width;
+                        canvas.height = img.height;
+                        const ctx = canvas.getContext('2d');
+                        ctx.drawImage(img, 0, 0, canvas.width, canvas.height);
+                        
+                        canvas.toBlob((blob) => {
+                            resolve(blob);
+                        }, 'image/jpeg', quality);
+                    };
+                };
+            });
+        }
+
+        async function processAndSave() {
+            if (selectedFiles.length === 0) {
+                alert('يرجى اختيار صورة واحدة على الأقل أولاً!');
+                return;
+            }
+
+            let originalText = actionBtn.innerHTML;
+            actionBtn.innerHTML = '<i class="fa-solid fa-spinner fa-spin"></i> جاري المعالجة...';
+            
+            for (let i = 0; i < selectedFiles.length; i++) {
+                let file = selectedFiles[i];
+                let compressedBlob = await compressImage(file, currentQuality);
+                
+                setTimeout(() => {
+                    const link = document.createElement('a');
+                    link.href = URL.createObjectURL(compressedBlob);
+                    link.download = "Compressed_" + file.name;
+                    document.body.appendChild(link);
+                    link.click();
+                    document.body.removeChild(link);
+                }, i * 600); 
+            }
+
+            setTimeout(() => {
+                actionBtn.innerHTML = '<i class="fa-solid fa-check"></i> تم الحفظ بنجاح!';
+                actionBtn.style.background = 'linear-gradient(90deg, #00c853, #b2ff59)';
+                
+                setTimeout(() => {
+                    actionBtn.innerHTML = originalText;
+                    actionBtn.style.background = 'linear-gradient(90deg, #9b00ff, #ff00ff, #9b00ff)';
+                    fileInput.value = '';
+                    selectedFiles = [];
+                    uploadSub.style.display = 'block';
+                    filesCountLabel.style.display = 'none';
+                }, 3000);
+            }, selectedFiles.length * 600);
+        }
+    </script>
+</body>
+</html>
