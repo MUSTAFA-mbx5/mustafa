@@ -1,0 +1,365 @@
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>طلب إجازة - ورقة A4 رسمية</title>
+    <!-- Google Fonts -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Amiri:ital,wght@0,400;0,700;1,400&family=Cairo:wght@400;600;700;800&display=swap" rel="stylesheet">
+    <!-- Tailwind CSS CDN -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <style>
+        body {
+            font-family: 'Cairo', 'Amiri', serif;
+            background-color: #f1f5f9;
+            color: #0f172a;
+            margin: 0;
+            padding: 0;
+            -webkit-print-color-adjust: exact;
+            print-color-adjust: exact;
+        }
+
+        /* A4 Page Setup */
+        .a4-container {
+            width: 210mm;
+            min-height: 297mm;
+            padding: 18mm 20mm;
+            margin: 30px auto;
+            background: #ffffff;
+            box-shadow: 0 10px 25px -5px rgba(0, 0, 0, 0.1), 0 8px 10px -6px rgba(0, 0, 0, 0.1);
+            position: relative;
+            box-sizing: border-box;
+        }
+
+        /* Formal Border Frame */
+        .outer-border {
+            border: 2px solid #1e293b;
+            padding: 4px;
+            height: 100%;
+            min-height: calc(297mm - 36mm);
+            box-sizing: border-box;
+        }
+
+        .inner-border {
+            border: 1px solid #475569;
+            padding: 24px;
+            height: 100%;
+            min-height: calc(297mm - 36mm - 10px);
+            display: flex;
+            flex-direction: column;
+            justify-content: space-between;
+            box-sizing: border-box;
+            background-color: #fafafa;
+        }
+
+        .dotted-line {
+            border-bottom: 1.5px dotted #64748b;
+            display: inline-block;
+            min-width: 140px;
+            text-align: center;
+            font-weight: 600;
+            color: #1e293b;
+            padding: 0 8px;
+        }
+
+        .dotted-fill {
+            border-bottom: 1.5px dotted #64748b;
+            flex-grow: 1;
+            margin: 0 8px;
+        }
+
+        /* Formal Header Badge */
+        .title-badge {
+            background-color: #f8fafc;
+            border: 2px solid #0f172a;
+            padding: 6px 28px;
+            border-radius: 6px;
+            display: inline-block;
+            box-shadow: 2px 2px 0px #0f172a;
+        }
+
+        /* Draggable & Interactive Logo Container */
+        .logo-box {
+            position: relative;
+            cursor: move;
+            user-select: none;
+            transition: border-color 0.2s;
+        }
+        .logo-box:hover {
+            border-color: #2563eb;
+        }
+
+        /* Interactive Controls Top Bar */
+        .top-bar {
+            max-width: 210mm;
+            margin: 20px auto 0;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            flex-wrap: wrap;
+            gap: 12px;
+            background: #ffffff;
+            padding: 12px 20px;
+            border-radius: 8px;
+            box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.05);
+            border: 1px solid #e2e8f0;
+        }
+
+        /* Print Media Queries */
+        @media print {
+            body {
+                background: #ffffff;
+                padding: 0;
+            }
+            .no-print {
+                display: none !important;
+            }
+            .a4-container {
+                margin: 0;
+                box-shadow: none;
+                border: none;
+                width: 100%;
+                min-height: 100vh;
+                padding: 12mm;
+            }
+            .inner-border {
+                background-color: #ffffff;
+            }
+            @page {
+                size: A4 portrait;
+                margin: 0;
+            }
+        }
+    </style>
+</head>
+<body>
+
+    <!-- Controls Bar (Will not show on print) -->
+    <div class="top-bar no-print">
+        <div class="flex items-center gap-2 text-slate-700 font-bold">
+            <svg class="w-6 h-6 text-indigo-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"></path>
+            </svg>
+            <span>معاينة نموذج طلب الإجازة (A4) - محافظة المثنى</span>
+        </div>
+
+        <!-- Logo Controls -->
+        <div class="flex items-center gap-3 bg-slate-100 px-3 py-1.5 rounded-lg border border-slate-200 text-xs text-slate-700">
+            <span class="font-bold">حجم الشعار:</span>
+            <input type="range" id="logo-scale" min="40" max="130" value="70" class="w-24 cursor-pointer" oninput="updateLogoSize(this.value)">
+            <button onclick="document.getElementById('logo-file-input').click()" class="bg-slate-200 hover:bg-slate-300 px-2 py-1 rounded font-semibold text-slate-800 transition">
+                📷 تغيير الشعار
+            </button>
+        </div>
+
+        <div class="flex gap-3">
+            <button onclick="window.print()" class="bg-indigo-600 hover:bg-indigo-700 text-white px-5 py-2 rounded-lg font-semibold flex items-center gap-2 shadow transition">
+                <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 17h2a2 2 0 002-2v-4a2 2 0 00-2-2H5a2 2 0 00-2 2v4a2 2 0 00-2 2h2m2 4h10a2 2 0 000-4H7a2 2 0 000 4zm8-12V5a2 2 0 00-2-2H9a2 2 0 00-2 2v4h10z"></path>
+                </svg>
+                طباعة النموذج
+            </button>
+        </div>
+    </div>
+
+    <!-- Hidden File Input for Custom Logo -->
+    <input type="file" id="logo-file-input" accept="image/*" class="hidden" onchange="loadLogoImage(event)">
+
+    <!-- Printable A4 Sheet -->
+    <div class="a4-container">
+        <div class="outer-border">
+            <div class="inner-border">
+                
+                <!-- 1. Header Section -->
+                <div>
+                    <div class="flex justify-between items-start pb-4 border-b-2 border-slate-800">
+                        <div class="text-right text-sm font-bold text-slate-800 leading-relaxed">
+                            <p>جمهورية العراق</p>
+                            <p>وزارة التربية</p>
+                            <p>المديرية العامة للتربية في محافظة المثنى</p>
+                            <p>متوسطة <span class="dotted-line" contenteditable="true">اللجين للبنات </span></p>
+                        </div>
+                        
+                        <!-- Emblem / Crest Interactive Draggable Box -->
+                        <div class="text-center relative">
+                            <div id="draggable-logo" class="logo-box border-2 border-dashed border-slate-400 rounded-full flex items-center justify-center mx-auto bg-slate-50 overflow-hidden shadow-sm" 
+                                 style="width: 70px; height: 70px;"
+                                 title="انقر لتغيير الصورة أو اسحب للتحريك"
+                                 onclick="document.getElementById('logo-file-input').click()">
+                                <img id="logo-img" class="w-full h-full object-contain hidden" alt="شعار المدرسة">
+                                <div id="logo-placeholder" class="text-[10px] font-bold text-slate-500 leading-tight p-1">
+                                    <span>انقر هنا<br>لاختيار<br>الشعار</span>
+                                </div>
+                            </div>
+                        </div>
+
+                        <div class="text-left text-sm font-bold text-slate-800 leading-relaxed dir-ltr">
+                            <p>التاريخ: ..... / ..... /    202&nbsp;م</p>
+                            <p>الرقم: ........................</p>
+                        </div>
+                    </div>
+
+                    <!-- 2. Order Re-arranged: Addressee First -->
+                    <div class="text-right mt-6 mb-3 text-base font-bold text-slate-900">
+                        <p class="text-lg">إلى / السيدة مديرة المدرسة المحترمة</p>
+                    </div>
+
+                    <!-- 3. Order Re-arranged: Subject Title Badge Second -->
+                    <div class="text-center my-4">
+                        <div class="title-badge">
+                            <h1 class="text-lg font-black text-slate-900 tracking-wide">مـ / طــلـب إجــــازة</h1>
+                        </div>
+                    </div>
+
+                    <!-- 4. Body Content -->
+                    <div class="mt-4 text-justify text-base leading-loose font-medium text-slate-800 space-y-3">
+                        <p class="font-semibold">السلام عليكم ورحمة الله وبركاته...</p>
+
+                        <p class="text-lg leading-10">
+                            أرجو التفضل بالموافقة على منحي إجازة لمـــــــدة 
+                            (<span class="dotted-line min-w-[60px]" contenteditable="true"></span>) 
+                            يوم/أيام، بدءاً من يوم 
+                            (<span class="dotted-line" contenteditable="true">....................</span>) 
+                            المصادف 
+                            <span class="font-bold">    &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;/&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;/&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;   </span>، 
+                            وذلك بسبب: 
+                            <span class="dotted-line min-w-[280px]" contenteditable="true">...............................................................................</span>
+                        </p>
+
+                        <p class="pt-2">
+                            شاكرين حسن تعاونكم ورعايتكم الكريمة.
+                        </p>
+
+                        <p class="text-center font-bold text-slate-900 pt-2">
+                            وتفضلوا بقبول فائق الاحترام والتقدير...
+                        </p>
+                    </div>
+                </div>
+
+                <!-- 5. Applicant Sign-off Section -->
+                <div class="my-6">
+                    <div class="flex justify-end">
+                        <div class="w-72 p-4 border border-slate-300 rounded-lg bg-white shadow-sm text-sm space-y-3">
+                            <p class="font-bold text-base text-slate-900 border-b pb-1 text-center">مقدمة الطلب</p>
+                            <div class="flex justify-between items-center">
+                                <span class="font-semibold text-slate-700">الاسم الثلاثي:</span>
+                                <span class="dotted-line flex-grow text-right" contenteditable="true"></span>
+                            </div>
+                            <div class="flex justify-between items-center">
+                                <span class="font-semibold text-slate-700">الصف / الوظيفة:</span>
+                                <span class="dotted-line flex-grow text-right" contenteditable="true"></span>
+                            </div>
+                            <div class="flex justify-between items-center">
+                                <span class="font-semibold text-slate-700">التوقيع:</span>
+                                <span class="dotted-line flex-grow" contenteditable="true"></span>
+                            </div>
+                            <div class="flex justify-between items-center">
+                                <span class="font-semibold text-slate-700">التاريخ:</span>
+                                <span class="text-slate-800 font-bold">202&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;/&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;/&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;م</span>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- 6. Official Administrative Decision Block -->
+                <div class="border-t-2 border-slate-800 pt-4">
+                    <div class="border border-slate-400 rounded-md p-4 bg-slate-50">
+                        <h3 class="font-bold text-sm text-slate-900 mb-2 border-b border-slate-300 pb-1">هامش وإجراء إدارة المدرسة:</h3>
+                        
+                        <div class="grid grid-cols-2 gap-4 text-xs font-semibold text-slate-800 my-2">
+                            <div class="flex items-center gap-2">
+                                <div class="w-4 h-4 border-2 border-slate-700 rounded-sm"></div>
+                                <span>حصلت الموافقة وتمنح الإجازة.</span>
+                            </div>
+                            <div class="flex items-center gap-2">
+                                <div class="w-4 h-4 border-2 border-slate-700 rounded-sm"></div>
+                                <span>يتعذر القبول للضرورة المدرسية.</span>
+                            </div>
+                        </div>
+
+                        <p class="text-xs text-slate-700 mt-2">ملاحظات الإدارة: .....................................................................................................................................</p>
+
+                        <div class="flex justify-between items-end mt-6 text-xs font-bold text-slate-900">
+                            <div>
+                                <p>الختم الرسمي للمدرسة</p>
+                            </div>
+                            <div class="text-center pl-8">
+                                <p>توقيع السيدة المديرة</p>
+                                <p class="mt-6 text-slate-500">.............................................</p>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+            </div>
+        </div>
+    </div>
+
+    <!-- Script for Interactive Logo Customization & Dragging -->
+    <script>
+        function loadLogoImage(event) {
+            const file = event.target.files[0];
+            if (file) {
+                const reader = new FileReader();
+                reader.onload = function(e) {
+                    const logoImg = document.getElementById('logo-img');
+                    const placeholder = document.getElementById('logo-placeholder');
+                    const logoBox = document.getElementById('draggable-logo');
+                    
+                    logoImg.src = e.target.result;
+                    logoImg.classList.remove('hidden');
+                    placeholder.classList.add('hidden');
+                    logoBox.classList.remove('border-dashed', 'bg-slate-50');
+                }
+                reader.readAsDataURL(file);
+            }
+        }
+
+        function updateLogoSize(size) {
+            const logoBox = document.getElementById('draggable-logo');
+            logoBox.style.width = size + 'px';
+            logoBox.style.height = size + 'px';
+        }
+
+        // Enable Dragging for Logo Box
+        (function setupLogoDrag() {
+            const logo = document.getElementById('draggable-logo');
+            let isDragging = false;
+            let startX, startY, initialLeft, initialTop;
+
+            logo.addEventListener('mousedown', function(e) {
+                // Prevent click if we are dragging
+                isDragging = false;
+                startX = e.clientX;
+                startY = e.clientY;
+                
+                const style = window.getComputedStyle(logo);
+                initialLeft = parseInt(style.left) || 0;
+                initialTop = parseInt(style.top) || 0;
+
+                function onMouseMove(e) {
+                    const dx = e.clientX - startX;
+                    const dy = e.clientY - startY;
+
+                    if (Math.abs(dx) > 3 || Math.abs(dy) > 3) {
+                        isDragging = true;
+                        logo.style.position = 'relative';
+                        logo.style.left = (initialLeft + dx) + 'px';
+                        logo.style.top = (initialTop + dy) + 'px';
+                    }
+                }
+
+                function onMouseUp(e) {
+                    document.removeEventListener('mousemove', onMouseMove);
+                    document.removeEventListener('mouseup', onMouseUp);
+                }
+
+                document.addEventListener('mousemove', onMouseMove);
+                document.addEventListener('mouseup', onMouseUp);
+            });
+        })();
+    </script>
+</body>
+</html>
