@@ -1,0 +1,1033 @@
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>MCQ Maker - صانع الاختبارات الذكي</title>
+    <!-- Tailwind CSS CDN -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script>
+        tailwind.config = {
+            darkMode: 'class',
+        }
+    </script>
+    <!-- Google Fonts: Cairo & Reem Kufi for Certificate -->
+    <link href="https://fonts.googleapis.com/css2?family=Cairo:wght@300;400;600;700;800;900&family=Amiri:wght@700&display=swap" rel="stylesheet">
+    <!-- Lucide Icons CDN -->
+    <script src="https://unpkg.com/lucide@latest"></script>
+    <style>
+        body {
+            font-family: 'Cairo', sans-serif;
+            background-color: #f8fafc;
+            transition: background-color 0.3s, color 0.3s;
+        }
+        .dark body {
+            background-color: #0f172a;
+            color: #f1f5f9;
+        }
+        .dark .bg-white {
+            background-color: #1e293b !important;
+            color: #f8fafc !important;
+            border-color: #334155 !important;
+        }
+        .dark .bg-slate-50 {
+            background-color: #0f172a !important;
+            color: #e2e8f0 !important;
+            border-color: #334155 !important;
+        }
+        .dark .text-slate-900, .dark .text-slate-800, .dark .text-slate-700 {
+            color: #f1f5f9 !important;
+        }
+        .dark .text-slate-600, .dark .text-slate-500 {
+            color: #94a3b8 !important;
+        }
+        .dark .border-slate-200, .dark .border-slate-300 {
+            border-color: #334155 !important;
+        }
+        .gradient-text {
+            background: linear-gradient(135deg, #2563eb 0%, #7c3aed 100%);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+        }
+        .gradient-bg {
+            background: linear-gradient(135deg, #2563eb 0%, #7c3aed 100%);
+        }
+        .certificate-border {
+            border: 12px double #d97706;
+        }
+        @media print {
+            body * {
+                visibility: hidden;
+            }
+            #printable-report, #printable-report *, #printable-certificate, #printable-certificate * {
+                visibility: visible;
+            }
+            #printable-certificate {
+                position: absolute;
+                left: 0;
+                top: 0;
+                width: 100%;
+            }
+        }
+    </style>
+</head>
+<body class="text-slate-800 min-h-screen flex flex-col">
+
+    <!-- Header / Navbar -->
+    <header class="bg-white border-b border-slate-200 sticky top-0 z-50 shadow-sm transition-colors">
+        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 h-16 flex items-center justify-between">
+            <div class="flex items-center gap-3 cursor-pointer" onclick="switchView('generator')">
+                <div class="w-10 h-10 gradient-bg rounded-xl flex items-center justify-center text-white shadow-md">
+                    <i data-lucide="book-open-check" class="w-6 h-6"></i>
+                </div>
+                <div>
+                    <span class="font-extrabold text-lg sm:text-xl gradient-text">MCQ Maker</span>
+                    <span class="text-xs bg-amber-100 text-amber-800 dark:bg-amber-900/50 dark:text-amber-300 px-2 py-0.5 rounded-full font-bold mr-1">مكتبة المصطفى</span>
+                </div>
+            </div>
+
+            <nav class="hidden md:flex items-center gap-6 text-sm font-semibold text-slate-600">
+                <a href="#generator" onclick="switchView('generator')" class="hover:text-blue-600 transition">توليد اختبار</a>
+                <button onclick="openAboutModal()" class="hover:text-blue-600 transition flex items-center gap-1">
+                    <i data-lucide="info" class="w-4 h-4"></i>
+                    <span>من نحن</span>
+                </button>
+            </nav>
+
+            <div class="flex items-center gap-2 sm:gap-3">
+                <!-- Day / Night Mode Toggle -->
+                <button onclick="toggleDarkMode()" class="p-2 rounded-xl bg-slate-100 dark:bg-slate-800 text-slate-700 dark:text-amber-400 hover:bg-slate-200 dark:hover:bg-slate-700 transition" title="تبديل الوضع الليلي/النهاري">
+                    <i data-lucide="sun" id="theme-icon-sun" class="w-5 h-5 hidden"></i>
+                    <i data-lucide="moon" id="theme-icon-moon" class="w-5 h-5"></i>
+                </button>
+
+                <button onclick="openAboutModal()" class="md:hidden text-xs font-bold bg-slate-100 dark:bg-slate-800 text-slate-700 dark:text-slate-200 px-3 py-2 rounded-lg">
+                    من نحن
+                </button>
+
+                <button onclick="switchView('generator')" class="bg-slate-900 text-white dark:bg-blue-600 text-xs sm:text-sm font-bold px-4 py-2 rounded-lg hover:bg-slate-800 dark:hover:bg-blue-700 transition flex items-center gap-2">
+                    <i data-lucide="sparkles" class="w-4 h-4 text-amber-400"></i>
+                    <span>توليد مجاني</span>
+                </button>
+            </div>
+        </div>
+    </header>
+
+    <!-- Main Content Container -->
+    <main class="flex-1 max-w-7xl w-full mx-auto px-4 sm:px-6 lg:px-8 py-8">
+
+        <!-- Banner Alert: Free Mustafa Library Notice -->
+        <div class="mb-6 bg-gradient-to-r from-blue-50 to-indigo-50 dark:from-slate-800 dark:to-slate-900 border border-blue-200 dark:border-slate-700 rounded-xl p-4 flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4 shadow-sm">
+            <div class="flex items-center gap-3">
+                <div class="p-2.5 bg-blue-600 text-white rounded-xl shadow">
+                    <i data-lucide="heart-handshake" class="w-6 h-6"></i>
+                </div>
+                <div>
+                    <h4 class="font-bold text-slate-900 text-sm">موقع مجاني بالكامل - إهداء من موقع مكتبة المصطفى</h4>
+                    <p class="text-xs text-slate-600 dark:text-slate-400">خدمة مخصصة لمساعدة الطلاب والمعلمين في صياغة الاختبارات الإلكترونية بسهولة وبلا حدود مادية.</p>
+                </div>
+            </div>
+            <button onclick="openAboutModal()" class="text-xs font-bold text-blue-700 dark:text-blue-300 bg-blue-100 dark:bg-blue-900/60 px-4 py-2 rounded-lg hover:bg-blue-200 transition whitespace-nowrap">
+                اقرأ الشروط والفضل
+            </button>
+        </div>
+
+        <!-- VIEW 1: Generator & Upload Section -->
+        <section id="view-generator" class="space-y-8">
+            <!-- Hero Title -->
+            <div class="text-center max-w-2xl mx-auto space-y-3">
+                <h1 class="text-3xl sm:text-4xl font-black text-slate-900 leading-tight">
+                    حوّل ملخصاتك وملفاتك إلى <span class="gradient-text">اختبارات تفاعلية</span> بثوانٍ
+                </h1>
+                <p class="text-slate-600 text-sm sm:text-base">
+                    قم برفع ملف PDF أو Word أو اختر نصاً مباشرة، وسيقوم الذكاء الاصطناعي باستخراج أهم الأسئلة وتوليد اختيارات متعدده مع حلول نموذجية.
+                </p>
+            </div>
+
+            <!-- Upload & Setup Card -->
+            <div class="bg-white rounded-2xl shadow-xl border border-slate-200/80 overflow-hidden max-w-4xl mx-auto">
+                <div class="p-6 sm:p-8 space-y-6">
+
+                    <!-- Drag & Drop Zone -->
+                    <div id="drop-zone" class="border-2 border-dashed border-slate-300 rounded-xl p-8 text-center bg-slate-50 hover:bg-blue-50/50 hover:border-blue-400 transition cursor-pointer group">
+                        <input type="file" id="file-input" class="hidden" accept=".pdf,.docx,.doc,.png,.jpg,.jpeg">
+                        <div class="w-16 h-16 bg-blue-100 text-blue-600 rounded-full flex items-center justify-center mx-auto mb-4 group-hover:scale-110 transition">
+                            <i data-lucide="upload-cloud" class="w-8 h-8"></i>
+                        </div>
+                        <h3 class="font-bold text-slate-800 text-lg mb-1">أسقط الملف هنا أو انقر للاختيار</h3>
+                        <p class="text-xs text-slate-500 mb-4">يدعم PDF, Word (DOCX) أو الصور (يدعم الملخصات المصورة) حتّى 25 ميجابايت</p>
+                        <div class="inline-flex items-center gap-2 text-xs font-semibold text-slate-600 bg-white border border-slate-200 rounded-lg px-3 py-1.5 shadow-sm">
+                            <i data-lucide="file-text" class="w-4 h-4 text-blue-500"></i>
+                            <span id="selected-file-name">لم يتم اختيار ملف بعد</span>
+                        </div>
+                    </div>
+
+                    <!-- Section: User Role Selector (Student vs Teacher) -->
+                    <div class="space-y-2 pt-2">
+                        <label class="block text-xs font-bold text-slate-700 flex items-center gap-1.5">
+                            <i data-lucide="user-check" class="w-4 h-4 text-blue-600"></i>
+                            اختر صفك / الهدف من الاختبار:
+                        </label>
+                        <div class="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                            <!-- Student Card -->
+                            <div id="role-student-card" onclick="setUserRole('student')" class="cursor-pointer border-2 border-blue-600 bg-blue-50/50 p-4 rounded-xl flex items-start gap-3 transition hover:shadow-sm">
+                                <input type="radio" id="role-student" name="user_role" value="student" checked class="mt-1 text-blue-600">
+                                <div>
+                                    <div class="text-xs font-bold text-slate-900 flex items-center gap-1">
+                                        <span>أنا طالب</span>
+                                        <span class="text-[10px] bg-blue-100 text-blue-700 px-1.5 py-0.5 rounded font-bold">دراسة وتدريب</span>
+                                    </div>
+                                    <p class="text-[11px] text-slate-500 mt-0.5 leading-relaxed">
+                                        يخوض الطالب الاختبار ويحدد إجاباته بدقة دون إظهار صحة أو خطأ الإجابة إلا بعد إنهاء الاختبار بالكامل.
+                                    </p>
+                                </div>
+                            </div>
+
+                            <!-- Teacher Card -->
+                            <div id="role-teacher-card" onclick="setUserRole('teacher')" class="cursor-pointer border-2 border-slate-200 bg-white p-4 rounded-xl flex items-start gap-3 transition hover:border-blue-300 hover:shadow-sm">
+                                <input type="radio" id="role-teacher" name="user_role" value="teacher" class="mt-1 text-blue-600">
+                                <div>
+                                    <div class="text-xs font-bold text-slate-900 flex items-center gap-1">
+                                        <span>أنا معلم / مدرب</span>
+                                        <span class="text-[10px] bg-purple-100 text-purple-700 px-1.5 py-0.5 rounded font-bold">إنشاء ومشاركة</span>
+                                    </div>
+                                    <p class="text-[11px] text-slate-500 mt-0.5 leading-relaxed">
+                                        تحديد الإجابات ومراجعتها، ثم توليد رابط مشاركة مخصص للطلاب لحله وإصدار تقارير النجاح.
+                                    </p>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Options Grid -->
+                    <div class="grid grid-cols-1 md:grid-cols-3 gap-4 pt-2">
+                        <!-- Option 1: Language -->
+                        <div>
+                            <label class="block text-xs font-bold text-slate-700 mb-1.5 flex items-center gap-1.5">
+                                <i data-lucide="globe" class="w-4 h-4 text-slate-500"></i>
+                                لغة الأسئلة
+                            </label>
+                            <select id="opt-lang" class="w-full bg-slate-50 border border-slate-200 rounded-xl px-3 py-2.5 text-sm font-semibold text-slate-800 focus:ring-2 focus:ring-blue-500 focus:outline-none">
+                                <option value="ar">العربية (تلقائي)</option>
+                                <option value="en">الإنجليزية (English)</option>
+                                <option value="auto">نفس لغة المستند</option>
+                            </select>
+                        </div>
+
+                        <!-- Option 2: Question Count -->
+                        <div>
+                            <label class="block text-xs font-bold text-slate-700 mb-1.5 flex items-center gap-1.5">
+                                <i data-lucide="list-checks" class="w-4 h-4 text-slate-500"></i>
+                                عدد الأسئلة
+                            </label>
+                            <select id="opt-count" class="w-full bg-slate-50 border border-slate-200 rounded-xl px-3 py-2.5 text-sm font-semibold text-slate-800 focus:ring-2 focus:ring-blue-500 focus:outline-none">
+                                <option value="5">5 أسئلة (سريع)</option>
+                                <option value="10" selected>10 أسئلة (موصى به)</option>
+                                <option value="15">15 سؤالاً</option>
+                                <option value="20">20 سؤالاً (متاح مجاناً ✨)</option>
+                            </select>
+                        </div>
+
+                        <!-- Option 3: Difficulty -->
+                        <div>
+                            <label class="block text-xs font-bold text-slate-700 mb-1.5 flex items-center gap-1.5">
+                                <i data-lucide="bar-chart-3" class="w-4 h-4 text-slate-500"></i>
+                                مستوى الصعوبة
+                            </label>
+                            <select id="opt-difficulty" class="w-full bg-slate-50 border border-slate-200 rounded-xl px-3 py-2.5 text-sm font-semibold text-slate-800 focus:ring-2 focus:ring-blue-500 focus:outline-none">
+                                <option value="mixed">متنوع (سهل، متوسط، صعب)</option>
+                                <option value="easy">سهل - تذكر المفاهيم</option>
+                                <option value="medium">متوسط - فهم واستيعاب</option>
+                                <option value="hard">متقدم - تحليل واستنتاج</option>
+                            </select>
+                        </div>
+                    </div>
+
+                    <!-- Page Range Selection -->
+                    <div class="bg-slate-50 p-4 rounded-xl border border-slate-200 flex flex-col sm:flex-row items-center justify-between gap-3">
+                        <div class="flex items-center gap-2">
+                            <i data-lucide="book-open" class="w-5 h-5 text-blue-600"></i>
+                            <div>
+                                <h4 class="text-xs font-bold text-slate-800">تحديد نطاق الصفحات (اختياري)</h4>
+                                <p class="text-[11px] text-slate-500">معالجة أجزاء محددة للسرعة وتوفير الرصيد</p>
+                            </div>
+                        </div>
+                        <div class="flex items-center gap-2 text-xs">
+                            <span>من صفحة</span>
+                            <input type="number" value="1" min="1" class="w-16 bg-white border border-slate-300 rounded-lg px-2 py-1 text-center font-bold">
+                            <span>إلى</span>
+                            <input type="number" placeholder="الكل" class="w-16 bg-white border border-slate-300 rounded-lg px-2 py-1 text-center font-bold">
+                        </div>
+                    </div>
+
+                    <!-- Submit Button -->
+                    <button onclick="startAiGeneration()" id="btn-generate" class="w-full gradient-bg hover:opacity-95 text-white font-bold py-4 rounded-xl shadow-lg shadow-blue-500/25 flex items-center justify-center gap-2 transition transform active:scale-[0.99]">
+                        <i data-lucide="wand-2" class="w-5 h-5"></i>
+                        <span>إنشاء الأسئلة الآن باستخدام الذكاء الاصطناعي</span>
+                    </button>
+
+                </div>
+            </div>
+        </section>
+
+        <!-- VIEW 2: Processing & Loading State -->
+        <section id="view-loading" class="hidden my-16 text-center space-y-6 max-w-md mx-auto">
+            <div class="relative w-24 h-24 mx-auto flex items-center justify-center">
+                <div class="absolute inset-0 rounded-full border-4 border-blue-200 border-t-blue-600 animate-spin"></div>
+                <i data-lucide="cpu" class="w-10 h-10 text-blue-600"></i>
+            </div>
+            <div class="space-y-2">
+                <h3 class="text-xl font-bold text-slate-900" id="loading-status-title">جاري استخراج النص ومعالجته...</h3>
+                <p class="text-xs text-slate-500" id="loading-status-sub">نقوم بتحليل محتوى المستند وصياغة أسئلة الخيارات المتعددة</p>
+            </div>
+            <div class="w-full bg-slate-200 h-2.5 rounded-full overflow-hidden">
+                <div id="loading-bar" class="bg-blue-600 h-full w-0 transition-all duration-300"></div>
+            </div>
+        </section>
+
+        <!-- VIEW 3: Editor & Review Mode -->
+        <section id="view-editor" class="hidden space-y-6">
+            <div class="bg-white p-4 rounded-2xl border border-slate-200 shadow-sm flex flex-col md:flex-row items-center justify-between gap-4">
+                <div class="flex items-center gap-3">
+                    <div class="p-2 bg-emerald-100 text-emerald-700 rounded-lg">
+                        <i data-lucide="check-circle-2" class="w-6 h-6"></i>
+                    </div>
+                    <div>
+                        <h2 class="text-lg font-bold text-slate-900">تم توليد الأسئلة بنجاح!</h2>
+                        <p class="text-xs text-slate-500">تم إنشاء <span id="created-count" class="font-bold text-blue-600">5</span> أسئلة. يمكنك تعديلها أو خوض الاختبار أو تصديرها مباشرة.</p>
+                    </div>
+                </div>
+
+                <div class="flex flex-wrap items-center gap-2 w-full md:w-auto">
+                    <button onclick="startInteractiveQuiz()" class="flex-1 md:flex-none bg-blue-600 hover:bg-blue-700 text-white text-xs font-bold px-4 py-2.5 rounded-xl flex items-center justify-center gap-2 shadow-sm transition">
+                        <i data-lucide="play" class="w-4 h-4"></i>
+                        <span>تجربة الاختبار</span>
+                    </button>
+                    <button id="btn-share-students" onclick="openShareModal()" class="flex-1 md:flex-none bg-purple-600 hover:bg-purple-700 text-white text-xs font-bold px-4 py-2.5 rounded-xl flex items-center justify-center gap-2 shadow-sm transition">
+                        <i data-lucide="share-2" class="w-4 h-4"></i>
+                        <span>مشاركة رابط للطلاب</span>
+                    </button>
+                    <button onclick="exportDoc('pdf')" class="flex-1 md:flex-none bg-slate-100 hover:bg-slate-200 text-slate-800 text-xs font-bold px-3 py-2.5 rounded-xl flex items-center justify-center gap-2 border border-slate-300 transition">
+                        <i data-lucide="download" class="w-4 h-4"></i>
+                        <span>تصدير PDF</span>
+                    </button>
+                </div>
+            </div>
+
+            <!-- Questions List -->
+            <div id="questions-container" class="space-y-4"></div>
+
+            <!-- Add Question Button -->
+            <button onclick="addNewQuestion()" class="w-full py-3 border-2 border-dashed border-slate-300 rounded-xl text-slate-600 hover:text-blue-600 hover:border-blue-400 font-bold text-sm flex items-center justify-center gap-2 transition bg-white">
+                <i data-lucide="plus-circle" class="w-5 h-5"></i>
+                <span>إضافة سؤال جديد يدوياً</span>
+            </button>
+        </section>
+
+        <!-- VIEW 4: Interactive Quiz Mode -->
+        <section id="view-quiz" class="hidden max-w-3xl mx-auto space-y-6">
+            <div class="bg-white p-4 rounded-xl border border-slate-200 shadow-sm flex items-center justify-between">
+                <div class="flex items-center gap-2">
+                    <span class="text-xs font-bold text-slate-500">السؤال:</span>
+                    <span id="quiz-progress-text" class="text-sm font-extrabold text-blue-600">1 / 5</span>
+                </div>
+                <div class="flex items-center gap-2 text-slate-600 text-xs font-semibold bg-slate-100 px-3 py-1.5 rounded-lg">
+                    <i data-lucide="clock" class="w-4 h-4 text-blue-500"></i>
+                    <span id="quiz-timer">00:00</span>
+                </div>
+                <button onclick="exitQuiz()" class="text-xs text-red-600 hover:bg-red-50 font-bold px-3 py-1.5 rounded-lg transition">
+                    إنهاء الاختبار
+                </button>
+            </div>
+
+            <div class="bg-white rounded-2xl shadow-lg border border-slate-200 p-6 sm:p-8 space-y-6">
+                <h3 id="quiz-question-title" class="text-lg sm:text-xl font-bold text-slate-900 leading-snug"></h3>
+
+                <div id="quiz-options-container" class="space-y-3"></div>
+
+                <div class="flex items-center justify-between pt-4 border-t border-slate-100">
+                    <button id="btn-quiz-prev" onclick="prevQuizQuestion()" class="text-slate-600 hover:bg-slate-100 px-4 py-2 rounded-xl font-bold text-xs flex items-center gap-2 disabled:opacity-40" disabled>
+                        <i data-lucide="arrow-right" class="w-4 h-4"></i>
+                        <span>السابق</span>
+                    </button>
+                    <button id="btn-quiz-next" onclick="nextQuizQuestion()" class="bg-blue-600 text-white hover:bg-blue-700 px-6 py-2.5 rounded-xl font-bold text-xs flex items-center gap-2 shadow-sm">
+                        <span>التالي</span>
+                        <i data-lucide="arrow-left" class="w-4 h-4"></i>
+                    </button>
+                </div>
+            </div>
+        </section>
+
+        <!-- VIEW 5: Quiz Results -->
+        <section id="view-results" class="hidden max-w-2xl mx-auto space-y-6 text-center">
+            <div class="bg-white rounded-2xl shadow-xl border border-slate-200 p-8 space-y-6">
+                <div class="w-20 h-20 bg-emerald-100 text-emerald-600 rounded-full flex items-center justify-center mx-auto">
+                    <i data-lucide="trophy" class="w-10 h-10"></i>
+                </div>
+                <div>
+                    <h2 class="text-2xl font-black text-slate-900">أحسنت! أكملت الاختبار</h2>
+                    <p class="text-xs text-slate-500 mt-1">إليك ملخص أدائك في هذا الاختبار</p>
+                </div>
+
+                <div class="bg-slate-50 p-6 rounded-2xl border border-slate-200 flex items-center justify-around">
+                    <div>
+                        <span class="block text-2xl font-black text-slate-800" id="res-score">0/0</span>
+                        <span class="text-[11px] font-bold text-slate-500">الدرجة النهائية</span>
+                    </div>
+                    <div class="h-8 w-px bg-slate-200"></div>
+                    <div>
+                        <span class="block text-2xl font-black text-blue-600" id="res-percentage">0%</span>
+                        <span class="text-[11px] font-bold text-slate-500">النسبة المئوية</span>
+                    </div>
+                    <div class="h-8 w-px bg-slate-200"></div>
+                    <div>
+                        <span class="block text-2xl font-black text-slate-800" id="res-time">00:00</span>
+                        <span class="text-[11px] font-bold text-slate-500">الوقت المستغرق</span>
+                    </div>
+                </div>
+
+                <div class="flex flex-col sm:flex-row gap-3 pt-4">
+                    <button onclick="switchView('editor')" class="flex-1 bg-slate-900 text-white hover:bg-slate-800 py-3 rounded-xl font-bold text-xs flex items-center justify-center gap-2">
+                        <i data-lucide="edit" class="w-4 h-4"></i>
+                        <span>مراجعة وتعديل الأسئلة</span>
+                    </button>
+                    <button onclick="exportDoc('pdf')" class="flex-1 gradient-bg text-white hover:opacity-95 py-3 rounded-xl font-bold text-xs flex items-center justify-center gap-2">
+                        <i data-lucide="download" class="w-4 h-4"></i>
+                        <span>تنزيل تقرير النتيجة PDF</span>
+                    </button>
+                </div>
+            </div>
+        </section>
+
+        <!-- VIEW 6: Student Name Entry View -->
+        <section id="view-student-entry" class="hidden max-w-md mx-auto my-12 space-y-6">
+            <div class="bg-white rounded-2xl shadow-xl border border-slate-200 p-6 sm:p-8 space-y-6 text-center">
+                <div class="w-16 h-16 gradient-bg text-white rounded-2xl flex items-center justify-center mx-auto shadow-md">
+                    <i data-lucide="graduation-cap" class="w-8 h-8"></i>
+                </div>
+                <div>
+                    <h2 class="text-2xl font-black text-slate-900">مرحباً بك في الاختبار التفاعلي</h2>
+                    <p class="text-xs text-slate-500 mt-1">الرجاء إدخال اسمك للبدء في حل الاختبار وتسجيل النتيجة للمعلم</p>
+                </div>
+
+                <div class="space-y-4 text-right">
+                    <div>
+                        <label class="block text-xs font-bold text-slate-700 mb-1.5">اسم الطالب الثلاثي:</label>
+                        <input type="text" id="student-name-input" placeholder="مثال: أحمد محمد علي" class="w-full bg-slate-50 border border-slate-300 rounded-xl px-4 py-3 text-sm font-semibold text-slate-800 focus:bg-white focus:ring-2 focus:ring-blue-500 focus:outline-none transition">
+                    </div>
+                    <button onclick="startStudentQuizSession()" class="w-full gradient-bg hover:opacity-95 text-white font-bold py-3.5 rounded-xl text-sm shadow-md flex items-center justify-center gap-2 transition">
+                        <span>بدء حل الأسئلة الآن</span>
+                        <i data-lucide="arrow-left" class="w-4 h-4"></i>
+                    </button>
+                </div>
+            </div>
+        </section>
+
+        <!-- VIEW 7: Student Final Report View (Pass / Fail) -->
+        <section id="view-student-report" class="hidden max-w-2xl mx-auto space-y-6">
+            <div id="printable-report" class="bg-white rounded-2xl shadow-xl border border-slate-200 p-8 space-y-6 relative overflow-hidden">
+                <div id="report-status-banner" class="p-4 rounded-xl flex items-center justify-between">
+                    <div class="flex items-center gap-3">
+                        <div id="report-status-icon" class="w-12 h-12 rounded-full flex items-center justify-center text-white font-bold"></div>
+                        <div>
+                            <h3 id="report-status-title" class="text-lg font-black"></h3>
+                            <p id="report-status-sub" class="text-xs opacity-90"></p>
+                        </div>
+                    </div>
+                    <span id="report-status-tag" class="text-xs font-black px-3 py-1 rounded-full bg-white/30"></span>
+                </div>
+
+                <div class="bg-slate-50 p-4 rounded-xl border border-slate-200 flex flex-wrap items-center justify-between gap-4 text-xs">
+                    <div>
+                        <span class="text-slate-400 font-bold block">اسم الطالب:</span>
+                        <span id="report-student-name" class="text-sm font-extrabold text-slate-900"></span>
+                    </div>
+                    <div>
+                        <span class="text-slate-400 font-bold block">جهة الإصدار:</span>
+                        <span class="text-sm font-semibold text-amber-600 font-bold">مكتبة المصطفى</span>
+                    </div>
+                    <div>
+                        <span class="text-slate-400 font-bold block">حالة النتيجة:</span>
+                        <span id="report-pass-badge" class="font-extrabold text-sm"></span>
+                    </div>
+                </div>
+
+                <div class="grid grid-cols-3 gap-3 text-center">
+                    <div class="bg-slate-50 p-4 rounded-xl border border-slate-100">
+                        <span class="text-xs font-bold text-slate-500 block">النتيجة</span>
+                        <span id="report-score-num" class="text-xl font-black text-slate-800"></span>
+                    </div>
+                    <div class="bg-slate-50 p-4 rounded-xl border border-slate-100">
+                        <span class="text-xs font-bold text-slate-500 block">النسبة المئوية</span>
+                        <span id="report-score-pct" class="text-xl font-black text-blue-600"></span>
+                    </div>
+                    <div class="bg-slate-50 p-4 rounded-xl border border-slate-100">
+                        <span class="text-xs font-bold text-slate-500 block">الوقت المستغرق</span>
+                        <span id="report-time-spent" class="text-xl font-black text-slate-800"></span>
+                    </div>
+                </div>
+
+                <!-- Certificate Generator Button Section -->
+                <div id="certificate-action-box" class="hidden bg-amber-50 dark:bg-amber-950/30 border border-amber-200 dark:border-amber-800 p-4 rounded-xl text-center space-y-3">
+                    <div class="flex items-center justify-center gap-2 text-amber-800 dark:text-amber-300 font-bold text-sm">
+                        <i data-lucide="award" class="w-5 h-5 text-amber-600"></i>
+                        <span>مبارك! استحققت شهادة اجتياز تقديرية من مكتبة المصطفى</span>
+                    </div>
+                    <button onclick="generateCertificate()" class="bg-amber-600 hover:bg-amber-700 text-white font-extrabold text-xs px-6 py-3 rounded-xl shadow-md transition flex items-center justify-center gap-2 mx-auto">
+                        <i data-lucide="file-badge-2" class="w-4 h-4"></i>
+                        <span>عرض واستخراج شهادة التفوق الآن</span>
+                    </button>
+                </div>
+
+                <div class="flex flex-col sm:flex-row gap-3 pt-2 print:hidden">
+                    <button onclick="exportStudentReportPDF()" class="flex-1 gradient-bg text-white hover:opacity-95 py-3 rounded-xl font-bold text-xs flex items-center justify-center gap-2 shadow-md">
+                        <i data-lucide="printer" class="w-4 h-4"></i>
+                        <span>تصدير / طباعة التقرير الرسمى</span>
+                    </button>
+                    <button onclick="switchView('generator')" class="bg-slate-100 hover:bg-slate-200 text-slate-800 px-5 py-3 rounded-xl font-bold text-xs border border-slate-300">
+                        العودة للرئيسية
+                    </button>
+                </div>
+            </div>
+        </section>
+
+    </main>
+
+    <!-- Certificate Modal View -->
+    <div id="certificate-modal" class="fixed inset-0 bg-slate-900/80 backdrop-blur-md z-50 flex items-center justify-center p-4 hidden overflow-y-auto">
+        <div class="bg-white text-slate-900 rounded-2xl shadow-2xl max-w-3xl w-full p-4 sm:p-8 space-y-6 relative border-4 border-amber-400 my-8">
+            <button onclick="closeCertificateModal()" class="absolute top-4 left-4 text-slate-400 hover:text-slate-700 p-1 print:hidden">
+                <i data-lucide="x" class="w-6 h-6"></i>
+            </button>
+
+            <!-- Printable Certificate Area -->
+            <div id="printable-certificate" class="certificate-border p-6 sm:p-10 text-center space-y-6 bg-amber-50/20 relative">
+                
+                <div class="flex justify-between items-center border-b border-amber-200 pb-4">
+                    <div class="text-right">
+                        <span class="text-xs font-bold text-amber-700 block">منصة الاختبارات الإلكترونية</span>
+                        <span class="text-lg font-black text-slate-900" style="font-family: 'Amiri', serif;">موقع مكتبة المصطفى</span>
+                    </div>
+                    <div class="w-14 h-14 bg-amber-500 text-white rounded-full flex items-center justify-center shadow-lg">
+                        <i data-lucide="award" class="w-8 h-8"></i>
+                    </div>
+                </div>
+
+                <div class="space-y-3 py-4">
+                    <h2 class="text-3xl sm:text-4xl font-black text-amber-800 tracking-wide" style="font-family: 'Amiri', serif;">شهادة اجتياز وتفوق</h2>
+                    <p class="text-xs text-slate-600 font-bold uppercase tracking-widest">CERTIFICATE OF ACHIEVEMENT</p>
+                </div>
+
+                <div class="space-y-4 max-w-xl mx-auto">
+                    <p class="text-sm text-slate-700 font-semibold">تمنح هذه الشهادة التقديرية بكل فخر واعتزاز للطالب/ة:</p>
+                    <div class="text-2xl sm:text-3xl font-black text-blue-900 border-b-2 border-dashed border-amber-500 py-2 inline-block px-8" id="cert-student-name">
+                        أحمد محمد
+                    </div>
+                    <p class="text-xs sm:text-sm text-slate-700 leading-relaxed pt-2">
+                        وذلك لاجتيار اختبار الأسئلة الإلكترونية التفاعلية بنجاح وبتقدير ممتاز بنسبة (<span id="cert-score-pct" class="font-bold text-amber-700">0%</span>) عبر منصة MCQ Maker التابعة لموقع <span class="font-bold text-amber-800">مكتبة المصطفى</span>.
+                    </p>
+                </div>
+
+                <div class="grid grid-cols-2 gap-8 pt-8 text-xs font-bold text-slate-700 border-t border-amber-200">
+                    <div>
+                        <span class="block text-slate-400 font-normal">تاريخ الإصدار:</span>
+                        <span id="cert-date" class="text-slate-800"></span>
+                    </div>
+                    <div>
+                        <span class="block text-slate-400 font-normal">التوقيع والاعتماد:</span>
+                        <span class="text-amber-800 font-black text-sm" style="font-family: 'Amiri', serif;">إدارة موقع مكتبة المصطفى</span>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Modal Action Buttons -->
+            <div class="flex flex-col sm:flex-row gap-3 pt-2 print:hidden">
+                <button onclick="printCertificate()" class="flex-1 bg-amber-600 hover:bg-amber-700 text-white font-bold py-3 rounded-xl text-xs flex items-center justify-center gap-2 shadow-md transition">
+                    <i data-lucide="printer" class="w-4 h-4"></i>
+                    <span>طباعة / حفظ الشهادة (PDF)</span>
+                </button>
+                <button onclick="closeCertificateModal()" class="bg-slate-200 text-slate-800 font-bold px-6 py-3 rounded-xl text-xs hover:bg-slate-300 transition">
+                    إغلاق
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <!-- About Us Modal (من نحن & إبراء الذمة) -->
+    <div id="about-modal" class="fixed inset-0 bg-slate-900/60 backdrop-blur-sm z-50 flex items-center justify-center p-4 hidden">
+        <div class="bg-white rounded-2xl shadow-2xl max-w-2xl w-full p-6 sm:p-8 space-y-6 relative overflow-y-auto max-h-[90vh]">
+            <button onclick="closeAboutModal()" class="absolute top-4 left-4 text-slate-400 hover:text-slate-600 p-1">
+                <i data-lucide="x" class="w-6 h-6"></i>
+            </button>
+
+            <div class="text-center space-y-2">
+                <div class="w-14 h-14 bg-amber-100 text-amber-700 rounded-2xl flex items-center justify-center mx-auto shadow-sm">
+                    <i data-lucide="book-open-check" class="w-8 h-8"></i>
+                </div>
+                <h3 class="text-2xl font-black text-slate-900">عن منصة MCQ Maker - مكتبة المصطفى</h3>
+                <p class="text-xs text-slate-500">منصة توليد واختبارات تفاعلية ذكية للجميع</p>
+            </div>
+
+            <div class="space-y-4 text-xs sm:text-sm text-slate-700 leading-relaxed border-t border-slate-100 pt-4">
+                <div class="bg-blue-50 dark:bg-slate-800/80 p-4 rounded-xl border border-blue-100 dark:border-slate-700 space-y-2">
+                    <h4 class="font-bold text-blue-900 dark:text-blue-300 flex items-center gap-2">
+                        <i data-lucide="heart" class="w-4 h-4 text-rose-500"></i>
+                        <span>هدفنا والخدمة المجانية:</span>
+                    </h4>
+                    <p class="text-slate-600 dark:text-slate-300">
+                        تم إنشاء هذا الموقع كخدمة تعليمية مجانية بالكامل إهداءً من **موقع مكتبة المصطفى**، لمساعدة الطلاب في مذاكرة دروسهم بأسلوب تفاعلي، ولمساندة المعلمين والمدربين في إعداد أسئلة خيارات متعددة صائبة ومشاركتها مع طلابهم بدون أي رسوم أو اشتراكات مالية.
+                    </p>
+                </div>
+
+                <!-- Strict Non-Acquittal Disclaimer -->
+                <div class="bg-rose-50 dark:bg-rose-950/30 p-4 rounded-xl border border-rose-200 dark:border-rose-900 space-y-2">
+                    <h4 class="font-bold text-rose-900 dark:text-rose-300 flex items-center gap-2">
+                        <i data-lucide="alert-triangle" class="w-4 h-4 text-rose-600"></i>
+                        <span>تنبيه هام وإبراء ذمة شرعي وقانوني:</span>
+                    </h4>
+                    <p class="text-rose-950 dark:text-rose-200 font-semibold leading-relaxed">
+                        هذا الموقع ومحتواه والبرمجيات الخاصة به هي جهد خاص ومجاني لوجه الله تعالى ومقدم باسم **حقوق موقع مكتبة المصطفى**. 
+                        <br><br>
+                        <strong class="text-rose-700 dark:text-rose-400">⚠️ غير مبرأ الذمة شرعاً وأخلاقياً</strong> أمام الله تعالى كل من يقوم بسرقة هذا الكود أو إعادة إصداره ونسب هذا الجهد والفضل لغير صاحبه الأصلي، أو مسح وتغيير حقوق **مكتبة المصطفى**.
+                    </p>
+                </div>
+            </div>
+
+            <div class="pt-2 border-t border-slate-100 text-center">
+                <button onclick="closeAboutModal()" class="w-full bg-slate-900 hover:bg-slate-800 text-white font-bold py-3 rounded-xl text-xs transition">
+                    فهمت ذلك، إغلاق
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Footer -->
+    <footer class="bg-white border-t border-slate-200 mt-auto py-6 transition-colors">
+        <div class="max-w-7xl mx-auto px-4 text-center text-xs text-slate-500 space-y-2">
+            <p class="font-bold text-slate-700 dark:text-slate-300">جميع الحقوق محفوظة © 2026 موقع حقوق مكتبة المصطفى - منصة MCQ Maker التفاعلية</p>
+            <p class="text-[11px] text-slate-400">خدمة مجانية مخصصة لدعم التعليم وصياغة الاختبارات الذكية</p>
+        </div>
+    </footer>
+
+    <!-- JavaScript Logic -->
+    <script>
+        let sampleQuestions = [
+            {
+                id: 1,
+                question: "ما هي الوظيفة الرئيسية لمعالج الحاسوب (CPU)؟",
+                options: [
+                    "تخزين الملفات بشكل دائم",
+                    "تنفيذ التعليمات وإجراء العمليات الحسابية والمنطقية",
+                    "عرض الصور والرسوميات على الشاشة",
+                    "تزويد المكونات بالطاقة الكهربائية"
+                ],
+                correct: 1,
+                explanation: "المعالج هو بمثابة العقل في الحاسوب، ويتولى تنفيذ الأوامر ومعالجة البيانات."
+            },
+            {
+                id: 2,
+                question: "أي مما يلي يُعد مثالاً على برمجيات النظام (System Software)؟",
+                options: [
+                    "محرر النصوص Microsoft Word",
+                    "متصفح Google Chrome",
+                    "نظام التشغيل Linux",
+                    "تطبيق Photoshop"
+                ],
+                correct: 2,
+                explanation: "أنظمة التشغيل مثل Linux و Windows هي برمجيات نظام."
+            }
+        ];
+
+        let currentRole = 'student';
+        let currentStudentName = '';
+        let isStudentSharedSession = false;
+        let currentQuizIndex = 0;
+        let userAnswers = {};
+        let quizTimerInterval = null;
+        let timerSeconds = 0;
+        let isDarkMode = false;
+
+        // Initialize Dark Mode & Icons
+        window.addEventListener('DOMContentLoaded', () => {
+            lucide.createIcons();
+            checkAndLoadQuizFromUrl();
+        });
+
+        function toggleDarkMode() {
+            isDarkMode = !isDarkMode;
+            if (isDarkMode) {
+                document.documentElement.classList.add('dark');
+                document.getElementById('theme-icon-sun').classList.remove('hidden');
+                document.getElementById('theme-icon-moon').classList.add('hidden');
+            } else {
+                document.documentElement.classList.remove('dark');
+                document.getElementById('theme-icon-sun').classList.add('hidden');
+                document.getElementById('theme-icon-moon').classList.remove('hidden');
+            }
+        }
+
+        function openAboutModal() {
+            document.getElementById('about-modal').classList.remove('hidden');
+        }
+        function closeAboutModal() {
+            document.getElementById('about-modal').classList.add('hidden');
+        }
+
+        // Modified finishQuiz function to handle Certificate trigger for passing students
+        function finishQuiz() {
+            clearInterval(quizTimerInterval);
+            let score = 0;
+            sampleQuestions.forEach((q, idx) => {
+                if (userAnswers[idx] === q.correct) score++;
+            });
+
+            const total = sampleQuestions.length;
+            const pct = Math.round((score / total) * 100);
+            const mins = String(Math.floor(timerSeconds / 60)).padStart(2, '0');
+            const secs = String(timerSeconds % 60).padStart(2, '0');
+
+            if (isStudentSharedSession) {
+                const isPassed = pct >= 50;
+                
+                document.getElementById('report-student-name').textContent = currentStudentName || "طالب بدون اسم";
+                document.getElementById('report-score-num').textContent = `${score} / ${total}`;
+                document.getElementById('report-score-pct').textContent = `${pct}%`;
+                document.getElementById('report-time-spent').textContent = `${mins}:${secs}`;
+
+                const banner = document.getElementById('report-status-banner');
+                const icon = document.getElementById('report-status-icon');
+                const title = document.getElementById('report-status-title');
+                const sub = document.getElementById('report-status-sub');
+                const tag = document.getElementById('report-status-tag');
+                const passBadge = document.getElementById('report-pass-badge');
+                const certBox = document.getElementById('certificate-action-box');
+
+                if (isPassed) {
+                    banner.className = "p-5 rounded-xl flex items-center justify-between bg-emerald-600 text-white shadow-md";
+                    icon.className = "w-12 h-12 rounded-full flex items-center justify-center bg-white/20 text-white";
+                    icon.innerHTML = `<i data-lucide="check-circle" class="w-7 h-7"></i>`;
+                    title.textContent = "تهانينا! لقد اجتزت الاختبار بنجاح 🎉";
+                    sub.textContent = "أداء ممتاز من موقع مكتبة المصطفى، يمكنك إصدار شهادة التفوق الآن.";
+                    tag.textContent = "ناجح";
+                    passBadge.textContent = "ناجح (اجتاز)";
+                    passBadge.className = "font-extrabold text-sm text-emerald-600 bg-emerald-50 px-2 py-0.5 rounded";
+                    
+                    // Show Certificate Option!
+                    certBox.classList.remove('hidden');
+                } else {
+                    banner.className = "p-5 rounded-xl flex items-center justify-between bg-rose-600 text-white shadow-md";
+                    icon.className = "w-12 h-12 rounded-full flex items-center justify-center bg-white/20 text-white";
+                    icon.innerHTML = `<i data-lucide="x-circle" class="w-7 h-7"></i>`;
+                    title.textContent = "للأسف لم تجتاز الاختبار هذه المرة ⚠️";
+                    sub.textContent = "نسبتك أقل من حد النجاح المطلوب (50%). حاول المراجعة مجدداً.";
+                    tag.textContent = "غير مجتاز";
+                    passBadge.textContent = "راسب (لم يجتاز)";
+                    passBadge.className = "font-extrabold text-sm text-rose-600 bg-rose-50 px-2 py-0.5 rounded";
+                    
+                    // Hide Certificate Option
+                    certBox.classList.add('hidden');
+                }
+
+                lucide.createIcons();
+                switchView('student-report');
+            } else {
+                document.getElementById('res-score').textContent = `${score} / ${total}`;
+                document.getElementById('res-percentage').textContent = `${pct}%`;
+                document.getElementById('res-time').textContent = `${mins}:${secs}`;
+                switchView('results');
+            }
+        }
+
+        // Certificate Functions
+        function generateCertificate() {
+            document.getElementById('cert-student-name').textContent = currentStudentName || "الطالب المتميز";
+            const scorePct = document.getElementById('report-score-pct').textContent;
+            document.getElementById('cert-score-pct').textContent = scorePct;
+            document.getElementById('cert-date').textContent = new Date().toLocaleDateString('ar-EG');
+            document.getElementById('certificate-modal').classList.remove('hidden');
+        }
+
+        function closeCertificateModal() {
+            document.getElementById('certificate-modal').classList.add('hidden');
+        }
+
+        function printCertificate() {
+            window.print();
+        }
+
+        // Cleaned up removed Plans Functions
+        function openPlansModal() { openAboutModal(); }
+        function closePlansModal() {}
+                    title.textContent = "استخراج النص وتجاوز التنسيقات...";
+                } else if (progress === 75) {
+                    title.textContent = "توليد خيارات الأسئلة...";
+                } else if (progress >= 100) {
+                    clearInterval(interval);
+                    renderEditorQuestions();
+
+                    const shareBtn = document.getElementById('btn-share-students');
+                    if (currentRole === 'teacher') {
+                        shareBtn.classList.remove('hidden');
+                    } else {
+                        shareBtn.classList.add('hidden');
+                    }
+
+                    switchView('editor');
+                }
+            }, 300);
+        }
+
+        function renderEditorQuestions() {
+            const container = document.getElementById('questions-container');
+            document.getElementById('created-count').textContent = sampleQuestions.length;
+            container.innerHTML = '';
+
+            sampleQuestions.forEach((q, index) => {
+                const card = document.createElement('div');
+                card.className = "bg-white p-6 rounded-2xl border border-slate-200 shadow-sm space-y-4 relative";
+                card.innerHTML = `
+                    <div class="flex items-center justify-between gap-2 border-b border-slate-100 pb-3">
+                        <span class="text-xs font-bold text-blue-600 bg-blue-50 px-2.5 py-1 rounded-lg">سؤال #${index + 1}</span>
+                        <button onclick="deleteQuestion(${index})" class="text-slate-400 hover:text-red-500 text-xs font-semibold flex items-center gap-1 transition">
+                            <i data-lucide="trash-2" class="w-4 h-4"></i>
+                            <span>حذف</span>
+                        </button>
+                    </div>
+
+                    <div>
+                        <label class="block text-xs font-bold text-slate-700 mb-1">نص السؤال:</label>
+                        <input type="text" value="${q.question}" onchange="updateQuestionText(${index}, this.value)" class="w-full bg-slate-50 border border-slate-200 rounded-xl px-3 py-2 text-sm font-semibold text-slate-800 focus:bg-white focus:ring-2 focus:ring-blue-500 focus:outline-none">
+                    </div>
+
+                    <div class="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                        ${q.options.map((opt, optIndex) => `
+                            <div class="flex items-center gap-2 bg-slate-50 p-2 rounded-xl border ${q.correct === optIndex ? 'border-emerald-400 bg-emerald-50/30' : 'border-slate-200'}">
+                                <input type="radio" name="correct-${index}" ${q.correct === optIndex ? 'checked' : ''} onchange="setCorrectAnswer(${index}, ${optIndex})" class="text-emerald-600 focus:ring-emerald-500">
+                                <input type="text" value="${opt}" onchange="updateOptionText(${index}, ${optIndex}, this.value)" class="w-full bg-transparent text-xs font-medium text-slate-800 focus:outline-none">
+                            </div>
+                        `).join('')}
+                    </div>
+                `;
+                container.appendChild(card);
+            });
+            lucide.createIcons();
+        }
+
+        function updateQuestionText(idx, val) { sampleQuestions[idx].question = val; }
+        function updateOptionText(qIdx, oIdx, val) { sampleQuestions[qIdx].options[oIdx] = val; }
+        function setCorrectAnswer(qIdx, oIdx) { sampleQuestions[qIdx].correct = oIdx; renderEditorQuestions(); }
+        
+        function deleteQuestion(idx) {
+            sampleQuestions.splice(idx, 1);
+            renderEditorQuestions();
+        }
+
+        function addNewQuestion() {
+            sampleQuestions.push({
+                id: Date.now(),
+                question: "سؤال جديد...",
+                options: ["خيار 1", "خيار 2", "خيار 3", "خيار 4"],
+                correct: 0,
+                explanation: ""
+            });
+            renderEditorQuestions();
+        }
+
+        function startInteractiveQuiz() {
+            currentQuizIndex = 0;
+            userAnswers = {};
+            timerSeconds = 0;
+            switchView('quiz');
+            renderQuizQuestion();
+
+            if (quizTimerInterval) clearInterval(quizTimerInterval);
+            quizTimerInterval = setInterval(() => {
+                timerSeconds++;
+                const mins = String(Math.floor(timerSeconds / 60)).padStart(2, '0');
+                const secs = String(timerSeconds % 60).padStart(2, '0');
+                document.getElementById('quiz-timer').textContent = `${mins}:${secs}`;
+            }, 1000);
+        }
+
+        function renderQuizQuestion() {
+            const q = sampleQuestions[currentQuizIndex];
+            document.getElementById('quiz-progress-text').textContent = `${currentQuizIndex + 1} / ${sampleQuestions.length}`;
+            document.getElementById('quiz-question-title').textContent = `${currentQuizIndex + 1}. ${q.question}`;
+
+            const optionsBox = document.getElementById('quiz-options-container');
+            optionsBox.innerHTML = '';
+
+            q.options.forEach((opt, idx) => {
+                const btn = document.createElement('button');
+                btn.className = "w-full text-right p-4 rounded-xl border border-slate-200 text-sm font-semibold transition flex items-center justify-between hover:bg-slate-50";
+                
+                const isSelected = userAnswers[currentQuizIndex] === idx;
+                if (isSelected) {
+                    btn.classList.add('border-blue-600', 'bg-blue-50', 'text-blue-900', 'ring-2', 'ring-blue-500/20');
+                }
+
+                btn.innerHTML = `
+                    <span>${opt}</span>
+                    <span class="w-5 h-5 rounded-full border flex items-center justify-center text-xs font-bold ${isSelected ? 'bg-blue-600 border-blue-600 text-white' : 'border-slate-300 text-slate-500'}">
+                        ${String.fromCharCode(65 + idx)}
+                    </span>
+                `;
+
+                btn.onclick = () => selectQuizAnswer(idx);
+                optionsBox.appendChild(btn);
+            });
+
+            document.getElementById('btn-quiz-prev').disabled = currentQuizIndex === 0;
+            const nextBtn = document.getElementById('btn-quiz-next');
+            if (currentQuizIndex === sampleQuestions.length - 1) {
+                nextBtn.querySelector('span').textContent = "إنهاء وعرض النتيجة";
+            } else {
+                nextBtn.querySelector('span').textContent = "التالي";
+            }
+        }
+
+        function selectQuizAnswer(optIdx) {
+            userAnswers[currentQuizIndex] = optIdx;
+            renderQuizQuestion();
+        }
+
+        function prevQuizQuestion() {
+            if (currentQuizIndex > 0) {
+                currentQuizIndex--;
+                renderQuizQuestion();
+            }
+        }
+
+        function nextQuizQuestion() {
+            if (currentQuizIndex < sampleQuestions.length - 1) {
+                currentQuizIndex++;
+                renderQuizQuestion();
+            } else {
+                finishQuiz();
+            }
+        }
+
+        function finishQuiz() {
+            clearInterval(quizTimerInterval);
+            let score = 0;
+            sampleQuestions.forEach((q, idx) => {
+                if (userAnswers[idx] === q.correct) score++;
+            });
+
+            const total = sampleQuestions.length;
+            const pct = Math.round((score / total) * 100);
+            const mins = String(Math.floor(timerSeconds / 60)).padStart(2, '0');
+            const secs = String(timerSeconds % 60).padStart(2, '0');
+
+            if (isStudentSharedSession) {
+                const isPassed = pct >= 50;
+                
+                document.getElementById('report-student-name').textContent = currentStudentName || "طالب بدون اسم";
+                document.getElementById('report-date').textContent = new Date().toLocaleDateString('ar-EG');
+                document.getElementById('report-score-num').textContent = `${score} / ${total}`;
+                document.getElementById('report-score-pct').textContent = `${pct}%`;
+                document.getElementById('report-time-spent').textContent = `${mins}:${secs}`;
+
+                const banner = document.getElementById('report-status-banner');
+                const icon = document.getElementById('report-status-icon');
+                const title = document.getElementById('report-status-title');
+                const sub = document.getElementById('report-status-sub');
+                const tag = document.getElementById('report-status-tag');
+                const passBadge = document.getElementById('report-pass-badge');
+
+                if (isPassed) {
+                    banner.className = "p-5 rounded-xl flex items-center justify-between bg-emerald-600 text-white shadow-md";
+                    icon.className = "w-12 h-12 rounded-full flex items-center justify-center bg-white/20 text-white";
+                    icon.innerHTML = `<i data-lucide="check-circle" class="w-7 h-7"></i>`;
+                    title.textContent = "تهانينا! لقد اجتزت الاختبار بنجاح 🎉";
+                    sub.textContent = "أداء ممتاز، يمكنك طباعة التقرير الرسمي وتصديره للمعلم.";
+                    tag.textContent = "ناجح";
+                    passBadge.textContent = "ناجح (اجتاز)";
+                    passBadge.className = "font-extrabold text-sm text-emerald-600 bg-emerald-50 px-2 py-0.5 rounded";
+                } else {
+                    banner.className = "p-5 rounded-xl flex items-center justify-between bg-rose-600 text-white shadow-md";
+                    icon.className = "w-12 h-12 rounded-full flex items-center justify-center bg-white/20 text-white";
+                    icon.innerHTML = `<i data-lucide="x-circle" class="w-7 h-7"></i>`;
+                    title.textContent = "للأسف لم تجتاز الاختبار هذه المرة ⚠️";
+                    sub.textContent = "نسبتك أقل من حد النجاح المطلوب (50%). حاول المراجعة مجدداً.";
+                    tag.textContent = "غير مجتاز";
+                    passBadge.textContent = "راسب (لم يجتاز)";
+                    passBadge.className = "font-extrabold text-sm text-rose-600 bg-rose-50 px-2 py-0.5 rounded";
+                }
+
+                lucide.createIcons();
+                switchView('student-report');
+            } else {
+                document.getElementById('res-score').textContent = `${score} / ${total}`;
+                document.getElementById('res-percentage').textContent = `${pct}%`;
+                document.getElementById('res-time').textContent = `${mins}:${secs}`;
+                switchView('results');
+            }
+        }
+
+        function exitQuiz() {
+            clearInterval(quizTimerInterval);
+            if (isStudentSharedSession) {
+                switchView('student-entry');
+            } else {
+                switchView('editor');
+            }
+        }
+
+        // Generate Full Quiz URL compatible with GitHub Pages
+        function openShareModal() {
+            const encodedData = encodeQuizData(sampleQuestions);
+            const baseUrl = window.location.origin + window.location.pathname;
+            const shareUrl = `${baseUrl}?quiz=${encodedData}`;
+            
+            document.getElementById('share-url-field').value = shareUrl;
+            document.getElementById('share-modal').classList.remove('hidden');
+        }
+
+        function closeShareModal() {
+            document.getElementById('share-modal').classList.add('hidden');
+        }
+
+        function copyShareUrl() {
+            const copyText = document.getElementById('share-url-field');
+            copyText.select();
+            document.execCommand('copy');
+            const label = document.getElementById('copy-btn-label');
+            label.textContent = "تم النسخ!";
+            setTimeout(() => label.textContent = "نسخ الرابط", 2000);
+        }
+
+        function launchStudentFlowFromTeacher() {
+            closeShareModal();
+            isStudentSharedSession = true;
+            switchView('student-entry');
+        }
+
+        function startStudentQuizSession() {
+            const nameInput = document.getElementById('student-name-input').value.trim();
+            if (!nameInput) {
+                alert("الرجاء إدخال اسمك الثلاثي للبدء في الاختبار.");
+                return;
+            }
+            currentStudentName = nameInput;
+            isStudentSharedSession = true;
+            startInteractiveQuiz();
+        }
+
+        function exportStudentReportPDF() {
+            window.print();
+        }
+
+        function exportDoc(type) {
+            alert(`جاري تجهيز وتنزيل ملف الأسئلة بتنسيق ${type.toUpperCase()}...`);
+        }
+
+        function openPlansModal() {
+            document.getElementById('plans-modal').classList.remove('hidden');
+        }
+        function closePlansModal() {
+            document.getElementById('plans-modal').classList.add('hidden');
+        }
+    </script>
+</body>
+</html>
