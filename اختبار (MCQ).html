@@ -3,46 +3,54 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>MCQ Maker - صانع الاختبارات الذكي</title>
+    <title>MCQ Maker - صانع الاختبارات الذكي | مكتبة المصطفى</title>
     <!-- Tailwind CSS CDN -->
     <script src="https://cdn.tailwindcss.com"></script>
     <script>
         tailwind.config = {
             darkMode: 'class',
+            theme: {
+                extend: {
+                    colors: {
+                        brand: {
+                            50: '#eff6ff',
+                            100: '#dbeafe',
+                            500: '#3b82f6',
+                            600: '#2563eb',
+                            700: '#1d4ed8',
+                        }
+                    }
+                }
+            }
         }
     </script>
-    <!-- Google Fonts: Cairo & Reem Kufi for Certificate -->
+    <!-- Google Fonts: Cairo & Amiri for Certificate -->
     <link href="https://fonts.googleapis.com/css2?family=Cairo:wght@300;400;600;700;800;900&family=Amiri:wght@700&display=swap" rel="stylesheet">
     <!-- Lucide Icons CDN -->
     <script src="https://unpkg.com/lucide@latest"></script>
+    <!-- External Libraries for Real Parsing & Confetti -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/mammoth/1.6.0/mammoth.browser.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/canvas-confetti@1.6.0/dist/confetti.browser.min.js"></script>
+
     <style>
         body {
             font-family: 'Cairo', sans-serif;
             background-color: #f8fafc;
+            color: #0f172a;
             transition: background-color 0.3s, color 0.3s;
         }
         .dark body {
             background-color: #0f172a;
-            color: #f1f5f9;
+            color: #f8fafc;
         }
-        .dark .bg-white {
+        .dark .bg-card-dark {
             background-color: #1e293b !important;
-            color: #f8fafc !important;
             border-color: #334155 !important;
         }
-        .dark .bg-slate-50 {
-            background-color: #0f172a !important;
-            color: #e2e8f0 !important;
-            border-color: #334155 !important;
-        }
-        .dark .text-slate-900, .dark .text-slate-800, .dark .text-slate-700 {
-            color: #f1f5f9 !important;
-        }
-        .dark .text-slate-600, .dark .text-slate-500 {
-            color: #94a3b8 !important;
-        }
-        .dark .border-slate-200, .dark .border-slate-300 {
-            border-color: #334155 !important;
+        .dark .bg-subtle-dark {
+            background-color: #111827 !important;
+            border-color: #1f2937 !important;
         }
         .gradient-text {
             background: linear-gradient(135deg, #2563eb 0%, #7c3aed 100%);
@@ -55,6 +63,20 @@
         .certificate-border {
             border: 12px double #d97706;
         }
+        /* Flip Card Effect for Flashcards */
+        .perspective-1000 {
+            perspective: 1000px;
+        }
+        .transform-style-3d {
+            transform-style: preserve-3d;
+        }
+        .backface-hidden {
+            backface-visibility: hidden;
+        }
+        .rotate-y-180 {
+            transform: rotateY(180deg);
+        }
+        
         @media print {
             body * {
                 visibility: hidden;
@@ -71,199 +93,225 @@
         }
     </style>
 </head>
-<body class="text-slate-800 min-h-screen flex flex-col">
+<body class="min-h-screen flex flex-col antialiased selection:bg-blue-500 selection:text-white">
+
+    <!-- Toast Notification Overlay -->
+    <div id="toast-container" class="fixed top-5 left-1/2 -translate-x-1/2 z-50 flex flex-col gap-2 pointer-events-none"></div>
 
     <!-- Header / Navbar -->
-    <header class="bg-white border-b border-slate-200 sticky top-0 z-50 shadow-sm transition-colors">
+    <header class="bg-white dark:bg-slate-900 border-b border-slate-200 dark:border-slate-800 sticky top-0 z-40 shadow-sm transition-colors">
         <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 h-16 flex items-center justify-between">
             <div class="flex items-center gap-3 cursor-pointer" onclick="switchView('generator')">
                 <div class="w-10 h-10 gradient-bg rounded-xl flex items-center justify-center text-white shadow-md">
                     <i data-lucide="book-open-check" class="w-6 h-6"></i>
                 </div>
                 <div>
-                    <span class="font-extrabold text-lg sm:text-xl gradient-text">MCQ Maker</span>
-                    <span class="text-xs bg-amber-100 text-amber-800 dark:bg-amber-900/50 dark:text-amber-300 px-2 py-0.5 rounded-full font-bold mr-1">مكتبة المصطفى</span>
+                    <div class="flex items-center gap-2">
+                        <span class="font-extrabold text-lg sm:text-xl gradient-text">MCQ Maker Pro</span>
+                        <span class="text-[10px] bg-amber-100 text-amber-800 dark:bg-amber-900/60 dark:text-amber-300 px-2 py-0.5 rounded-full font-bold">مكتبة المصطفى</span>
+                    </div>
+                    <p class="text-[10px] text-slate-500 dark:text-slate-400 font-medium">صانع الاختبارات الذكي من المستندات والأنصوص</p>
                 </div>
             </div>
 
-            <nav class="hidden md:flex items-center gap-6 text-sm font-semibold text-slate-600">
-                <a href="#generator" onclick="switchView('generator')" class="hover:text-blue-600 transition">توليد اختبار</a>
-                <button onclick="openAboutModal()" class="hover:text-blue-600 transition flex items-center gap-1">
-                    <i data-lucide="info" class="w-4 h-4"></i>
-                    <span>من نحن</span>
+            <nav class="hidden md:flex items-center gap-6 text-sm font-bold text-slate-600 dark:text-slate-300">
+                <button onclick="switchView('generator')" class="hover:text-blue-600 dark:hover:text-blue-400 transition flex items-center gap-1.5">
+                    <i data-lucide="sparkles" class="w-4 h-4 text-blue-500"></i>
+                    <span>توليد اختبار</span>
+                </button>
+                <button onclick="switchView('editor')" id="nav-editor-btn" class="hidden hover:text-blue-600 dark:hover:text-blue-400 transition flex items-center gap-1.5">
+                    <i data-lucide="file-edit" class="w-4 h-4 text-purple-500"></i>
+                    <span>محرر الأسئلة</span>
+                </button>
+                <button onclick="switchView('flashcards')" id="nav-flashcards-btn" class="hidden hover:text-blue-600 dark:hover:text-blue-400 transition flex items-center gap-1.5">
+                    <i data-lucide="layers" class="w-4 h-4 text-amber-500"></i>
+                    <span>بطاقات تعليمية</span>
+                </button>
+                <button onclick="openAboutModal()" class="hover:text-blue-600 dark:hover:text-blue-400 transition flex items-center gap-1.5">
+                    <i data-lucide="info" class="w-4 h-4 text-emerald-500"></i>
+                    <span>عن المنصة وإبراء الذمة</span>
                 </button>
             </nav>
 
             <div class="flex items-center gap-2 sm:gap-3">
                 <!-- Day / Night Mode Toggle -->
-                <button onclick="toggleDarkMode()" class="p-2 rounded-xl bg-slate-100 dark:bg-slate-800 text-slate-700 dark:text-amber-400 hover:bg-slate-200 dark:hover:bg-slate-700 transition" title="تبديل الوضع الليلي/النهاري">
+                <button onclick="toggleDarkMode()" id="theme-toggle-btn" class="p-2.5 rounded-xl bg-slate-100 dark:bg-slate-800 text-slate-700 dark:text-amber-400 hover:bg-slate-200 dark:hover:bg-slate-700 transition flex items-center gap-2 text-xs font-bold" title="تبديل الوضع الليلي/النهاري">
                     <i data-lucide="sun" id="theme-icon-sun" class="w-5 h-5 hidden"></i>
                     <i data-lucide="moon" id="theme-icon-moon" class="w-5 h-5"></i>
+                    <span class="hidden sm:inline" id="theme-status-text">الوضع الليلي</span>
                 </button>
 
-                <button onclick="openAboutModal()" class="md:hidden text-xs font-bold bg-slate-100 dark:bg-slate-800 text-slate-700 dark:text-slate-200 px-3 py-2 rounded-lg">
+                <button onclick="openAboutModal()" class="md:hidden text-xs font-bold bg-slate-100 dark:bg-slate-800 text-slate-700 dark:text-slate-200 px-3 py-2 rounded-xl">
                     من نحن
                 </button>
 
-                <button onclick="switchView('generator')" class="bg-slate-900 text-white dark:bg-blue-600 text-xs sm:text-sm font-bold px-4 py-2 rounded-lg hover:bg-slate-800 dark:hover:bg-blue-700 transition flex items-center gap-2">
-                    <i data-lucide="sparkles" class="w-4 h-4 text-amber-400"></i>
-                    <span>توليد مجاني</span>
+                <button onclick="switchView('generator')" class="gradient-bg text-white text-xs sm:text-sm font-bold px-4 py-2.5 rounded-xl shadow-md hover:opacity-95 transition flex items-center gap-2">
+                    <i data-lucide="plus-circle" class="w-4 h-4"></i>
+                    <span class="hidden sm:inline">اختبار جديد</span>
                 </button>
             </div>
         </div>
     </header>
 
     <!-- Main Content Container -->
-    <main class="flex-1 max-w-7xl w-full mx-auto px-4 sm:px-6 lg:px-8 py-8">
+    <main class="flex-1 max-w-7xl w-full mx-auto px-4 sm:px-6 lg:px-8 py-6">
 
-        <!-- Banner Alert: Free Mustafa Library Notice -->
-        <div class="mb-6 bg-gradient-to-r from-blue-50 to-indigo-50 dark:from-slate-800 dark:to-slate-900 border border-blue-200 dark:border-slate-700 rounded-xl p-4 flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4 shadow-sm">
+        <!-- Top Gift Banner -->
+        <div class="mb-6 bg-gradient-to-r from-blue-50 to-indigo-50 dark:from-slate-800 dark:to-slate-900 border border-blue-200/80 dark:border-slate-700 rounded-2xl p-4 flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4 shadow-sm">
             <div class="flex items-center gap-3">
-                <div class="p-2.5 bg-blue-600 text-white rounded-xl shadow">
+                <div class="p-2.5 bg-blue-600 text-white rounded-xl shadow-md">
                     <i data-lucide="heart-handshake" class="w-6 h-6"></i>
                 </div>
                 <div>
-                    <h4 class="font-bold text-slate-900 text-sm">موقع مجاني بالكامل - إهداء من موقع مكتبة المصطفى</h4>
-                    <p class="text-xs text-slate-600 dark:text-slate-400">خدمة مخصصة لمساعدة الطلاب والمعلمين في صياغة الاختبارات الإلكترونية بسهولة وبلا حدود مادية.</p>
+                    <h4 class="font-bold text-slate-900 dark:text-white text-sm sm:text-base">منصة مجانية بالكامل - إهداء من موقع مكتبة المصطفى</h4>
+                    <p class="text-xs text-slate-600 dark:text-slate-400">تحويل الملخصات والملفات إلى أسئلة اختيارات متعددة وبطاقات استذكار بكل سهولة.</p>
                 </div>
             </div>
-            <button onclick="openAboutModal()" class="text-xs font-bold text-blue-700 dark:text-blue-300 bg-blue-100 dark:bg-blue-900/60 px-4 py-2 rounded-lg hover:bg-blue-200 transition whitespace-nowrap">
-                اقرأ الشروط والفضل
+            <button onclick="openAboutModal()" class="text-xs font-bold text-blue-700 dark:text-blue-300 bg-blue-100 dark:bg-blue-900/60 px-4 py-2 rounded-xl hover:bg-blue-200 dark:hover:bg-blue-800/80 transition whitespace-nowrap">
+                شروط الاستخدام والحقوق
             </button>
         </div>
 
         <!-- VIEW 1: Generator & Upload Section -->
         <section id="view-generator" class="space-y-8">
             <!-- Hero Title -->
-            <div class="text-center max-w-2xl mx-auto space-y-3">
-                <h1 class="text-3xl sm:text-4xl font-black text-slate-900 leading-tight">
-                    حوّل ملخصاتك وملفاتك إلى <span class="gradient-text">اختبارات تفاعلية</span> بثوانٍ
+            <div class="text-center max-w-3xl mx-auto space-y-3">
+                <h1 class="text-3xl sm:text-4xl font-black text-slate-900 dark:text-white leading-tight">
+                    حوّل مستنداتك وملخصاتك إلى <span class="gradient-text">اختبارات تفاعلية وذكية</span>
                 </h1>
-                <p class="text-slate-600 text-sm sm:text-base">
-                    قم برفع ملف PDF أو Word أو اختر نصاً مباشرة، وسيقوم الذكاء الاصطناعي باستخراج أهم الأسئلة وتوليد اختيارات متعدده مع حلول نموذجية.
+                <p class="text-slate-600 dark:text-slate-400 text-xs sm:text-sm max-w-2xl mx-auto">
+                    ارفع ملفات PDF أو Word أو TXT، أو الصق النص مباشرة للتحليل التلقائي وتوليد أسئلة خيارات متعددة مع مفاتيح إجابات وشروح توضيحية.
                 </p>
             </div>
 
-            <!-- Upload & Setup Card -->
-            <div class="bg-white rounded-2xl shadow-xl border border-slate-200/80 overflow-hidden max-w-4xl mx-auto">
+            <!-- Main Input Card with Tabs -->
+            <div class="bg-white dark:bg-slate-800 rounded-3xl shadow-xl border border-slate-200 dark:border-slate-700 overflow-hidden max-w-4xl mx-auto transition-colors">
+                
+                <!-- Input Type Tabs -->
+                <div class="flex border-b border-slate-200 dark:border-slate-700 bg-slate-50 dark:bg-slate-900/50 p-2 gap-2">
+                    <button id="tab-btn-file" onclick="setInputTab('file')" class="flex-1 py-3 px-4 rounded-xl text-xs sm:text-sm font-bold flex items-center justify-center gap-2 bg-white dark:bg-slate-800 text-blue-600 dark:text-blue-400 shadow-sm transition">
+                        <i data-lucide="file-up" class="w-4 h-4"></i>
+                        <span>رفع ملف (PDF, Word, TXT)</span>
+                    </button>
+                    <button id="tab-btn-text" onclick="setInputTab('text')" class="flex-1 py-3 px-4 rounded-xl text-xs sm:text-sm font-bold flex items-center justify-center gap-2 text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-white transition">
+                        <i data-lucide="align-left" class="w-4 h-4"></i>
+                        <span>كتابة أو لصق نص مباشر</span>
+                    </button>
+                </div>
+
                 <div class="p-6 sm:p-8 space-y-6">
 
-                    <!-- Drag & Drop Zone -->
-                    <div id="drop-zone" class="border-2 border-dashed border-slate-300 rounded-xl p-8 text-center bg-slate-50 hover:bg-blue-50/50 hover:border-blue-400 transition cursor-pointer group">
-                        <input type="file" id="file-input" class="hidden" accept=".pdf,.docx,.doc,.png,.jpg,.jpeg">
-                        <div class="w-16 h-16 bg-blue-100 text-blue-600 rounded-full flex items-center justify-center mx-auto mb-4 group-hover:scale-110 transition">
-                            <i data-lucide="upload-cloud" class="w-8 h-8"></i>
-                        </div>
-                        <h3 class="font-bold text-slate-800 text-lg mb-1">أسقط الملف هنا أو انقر للاختيار</h3>
-                        <p class="text-xs text-slate-500 mb-4">يدعم PDF, Word (DOCX) أو الصور (يدعم الملخصات المصورة) حتّى 25 ميجابايت</p>
-                        <div class="inline-flex items-center gap-2 text-xs font-semibold text-slate-600 bg-white border border-slate-200 rounded-lg px-3 py-1.5 shadow-sm">
-                            <i data-lucide="file-text" class="w-4 h-4 text-blue-500"></i>
-                            <span id="selected-file-name">لم يتم اختيار ملف بعد</span>
+                    <!-- TAB CONTENT 1: File Drag & Drop -->
+                    <div id="tab-content-file" class="space-y-4">
+                        <div id="drop-zone" onclick="document.getElementById('file-input').click()" class="border-2 border-dashed border-slate-300 dark:border-slate-600 rounded-2xl p-8 text-center bg-slate-50/50 dark:bg-slate-900/30 hover:bg-blue-50/50 dark:hover:bg-blue-950/20 hover:border-blue-500 transition cursor-pointer group">
+                            <input type="file" id="file-input" class="hidden" accept=".pdf,.docx,.txt" onchange="handleFileSelect(event)">
+                            <div class="w-16 h-16 bg-blue-100 dark:bg-blue-900/50 text-blue-600 dark:text-blue-400 rounded-2xl flex items-center justify-center mx-auto mb-3 group-hover:scale-110 transition shadow-sm">
+                                <i data-lucide="upload-cloud" class="w-8 h-8"></i>
+                            </div>
+                            <h3 class="font-extrabold text-slate-800 dark:text-slate-200 text-base sm:text-lg mb-1">اضغط هنا لاختيار الملف أو اسحبه إلى هنا</h3>
+                            <p class="text-xs text-slate-500 dark:text-slate-400 mb-4">يدعم ملفات PDF, Word (DOCX) والملفات النصية (TXT)</p>
+                            <div class="inline-flex items-center gap-2 text-xs font-bold text-slate-700 dark:text-slate-300 bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-xl px-4 py-2 shadow-sm">
+                                <i data-lucide="file-text" class="w-4 h-4 text-blue-500"></i>
+                                <span id="selected-file-name">لم يتم اختيار ملف بعد</span>
+                            </div>
                         </div>
                     </div>
 
-                    <!-- Section: User Role Selector (Student vs Teacher) -->
+                    <!-- TAB CONTENT 2: Direct Text Input -->
+                    <div id="tab-content-text" class="hidden space-y-3">
+                        <label class="block text-xs font-bold text-slate-700 dark:text-slate-300">أدخل النص أو المادة الدراسية المراد تحويلها إلى أسئلة:</label>
+                        <textarea id="raw-text-input" rows="7" placeholder="ضع الكلمات أو الملخص التعليمي أو الدرس هنا... (مثال: التعريفات، المفاهيم الرئيسية، أو القوانين)" class="w-full bg-slate-50 dark:bg-slate-900 border border-slate-200 dark:border-slate-700 rounded-2xl p-4 text-xs sm:text-sm font-medium focus:ring-2 focus:ring-blue-500 focus:outline-none transition dark:text-slate-100"></textarea>
+                    </div>
+
+                    <!-- Preview Extracted Text Badge -->
+                    <div id="extracted-preview-box" class="hidden bg-emerald-50 dark:bg-emerald-950/30 border border-emerald-200 dark:border-emerald-800 p-3 rounded-xl flex items-center justify-between text-xs text-emerald-800 dark:text-emerald-300">
+                        <div class="flex items-center gap-2">
+                            <i data-lucide="check-circle" class="w-4 h-4 text-emerald-600"></i>
+                            <span>تم استخراج النص بنجاح! جاهز للتوليد الذكي.</span>
+                        </div>
+                        <span id="extracted-words-count" class="font-extrabold bg-emerald-100 dark:bg-emerald-900 px-2 py-0.5 rounded">0 كلمة</span>
+                    </div>
+
+                    <!-- User Role Selection -->
                     <div class="space-y-2 pt-2">
-                        <label class="block text-xs font-bold text-slate-700 flex items-center gap-1.5">
-                            <i data-lucide="user-check" class="w-4 h-4 text-blue-600"></i>
-                            اختر صفك / الهدف من الاختبار:
+                        <label class="block text-xs font-bold text-slate-700 dark:text-slate-300 flex items-center gap-1.5">
+                            <i data-lucide="user-check" class="w-4 h-4 text-blue-500"></i>
+                            حدد نوع الاستخدام المطلوب:
                         </label>
                         <div class="grid grid-cols-1 sm:grid-cols-2 gap-3">
-                            <!-- Student Card -->
-                            <div id="role-student-card" onclick="setUserRole('student')" class="cursor-pointer border-2 border-blue-600 bg-blue-50/50 p-4 rounded-xl flex items-start gap-3 transition hover:shadow-sm">
+                            <div id="role-student-card" onclick="setUserRole('student')" class="cursor-pointer border-2 border-blue-600 bg-blue-50/50 dark:bg-blue-950/30 p-4 rounded-2xl flex items-start gap-3 transition">
                                 <input type="radio" id="role-student" name="user_role" value="student" checked class="mt-1 text-blue-600">
                                 <div>
-                                    <div class="text-xs font-bold text-slate-900 flex items-center gap-1">
-                                        <span>أنا طالب</span>
-                                        <span class="text-[10px] bg-blue-100 text-blue-700 px-1.5 py-0.5 rounded font-bold">دراسة وتدريب</span>
+                                    <div class="text-xs font-bold text-slate-900 dark:text-white flex items-center gap-1.5">
+                                        <span>طالب / متدرب</span>
+                                        <span class="text-[10px] bg-blue-100 dark:bg-blue-900 text-blue-700 dark:text-blue-300 px-2 py-0.5 rounded-md font-bold">دراسة وتدريب</span>
                                     </div>
-                                    <p class="text-[11px] text-slate-500 mt-0.5 leading-relaxed">
-                                        يخوض الطالب الاختبار ويحدد إجاباته بدقة دون إظهار صحة أو خطأ الإجابة إلا بعد إنهاء الاختبار بالكامل.
+                                    <p class="text-[11px] text-slate-500 dark:text-slate-400 mt-1 leading-relaxed">
+                                        خوض الاختبار وحل الأسئلة تفاعلياً والحصول على النتيجة والشهادة فوراً.
                                     </p>
                                 </div>
                             </div>
 
-                            <!-- Teacher Card -->
-                            <div id="role-teacher-card" onclick="setUserRole('teacher')" class="cursor-pointer border-2 border-slate-200 bg-white p-4 rounded-xl flex items-start gap-3 transition hover:border-blue-300 hover:shadow-sm">
+                            <div id="role-teacher-card" onclick="setUserRole('teacher')" class="cursor-pointer border-2 border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-800 p-4 rounded-2xl flex items-start gap-3 transition">
                                 <input type="radio" id="role-teacher" name="user_role" value="teacher" class="mt-1 text-blue-600">
                                 <div>
-                                    <div class="text-xs font-bold text-slate-900 flex items-center gap-1">
-                                        <span>أنا معلم / مدرب</span>
-                                        <span class="text-[10px] bg-purple-100 text-purple-700 px-1.5 py-0.5 rounded font-bold">إنشاء ومشاركة</span>
+                                    <div class="text-xs font-bold text-slate-900 dark:text-white flex items-center gap-1.5">
+                                        <span>معلم / مدرب</span>
+                                        <span class="text-[10px] bg-purple-100 dark:bg-purple-900 text-purple-700 dark:text-purple-300 px-2 py-0.5 rounded-md font-bold">إنشاء ومشاركة</span>
                                     </div>
-                                    <p class="text-[11px] text-slate-500 mt-0.5 leading-relaxed">
-                                        تحديد الإجابات ومراجعتها، ثم توليد رابط مشاركة مخصص للطلاب لحله وإصدار تقارير النجاح.
+                                    <p class="text-[11px] text-slate-500 dark:text-slate-400 mt-1 leading-relaxed">
+                                        تعديل ومراجعة الأسئلة وتصدير ملفات PDF أو مشاركة رابط مخصص للطلاب.
                                     </p>
                                 </div>
                             </div>
                         </div>
                     </div>
 
-                    <!-- Options Grid -->
-                    <div class="grid grid-cols-1 md:grid-cols-3 gap-4 pt-2">
-                        <!-- Option 1: Language -->
+                    <!-- Generation Options Grid -->
+                    <div class="grid grid-cols-1 sm:grid-cols-3 gap-4 pt-2">
                         <div>
-                            <label class="block text-xs font-bold text-slate-700 mb-1.5 flex items-center gap-1.5">
-                                <i data-lucide="globe" class="w-4 h-4 text-slate-500"></i>
+                            <label class="block text-xs font-bold text-slate-700 dark:text-slate-300 mb-1.5 flex items-center gap-1.5">
+                                <i data-lucide="globe" class="w-4 h-4 text-slate-400"></i>
                                 لغة الأسئلة
                             </label>
-                            <select id="opt-lang" class="w-full bg-slate-50 border border-slate-200 rounded-xl px-3 py-2.5 text-sm font-semibold text-slate-800 focus:ring-2 focus:ring-blue-500 focus:outline-none">
+                            <select id="opt-lang" class="w-full bg-slate-50 dark:bg-slate-900 border border-slate-200 dark:border-slate-700 rounded-xl px-3 py-2.5 text-xs font-bold text-slate-800 dark:text-slate-200 focus:ring-2 focus:ring-blue-500 focus:outline-none">
                                 <option value="ar">العربية (تلقائي)</option>
                                 <option value="en">الإنجليزية (English)</option>
-                                <option value="auto">نفس لغة المستند</option>
+                                <option value="auto">طبيعي حسب المستند</option>
                             </select>
                         </div>
 
-                        <!-- Option 2: Question Count -->
                         <div>
-                            <label class="block text-xs font-bold text-slate-700 mb-1.5 flex items-center gap-1.5">
-                                <i data-lucide="list-checks" class="w-4 h-4 text-slate-500"></i>
+                            <label class="block text-xs font-bold text-slate-700 dark:text-slate-300 mb-1.5 flex items-center gap-1.5">
+                                <i data-lucide="list-checks" class="w-4 h-4 text-slate-400"></i>
                                 عدد الأسئلة
                             </label>
-                            <select id="opt-count" class="w-full bg-slate-50 border border-slate-200 rounded-xl px-3 py-2.5 text-sm font-semibold text-slate-800 focus:ring-2 focus:ring-blue-500 focus:outline-none">
+                            <select id="opt-count" class="w-full bg-slate-50 dark:bg-slate-900 border border-slate-200 dark:border-slate-700 rounded-xl px-3 py-2.5 text-xs font-bold text-slate-800 dark:text-slate-200 focus:ring-2 focus:ring-blue-500 focus:outline-none">
                                 <option value="5">5 أسئلة (سريع)</option>
                                 <option value="10" selected>10 أسئلة (موصى به)</option>
                                 <option value="15">15 سؤالاً</option>
-                                <option value="20">20 سؤالاً (متاح مجاناً ✨)</option>
+                                <option value="20">20 سؤالاً (مكتمل)</option>
                             </select>
                         </div>
 
-                        <!-- Option 3: Difficulty -->
                         <div>
-                            <label class="block text-xs font-bold text-slate-700 mb-1.5 flex items-center gap-1.5">
-                                <i data-lucide="bar-chart-3" class="w-4 h-4 text-slate-500"></i>
+                            <label class="block text-xs font-bold text-slate-700 dark:text-slate-300 mb-1.5 flex items-center gap-1.5">
+                                <i data-lucide="bar-chart-3" class="w-4 h-4 text-slate-400"></i>
                                 مستوى الصعوبة
                             </label>
-                            <select id="opt-difficulty" class="w-full bg-slate-50 border border-slate-200 rounded-xl px-3 py-2.5 text-sm font-semibold text-slate-800 focus:ring-2 focus:ring-blue-500 focus:outline-none">
-                                <option value="mixed">متنوع (سهل، متوسط، صعب)</option>
-                                <option value="easy">سهل - تذكر المفاهيم</option>
-                                <option value="medium">متوسط - فهم واستيعاب</option>
-                                <option value="hard">متقدم - تحليل واستنتاج</option>
+                            <select id="opt-difficulty" class="w-full bg-slate-50 dark:bg-slate-900 border border-slate-200 dark:border-slate-700 rounded-xl px-3 py-2.5 text-xs font-bold text-slate-800 dark:text-slate-200 focus:ring-2 focus:ring-blue-500 focus:outline-none">
+                                <option value="mixed">متنوع (سهل، متوسط، متقدم)</option>
+                                <option value="easy">مباشر وسهل</option>
+                                <option value="medium">متوسط - استيعابي</option>
+                                <option value="hard">متقدم - استنتاجي</option>
                             </select>
-                        </div>
-                    </div>
-
-                    <!-- Page Range Selection -->
-                    <div class="bg-slate-50 p-4 rounded-xl border border-slate-200 flex flex-col sm:flex-row items-center justify-between gap-3">
-                        <div class="flex items-center gap-2">
-                            <i data-lucide="book-open" class="w-5 h-5 text-blue-600"></i>
-                            <div>
-                                <h4 class="text-xs font-bold text-slate-800">تحديد نطاق الصفحات (اختياري)</h4>
-                                <p class="text-[11px] text-slate-500">معالجة أجزاء محددة للسرعة وتوفير الرصيد</p>
-                            </div>
-                        </div>
-                        <div class="flex items-center gap-2 text-xs">
-                            <span>من صفحة</span>
-                            <input type="number" value="1" min="1" class="w-16 bg-white border border-slate-300 rounded-lg px-2 py-1 text-center font-bold">
-                            <span>إلى</span>
-                            <input type="number" placeholder="الكل" class="w-16 bg-white border border-slate-300 rounded-lg px-2 py-1 text-center font-bold">
                         </div>
                     </div>
 
                     <!-- Submit Button -->
-                    <button onclick="startAiGeneration()" id="btn-generate" class="w-full gradient-bg hover:opacity-95 text-white font-bold py-4 rounded-xl shadow-lg shadow-blue-500/25 flex items-center justify-center gap-2 transition transform active:scale-[0.99]">
+                    <button onclick="startAiGeneration()" id="btn-generate" class="w-full gradient-bg hover:opacity-95 text-white font-extrabold py-4 rounded-2xl shadow-lg shadow-blue-500/20 flex items-center justify-center gap-2.5 text-sm sm:text-base transition transform active:scale-[0.99]">
                         <i data-lucide="wand-2" class="w-5 h-5"></i>
-                        <span>إنشاء الأسئلة الآن باستخدام الذكاء الاصطناعي</span>
+                        <span>توليد الاختبار وبطاقات المراجعة الآن</span>
                     </button>
 
                 </div>
@@ -273,84 +321,140 @@
         <!-- VIEW 2: Processing & Loading State -->
         <section id="view-loading" class="hidden my-16 text-center space-y-6 max-w-md mx-auto">
             <div class="relative w-24 h-24 mx-auto flex items-center justify-center">
-                <div class="absolute inset-0 rounded-full border-4 border-blue-200 border-t-blue-600 animate-spin"></div>
-                <i data-lucide="cpu" class="w-10 h-10 text-blue-600"></i>
+                <div class="absolute inset-0 rounded-full border-4 border-blue-200 dark:border-slate-700 border-t-blue-600 animate-spin"></div>
+                <i data-lucide="cpu" class="w-10 h-10 text-blue-600 dark:text-blue-400"></i>
             </div>
             <div class="space-y-2">
-                <h3 class="text-xl font-bold text-slate-900" id="loading-status-title">جاري استخراج النص ومعالجته...</h3>
-                <p class="text-xs text-slate-500" id="loading-status-sub">نقوم بتحليل محتوى المستند وصياغة أسئلة الخيارات المتعددة</p>
+                <h3 class="text-xl font-black text-slate-900 dark:text-white" id="loading-status-title">جاري استخراج البيانات وتحليل المحتوى...</h3>
+                <p class="text-xs text-slate-500 dark:text-slate-400" id="loading-status-sub">نقوم بقراءة النص وصياغة الأسئلة مع الاختيارات الدقيقة</p>
             </div>
-            <div class="w-full bg-slate-200 h-2.5 rounded-full overflow-hidden">
+            <div class="w-full bg-slate-200 dark:bg-slate-700 h-3 rounded-full overflow-hidden shadow-inner">
                 <div id="loading-bar" class="bg-blue-600 h-full w-0 transition-all duration-300"></div>
             </div>
         </section>
 
         <!-- VIEW 3: Editor & Review Mode -->
         <section id="view-editor" class="hidden space-y-6">
-            <div class="bg-white p-4 rounded-2xl border border-slate-200 shadow-sm flex flex-col md:flex-row items-center justify-between gap-4">
-                <div class="flex items-center gap-3">
-                    <div class="p-2 bg-emerald-100 text-emerald-700 rounded-lg">
+            <div class="bg-white dark:bg-slate-800 p-4 sm:p-6 rounded-2xl border border-slate-200 dark:border-slate-700 shadow-sm flex flex-col md:flex-row items-center justify-between gap-4 transition-colors">
+                <div class="flex items-center gap-3 w-full md:w-auto">
+                    <div class="p-3 bg-emerald-100 dark:bg-emerald-950 text-emerald-700 dark:text-emerald-300 rounded-xl">
                         <i data-lucide="check-circle-2" class="w-6 h-6"></i>
                     </div>
                     <div>
-                        <h2 class="text-lg font-bold text-slate-900">تم توليد الأسئلة بنجاح!</h2>
-                        <p class="text-xs text-slate-500">تم إنشاء <span id="created-count" class="font-bold text-blue-600">5</span> أسئلة. يمكنك تعديلها أو خوض الاختبار أو تصديرها مباشرة.</p>
+                        <h2 class="text-base sm:text-lg font-black text-slate-900 dark:text-white">جاهزية الأسئلة!</h2>
+                        <p class="text-xs text-slate-500 dark:text-slate-400">تم تجهيز <span id="created-count" class="font-extrabold text-blue-600 dark:text-blue-400">0</span> أسئلة. يمكنك تعديل الإجابات أو تقديم الاختبار.</p>
                     </div>
                 </div>
 
                 <div class="flex flex-wrap items-center gap-2 w-full md:w-auto">
-                    <button onclick="startInteractiveQuiz()" class="flex-1 md:flex-none bg-blue-600 hover:bg-blue-700 text-white text-xs font-bold px-4 py-2.5 rounded-xl flex items-center justify-center gap-2 shadow-sm transition">
-                        <i data-lucide="play" class="w-4 h-4"></i>
-                        <span>تجربة الاختبار</span>
+                    <button onclick="startInteractiveQuiz()" class="flex-1 md:flex-none bg-blue-600 hover:bg-blue-700 text-white text-xs font-bold px-4 py-3 rounded-xl flex items-center justify-center gap-2 shadow-md transition">
+                        <i data-lucide="play-circle" class="w-4 h-4"></i>
+                        <span>تقديم الاختبار الان</span>
                     </button>
-                    <button id="btn-share-students" onclick="openShareModal()" class="flex-1 md:flex-none bg-purple-600 hover:bg-purple-700 text-white text-xs font-bold px-4 py-2.5 rounded-xl flex items-center justify-center gap-2 shadow-sm transition">
+                    <button onclick="switchView('flashcards')" class="flex-1 md:flex-none bg-amber-500 hover:bg-amber-600 text-white text-xs font-bold px-4 py-3 rounded-xl flex items-center justify-center gap-2 shadow-md transition">
+                        <i data-lucide="layers" class="w-4 h-4"></i>
+                        <span>البطاقات التعليمية</span>
+                    </button>
+                    <button id="btn-share-students" onclick="openShareModal()" class="flex-1 md:flex-none bg-purple-600 hover:bg-purple-700 text-white text-xs font-bold px-4 py-3 rounded-xl flex items-center justify-center gap-2 shadow-md transition">
                         <i data-lucide="share-2" class="w-4 h-4"></i>
-                        <span>مشاركة رابط للطلاب</span>
+                        <span>مشاركة للطلاب</span>
                     </button>
-                    <button onclick="exportDoc('pdf')" class="flex-1 md:flex-none bg-slate-100 hover:bg-slate-200 text-slate-800 text-xs font-bold px-3 py-2.5 rounded-xl flex items-center justify-center gap-2 border border-slate-300 transition">
+                    <button onclick="exportQuizDoc('word')" class="bg-slate-100 dark:bg-slate-700 hover:bg-slate-200 dark:hover:bg-slate-600 text-slate-800 dark:text-slate-200 text-xs font-bold px-3 py-3 rounded-xl flex items-center justify-center gap-1.5 border border-slate-300 dark:border-slate-600 transition">
                         <i data-lucide="download" class="w-4 h-4"></i>
-                        <span>تصدير PDF</span>
+                        <span>تصدير Word</span>
                     </button>
                 </div>
             </div>
 
-            <!-- Questions List -->
+            <!-- Questions Editor List -->
             <div id="questions-container" class="space-y-4"></div>
 
             <!-- Add Question Button -->
-            <button onclick="addNewQuestion()" class="w-full py-3 border-2 border-dashed border-slate-300 rounded-xl text-slate-600 hover:text-blue-600 hover:border-blue-400 font-bold text-sm flex items-center justify-center gap-2 transition bg-white">
+            <button onclick="addNewQuestion()" class="w-full py-4 border-2 border-dashed border-slate-300 dark:border-slate-700 rounded-2xl text-slate-600 dark:text-slate-300 hover:text-blue-600 dark:hover:text-blue-400 hover:border-blue-500 font-extrabold text-xs sm:text-sm flex items-center justify-center gap-2 transition bg-white dark:bg-slate-800 shadow-sm">
                 <i data-lucide="plus-circle" class="w-5 h-5"></i>
                 <span>إضافة سؤال جديد يدوياً</span>
             </button>
         </section>
 
-        <!-- VIEW 4: Interactive Quiz Mode -->
-        <section id="view-quiz" class="hidden max-w-3xl mx-auto space-y-6">
-            <div class="bg-white p-4 rounded-xl border border-slate-200 shadow-sm flex items-center justify-between">
-                <div class="flex items-center gap-2">
-                    <span class="text-xs font-bold text-slate-500">السؤال:</span>
-                    <span id="quiz-progress-text" class="text-sm font-extrabold text-blue-600">1 / 5</span>
+        <!-- VIEW 4: Flashcards Mode -->
+        <section id="view-flashcards" class="hidden max-w-2xl mx-auto space-y-6">
+            <div class="flex items-center justify-between bg-white dark:bg-slate-800 p-4 rounded-2xl border border-slate-200 dark:border-slate-700 shadow-sm">
+                <div class="flex items-center gap-2 text-xs font-extrabold text-slate-700 dark:text-slate-300">
+                    <i data-lucide="layers" class="w-4 h-4 text-amber-500"></i>
+                    <span>مراجعة البطاقات الخاطفة (Flashcards)</span>
                 </div>
-                <div class="flex items-center gap-2 text-slate-600 text-xs font-semibold bg-slate-100 px-3 py-1.5 rounded-lg">
+                <span id="flashcard-counter" class="text-xs font-black text-blue-600 dark:text-blue-400 bg-blue-50 dark:bg-blue-950 px-3 py-1 rounded-full">1 / 5</span>
+            </div>
+
+            <!-- Flip Card Box -->
+            <div class="perspective-1000 w-full h-80 cursor-pointer" onclick="flipFlashcard()">
+                <div id="flashcard-inner" class="relative w-full h-full duration-500 transform-style-3d shadow-xl rounded-3xl border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-800 p-8 flex flex-col items-center justify-center text-center">
+                    
+                    <!-- Front Side (Question) -->
+                    <div class="absolute inset-0 p-8 backface-hidden flex flex-col items-center justify-between bg-white dark:bg-slate-800 rounded-3xl">
+                        <span class="text-[10px] uppercase font-bold tracking-widest text-blue-600 dark:text-blue-400 bg-blue-50 dark:bg-blue-950 px-3 py-1 rounded-full">السؤال (اضغط للقلب)</span>
+                        <h3 id="flashcard-front-text" class="text-lg sm:text-xl font-bold text-slate-900 dark:text-white leading-relaxed"></h3>
+                        <p class="text-xs text-slate-400 flex items-center gap-1">
+                            <i data-lucide="rotate-cw" class="w-3.5 h-3.5"></i>
+                            <span>انقر لرؤية الإجابة الصحيحة</span>
+                        </p>
+                    </div>
+
+                    <!-- Back Side (Answer) -->
+                    <div class="absolute inset-0 p-8 backface-hidden rotate-y-180 flex flex-col items-center justify-between bg-gradient-to-br from-slate-900 to-slate-800 text-white rounded-3xl">
+                        <span class="text-[10px] uppercase font-bold tracking-widest text-emerald-400 bg-emerald-950 px-3 py-1 rounded-full">الإجابة النموذجية</span>
+                        <div class="space-y-3">
+                            <h4 id="flashcard-back-answer" class="text-xl sm:text-2xl font-black text-emerald-300"></h4>
+                            <p id="flashcard-back-explanation" class="text-xs text-slate-300 leading-relaxed max-w-md mx-auto"></p>
+                        </div>
+                        <span class="text-[11px] text-slate-400">انقر للعودة للسؤال</span>
+                    </div>
+
+                </div>
+            </div>
+
+            <div class="flex items-center justify-between pt-2">
+                <button onclick="prevFlashcard()" id="btn-flashcard-prev" class="bg-slate-200 dark:bg-slate-700 hover:bg-slate-300 text-slate-800 dark:text-slate-200 px-5 py-2.5 rounded-xl text-xs font-bold transition flex items-center gap-2">
+                    <i data-lucide="arrow-right" class="w-4 h-4"></i>
+                    <span>السابق</span>
+                </button>
+                <button onclick="flipFlashcard()" class="gradient-bg text-white px-6 py-2.5 rounded-xl text-xs font-bold shadow-md">
+                    قلب البطاقة 🔄
+                </button>
+                <button onclick="nextFlashcard()" id="btn-flashcard-next" class="bg-blue-600 hover:bg-blue-700 text-white px-5 py-2.5 rounded-xl text-xs font-bold transition flex items-center gap-2 shadow-md">
+                    <span>التالي</span>
+                    <i data-lucide="arrow-left" class="w-4 h-4"></i>
+                </button>
+            </div>
+        </section>
+
+        <!-- VIEW 5: Interactive Quiz Mode -->
+        <section id="view-quiz" class="hidden max-w-3xl mx-auto space-y-6">
+            <div class="bg-white dark:bg-slate-800 p-4 rounded-2xl border border-slate-200 dark:border-slate-700 shadow-sm flex items-center justify-between transition-colors">
+                <div class="flex items-center gap-2">
+                    <span class="text-xs font-bold text-slate-500 dark:text-slate-400">السؤال:</span>
+                    <span id="quiz-progress-text" class="text-sm font-extrabold text-blue-600 dark:text-blue-400">1 / 5</span>
+                </div>
+                <div class="flex items-center gap-2 text-slate-700 dark:text-slate-300 text-xs font-bold bg-slate-100 dark:bg-slate-700 px-3 py-1.5 rounded-xl">
                     <i data-lucide="clock" class="w-4 h-4 text-blue-500"></i>
                     <span id="quiz-timer">00:00</span>
                 </div>
-                <button onclick="exitQuiz()" class="text-xs text-red-600 hover:bg-red-50 font-bold px-3 py-1.5 rounded-lg transition">
+                <button onclick="exitQuiz()" class="text-xs text-rose-600 hover:bg-rose-50 dark:hover:bg-rose-950 font-bold px-3 py-1.5 rounded-xl transition">
                     إنهاء الاختبار
                 </button>
             </div>
 
-            <div class="bg-white rounded-2xl shadow-lg border border-slate-200 p-6 sm:p-8 space-y-6">
-                <h3 id="quiz-question-title" class="text-lg sm:text-xl font-bold text-slate-900 leading-snug"></h3>
+            <div class="bg-white dark:bg-slate-800 rounded-3xl shadow-xl border border-slate-200 dark:border-slate-700 p-6 sm:p-8 space-y-6 transition-colors">
+                <h3 id="quiz-question-title" class="text-base sm:text-lg font-bold text-slate-900 dark:text-white leading-snug"></h3>
 
                 <div id="quiz-options-container" class="space-y-3"></div>
 
-                <div class="flex items-center justify-between pt-4 border-t border-slate-100">
-                    <button id="btn-quiz-prev" onclick="prevQuizQuestion()" class="text-slate-600 hover:bg-slate-100 px-4 py-2 rounded-xl font-bold text-xs flex items-center gap-2 disabled:opacity-40" disabled>
+                <div class="flex items-center justify-between pt-4 border-t border-slate-100 dark:border-slate-700">
+                    <button id="btn-quiz-prev" onclick="prevQuizQuestion()" class="text-slate-600 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-slate-700 px-4 py-2.5 rounded-xl font-bold text-xs flex items-center gap-2 disabled:opacity-30" disabled>
                         <i data-lucide="arrow-right" class="w-4 h-4"></i>
                         <span>السابق</span>
                     </button>
-                    <button id="btn-quiz-next" onclick="nextQuizQuestion()" class="bg-blue-600 text-white hover:bg-blue-700 px-6 py-2.5 rounded-xl font-bold text-xs flex items-center gap-2 shadow-sm">
+                    <button id="btn-quiz-next" onclick="nextQuizQuestion()" class="gradient-bg text-white hover:opacity-95 px-6 py-2.5 rounded-xl font-bold text-xs flex items-center gap-2 shadow-md transition">
                         <span>التالي</span>
                         <i data-lucide="arrow-left" class="w-4 h-4"></i>
                     </button>
@@ -358,75 +462,75 @@
             </div>
         </section>
 
-        <!-- VIEW 5: Quiz Results -->
+        <!-- VIEW 6: Teacher/Self Quiz Results -->
         <section id="view-results" class="hidden max-w-2xl mx-auto space-y-6 text-center">
-            <div class="bg-white rounded-2xl shadow-xl border border-slate-200 p-8 space-y-6">
-                <div class="w-20 h-20 bg-emerald-100 text-emerald-600 rounded-full flex items-center justify-center mx-auto">
+            <div class="bg-white dark:bg-slate-800 rounded-3xl shadow-xl border border-slate-200 dark:border-slate-700 p-8 space-y-6 transition-colors">
+                <div class="w-20 h-20 bg-emerald-100 dark:bg-emerald-950 text-emerald-600 dark:text-emerald-400 rounded-full flex items-center justify-center mx-auto shadow-sm">
                     <i data-lucide="trophy" class="w-10 h-10"></i>
                 </div>
                 <div>
-                    <h2 class="text-2xl font-black text-slate-900">أحسنت! أكملت الاختبار</h2>
-                    <p class="text-xs text-slate-500 mt-1">إليك ملخص أدائك في هذا الاختبار</p>
+                    <h2 class="text-2xl font-black text-slate-900 dark:text-white">أحسنت! أكملت الاختبار</h2>
+                    <p class="text-xs text-slate-500 dark:text-slate-400 mt-1">ملخص النتيجة الخاصة بمحاولتك</p>
                 </div>
 
-                <div class="bg-slate-50 p-6 rounded-2xl border border-slate-200 flex items-center justify-around">
+                <div class="bg-slate-50 dark:bg-slate-900 p-6 rounded-2xl border border-slate-200 dark:border-slate-700 flex items-center justify-around">
                     <div>
-                        <span class="block text-2xl font-black text-slate-800" id="res-score">0/0</span>
-                        <span class="text-[11px] font-bold text-slate-500">الدرجة النهائية</span>
+                        <span class="block text-2xl font-black text-slate-800 dark:text-slate-100" id="res-score">0/0</span>
+                        <span class="text-[11px] font-bold text-slate-500 dark:text-slate-400">الإجابات الصحيحة</span>
                     </div>
-                    <div class="h-8 w-px bg-slate-200"></div>
+                    <div class="h-8 w-px bg-slate-200 dark:bg-slate-700"></div>
                     <div>
-                        <span class="block text-2xl font-black text-blue-600" id="res-percentage">0%</span>
-                        <span class="text-[11px] font-bold text-slate-500">النسبة المئوية</span>
+                        <span class="block text-2xl font-black text-blue-600 dark:text-blue-400" id="res-percentage">0%</span>
+                        <span class="text-[11px] font-bold text-slate-500 dark:text-slate-400">النسبة المئوية</span>
                     </div>
-                    <div class="h-8 w-px bg-slate-200"></div>
+                    <div class="h-8 w-px bg-slate-200 dark:bg-slate-700"></div>
                     <div>
-                        <span class="block text-2xl font-black text-slate-800" id="res-time">00:00</span>
-                        <span class="text-[11px] font-bold text-slate-500">الوقت المستغرق</span>
+                        <span class="block text-2xl font-black text-slate-800 dark:text-slate-100" id="res-time">00:00</span>
+                        <span class="text-[11px] font-bold text-slate-500 dark:text-slate-400">الوقت المستغرق</span>
                     </div>
                 </div>
 
                 <div class="flex flex-col sm:flex-row gap-3 pt-4">
-                    <button onclick="switchView('editor')" class="flex-1 bg-slate-900 text-white hover:bg-slate-800 py-3 rounded-xl font-bold text-xs flex items-center justify-center gap-2">
+                    <button onclick="switchView('editor')" class="flex-1 bg-slate-900 dark:bg-slate-700 text-white hover:bg-slate-800 py-3 rounded-xl font-bold text-xs flex items-center justify-center gap-2">
                         <i data-lucide="edit" class="w-4 h-4"></i>
                         <span>مراجعة وتعديل الأسئلة</span>
                     </button>
-                    <button onclick="exportDoc('pdf')" class="flex-1 gradient-bg text-white hover:opacity-95 py-3 rounded-xl font-bold text-xs flex items-center justify-center gap-2">
-                        <i data-lucide="download" class="w-4 h-4"></i>
-                        <span>تنزيل تقرير النتيجة PDF</span>
+                    <button onclick="window.print()" class="flex-1 gradient-bg text-white hover:opacity-95 py-3 rounded-xl font-bold text-xs flex items-center justify-center gap-2 shadow-md">
+                        <i data-lucide="printer" class="w-4 h-4"></i>
+                        <span>طباعة التقرير</span>
                     </button>
                 </div>
             </div>
         </section>
 
-        <!-- VIEW 6: Student Name Entry View -->
+        <!-- VIEW 7: Student Name Entry View -->
         <section id="view-student-entry" class="hidden max-w-md mx-auto my-12 space-y-6">
-            <div class="bg-white rounded-2xl shadow-xl border border-slate-200 p-6 sm:p-8 space-y-6 text-center">
+            <div class="bg-white dark:bg-slate-800 rounded-3xl shadow-xl border border-slate-200 dark:border-slate-700 p-6 sm:p-8 space-y-6 text-center transition-colors">
                 <div class="w-16 h-16 gradient-bg text-white rounded-2xl flex items-center justify-center mx-auto shadow-md">
                     <i data-lucide="graduation-cap" class="w-8 h-8"></i>
                 </div>
                 <div>
-                    <h2 class="text-2xl font-black text-slate-900">مرحباً بك في الاختبار التفاعلي</h2>
-                    <p class="text-xs text-slate-500 mt-1">الرجاء إدخال اسمك للبدء في حل الاختبار وتسجيل النتيجة للمعلم</p>
+                    <h2 class="text-2xl font-black text-slate-900 dark:text-white">مرحباً بك في الاختبار</h2>
+                    <p class="text-xs text-slate-500 dark:text-slate-400 mt-1">الرجاء إدخال اسمك للبدء في حل الاختبار واستخراج شهادتك</p>
                 </div>
 
                 <div class="space-y-4 text-right">
                     <div>
-                        <label class="block text-xs font-bold text-slate-700 mb-1.5">اسم الطالب الثلاثي:</label>
-                        <input type="text" id="student-name-input" placeholder="مثال: أحمد محمد علي" class="w-full bg-slate-50 border border-slate-300 rounded-xl px-4 py-3 text-sm font-semibold text-slate-800 focus:bg-white focus:ring-2 focus:ring-blue-500 focus:outline-none transition">
+                        <label class="block text-xs font-bold text-slate-700 dark:text-slate-300 mb-1.5">اسم الطالب الثلاثي:</label>
+                        <input type="text" id="student-name-input" placeholder="مثال: علي محمد حسن" class="w-full bg-slate-50 dark:bg-slate-900 border border-slate-300 dark:border-slate-700 rounded-xl px-4 py-3 text-sm font-semibold text-slate-800 dark:text-white focus:ring-2 focus:ring-blue-500 focus:outline-none transition">
                     </div>
                     <button onclick="startStudentQuizSession()" class="w-full gradient-bg hover:opacity-95 text-white font-bold py-3.5 rounded-xl text-sm shadow-md flex items-center justify-center gap-2 transition">
-                        <span>بدء حل الأسئلة الآن</span>
+                        <span>بدء الاختبار الآن</span>
                         <i data-lucide="arrow-left" class="w-4 h-4"></i>
                     </button>
                 </div>
             </div>
         </section>
 
-        <!-- VIEW 7: Student Final Report View (Pass / Fail) -->
+        <!-- VIEW 8: Student Final Report View (Pass / Fail) -->
         <section id="view-student-report" class="hidden max-w-2xl mx-auto space-y-6">
-            <div id="printable-report" class="bg-white rounded-2xl shadow-xl border border-slate-200 p-8 space-y-6 relative overflow-hidden">
-                <div id="report-status-banner" class="p-4 rounded-xl flex items-center justify-between">
+            <div id="printable-report" class="bg-white dark:bg-slate-800 rounded-3xl shadow-xl border border-slate-200 dark:border-slate-700 p-8 space-y-6 relative overflow-hidden transition-colors">
+                <div id="report-status-banner" class="p-5 rounded-2xl flex items-center justify-between">
                     <div class="flex items-center gap-3">
                         <div id="report-status-icon" class="w-12 h-12 rounded-full flex items-center justify-center text-white font-bold"></div>
                         <div>
@@ -437,54 +541,54 @@
                     <span id="report-status-tag" class="text-xs font-black px-3 py-1 rounded-full bg-white/30"></span>
                 </div>
 
-                <div class="bg-slate-50 p-4 rounded-xl border border-slate-200 flex flex-wrap items-center justify-between gap-4 text-xs">
+                <div class="bg-slate-50 dark:bg-slate-900 p-4 rounded-xl border border-slate-200 dark:border-slate-700 flex flex-wrap items-center justify-between gap-4 text-xs">
                     <div>
                         <span class="text-slate-400 font-bold block">اسم الطالب:</span>
-                        <span id="report-student-name" class="text-sm font-extrabold text-slate-900"></span>
+                        <span id="report-student-name" class="text-sm font-extrabold text-slate-900 dark:text-white"></span>
                     </div>
                     <div>
-                        <span class="text-slate-400 font-bold block">جهة الإصدار:</span>
-                        <span class="text-sm font-semibold text-amber-600 font-bold">مكتبة المصطفى</span>
+                        <span class="text-slate-400 font-bold block">جهة الإشراف:</span>
+                        <span class="text-sm font-bold text-amber-600 dark:text-amber-400">مكتبة المصطفى</span>
                     </div>
                     <div>
-                        <span class="text-slate-400 font-bold block">حالة النتيجة:</span>
+                        <span class="text-slate-400 font-bold block">نتيجة التقييم:</span>
                         <span id="report-pass-badge" class="font-extrabold text-sm"></span>
                     </div>
                 </div>
 
                 <div class="grid grid-cols-3 gap-3 text-center">
-                    <div class="bg-slate-50 p-4 rounded-xl border border-slate-100">
-                        <span class="text-xs font-bold text-slate-500 block">النتيجة</span>
-                        <span id="report-score-num" class="text-xl font-black text-slate-800"></span>
+                    <div class="bg-slate-50 dark:bg-slate-900 p-4 rounded-xl border border-slate-100 dark:border-slate-800">
+                        <span class="text-xs font-bold text-slate-500 dark:text-slate-400 block">النتيجة</span>
+                        <span id="report-score-num" class="text-xl font-black text-slate-800 dark:text-slate-100"></span>
                     </div>
-                    <div class="bg-slate-50 p-4 rounded-xl border border-slate-100">
-                        <span class="text-xs font-bold text-slate-500 block">النسبة المئوية</span>
-                        <span id="report-score-pct" class="text-xl font-black text-blue-600"></span>
+                    <div class="bg-slate-50 dark:bg-slate-900 p-4 rounded-xl border border-slate-100 dark:border-slate-800">
+                        <span class="text-xs font-bold text-slate-500 dark:text-slate-400 block">النسبة المئوية</span>
+                        <span id="report-score-pct" class="text-xl font-black text-blue-600 dark:text-blue-400"></span>
                     </div>
-                    <div class="bg-slate-50 p-4 rounded-xl border border-slate-100">
-                        <span class="text-xs font-bold text-slate-500 block">الوقت المستغرق</span>
-                        <span id="report-time-spent" class="text-xl font-black text-slate-800"></span>
+                    <div class="bg-slate-50 dark:bg-slate-900 p-4 rounded-xl border border-slate-100 dark:border-slate-800">
+                        <span class="text-xs font-bold text-slate-500 dark:text-slate-400 block">الوقت المستغرق</span>
+                        <span id="report-time-spent" class="text-xl font-black text-slate-800 dark:text-slate-100"></span>
                     </div>
                 </div>
 
-                <!-- Certificate Generator Button Section -->
-                <div id="certificate-action-box" class="hidden bg-amber-50 dark:bg-amber-950/30 border border-amber-200 dark:border-amber-800 p-4 rounded-xl text-center space-y-3">
+                <!-- Certificate Button Section -->
+                <div id="certificate-action-box" class="hidden bg-amber-50 dark:bg-amber-950/40 border border-amber-200 dark:border-amber-800 p-5 rounded-2xl text-center space-y-3">
                     <div class="flex items-center justify-center gap-2 text-amber-800 dark:text-amber-300 font-bold text-sm">
                         <i data-lucide="award" class="w-5 h-5 text-amber-600"></i>
-                        <span>مبارك! استحققت شهادة اجتياز تقديرية من مكتبة المصطفى</span>
+                        <span>مبارك! استحققت شهادة تقديرية من مكتبة المصطفى</span>
                     </div>
                     <button onclick="generateCertificate()" class="bg-amber-600 hover:bg-amber-700 text-white font-extrabold text-xs px-6 py-3 rounded-xl shadow-md transition flex items-center justify-center gap-2 mx-auto">
                         <i data-lucide="file-badge-2" class="w-4 h-4"></i>
-                        <span>عرض واستخراج شهادة التفوق الآن</span>
+                        <span>استخراج شهادة التفوق والناجحين</span>
                     </button>
                 </div>
 
                 <div class="flex flex-col sm:flex-row gap-3 pt-2 print:hidden">
-                    <button onclick="exportStudentReportPDF()" class="flex-1 gradient-bg text-white hover:opacity-95 py-3 rounded-xl font-bold text-xs flex items-center justify-center gap-2 shadow-md">
+                    <button onclick="window.print()" class="flex-1 gradient-bg text-white hover:opacity-95 py-3 rounded-xl font-bold text-xs flex items-center justify-center gap-2 shadow-md">
                         <i data-lucide="printer" class="w-4 h-4"></i>
-                        <span>تصدير / طباعة التقرير الرسمى</span>
+                        <span>طباعة التقرير الرسمي</span>
                     </button>
-                    <button onclick="switchView('generator')" class="bg-slate-100 hover:bg-slate-200 text-slate-800 px-5 py-3 rounded-xl font-bold text-xs border border-slate-300">
+                    <button onclick="switchView('generator')" class="bg-slate-100 dark:bg-slate-700 hover:bg-slate-200 text-slate-800 dark:text-slate-200 px-5 py-3 rounded-xl font-bold text-xs border border-slate-300 dark:border-slate-600">
                         العودة للرئيسية
                     </button>
                 </div>
@@ -495,43 +599,43 @@
 
     <!-- Certificate Modal View -->
     <div id="certificate-modal" class="fixed inset-0 bg-slate-900/80 backdrop-blur-md z-50 flex items-center justify-center p-4 hidden overflow-y-auto">
-        <div class="bg-white text-slate-900 rounded-2xl shadow-2xl max-w-3xl w-full p-4 sm:p-8 space-y-6 relative border-4 border-amber-400 my-8">
+        <div class="bg-white text-slate-900 rounded-3xl shadow-2xl max-w-3xl w-full p-4 sm:p-8 space-y-6 relative border-4 border-amber-400 my-8">
             <button onclick="closeCertificateModal()" class="absolute top-4 left-4 text-slate-400 hover:text-slate-700 p-1 print:hidden">
                 <i data-lucide="x" class="w-6 h-6"></i>
             </button>
 
             <!-- Printable Certificate Area -->
-            <div id="printable-certificate" class="certificate-border p-6 sm:p-10 text-center space-y-6 bg-amber-50/20 relative">
+            <div id="printable-certificate" class="certificate-border p-6 sm:p-10 text-center space-y-6 bg-amber-50/30 relative rounded-2xl">
                 
                 <div class="flex justify-between items-center border-b border-amber-200 pb-4">
                     <div class="text-right">
                         <span class="text-xs font-bold text-amber-700 block">منصة الاختبارات الإلكترونية</span>
-                        <span class="text-lg font-black text-slate-900" style="font-family: 'Amiri', serif;">موقع مكتبة المصطفى</span>
+                        <span class="text-xl font-black text-slate-900" style="font-family: 'Amiri', serif;">موقع مكتبة المصطفى</span>
                     </div>
                     <div class="w-14 h-14 bg-amber-500 text-white rounded-full flex items-center justify-center shadow-lg">
                         <i data-lucide="award" class="w-8 h-8"></i>
                     </div>
                 </div>
 
-                <div class="space-y-3 py-4">
-                    <h2 class="text-3xl sm:text-4xl font-black text-amber-800 tracking-wide" style="font-family: 'Amiri', serif;">شهادة اجتياز وتفوق</h2>
-                    <p class="text-xs text-slate-600 font-bold uppercase tracking-widest">CERTIFICATE OF ACHIEVEMENT</p>
+                <div class="space-y-2 py-2">
+                    <h2 class="text-3xl sm:text-4xl font-black text-amber-800 tracking-wide" style="font-family: 'Amiri', serif;">شهادة تفوق واجتياز</h2>
+                    <p class="text-[10px] text-slate-600 font-bold uppercase tracking-widest">CERTIFICATE OF ACHIEVEMENT</p>
                 </div>
 
                 <div class="space-y-4 max-w-xl mx-auto">
-                    <p class="text-sm text-slate-700 font-semibold">تمنح هذه الشهادة التقديرية بكل فخر واعتزاز للطالب/ة:</p>
+                    <p class="text-xs sm:text-sm text-slate-700 font-semibold">تمنح هذه الشهادة التقديرية بكل فخر واعتزاز للطالب/ة:</p>
                     <div class="text-2xl sm:text-3xl font-black text-blue-900 border-b-2 border-dashed border-amber-500 py-2 inline-block px-8" id="cert-student-name">
-                        أحمد محمد
+                        اسم الطالب
                     </div>
                     <p class="text-xs sm:text-sm text-slate-700 leading-relaxed pt-2">
-                        وذلك لاجتيار اختبار الأسئلة الإلكترونية التفاعلية بنجاح وبتقدير ممتاز بنسبة (<span id="cert-score-pct" class="font-bold text-amber-700">0%</span>) عبر منصة MCQ Maker التابعة لموقع <span class="font-bold text-amber-800">مكتبة المصطفى</span>.
+                        وذلك لاجتياز اختبار الأسئلة الإلكترونية بنجاح وتقدير ممتاز بنسبة (<span id="cert-score-pct" class="font-bold text-amber-700">0%</span>) عبر منصة MCQ Maker التابعة لموقع <span class="font-bold text-amber-800">مكتبة المصطفى</span>.
                     </p>
                 </div>
 
-                <div class="grid grid-cols-2 gap-8 pt-8 text-xs font-bold text-slate-700 border-t border-amber-200">
+                <div class="grid grid-cols-2 gap-8 pt-6 text-xs font-bold text-slate-700 border-t border-amber-200">
                     <div>
                         <span class="block text-slate-400 font-normal">تاريخ الإصدار:</span>
-                        <span id="cert-date" class="text-slate-800"></span>
+                        <span id="cert-date" class="text-slate-800 font-bold"></span>
                     </div>
                     <div>
                         <span class="block text-slate-400 font-normal">التوقيع والاعتماد:</span>
@@ -540,9 +644,8 @@
                 </div>
             </div>
 
-            <!-- Modal Action Buttons -->
             <div class="flex flex-col sm:flex-row gap-3 pt-2 print:hidden">
-                <button onclick="printCertificate()" class="flex-1 bg-amber-600 hover:bg-amber-700 text-white font-bold py-3 rounded-xl text-xs flex items-center justify-center gap-2 shadow-md transition">
+                <button onclick="window.print()" class="flex-1 bg-amber-600 hover:bg-amber-700 text-white font-bold py-3 rounded-xl text-xs flex items-center justify-center gap-2 shadow-md transition">
                     <i data-lucide="printer" class="w-4 h-4"></i>
                     <span>طباعة / حفظ الشهادة (PDF)</span>
                 </button>
@@ -553,48 +656,78 @@
         </div>
     </div>
 
-    <!-- About Us Modal (من نحن & إبراء الذمة) -->
-    <div id="about-modal" class="fixed inset-0 bg-slate-900/60 backdrop-blur-sm z-50 flex items-center justify-center p-4 hidden">
-        <div class="bg-white rounded-2xl shadow-2xl max-w-2xl w-full p-6 sm:p-8 space-y-6 relative overflow-y-auto max-h-[90vh]">
-            <button onclick="closeAboutModal()" class="absolute top-4 left-4 text-slate-400 hover:text-slate-600 p-1">
+    <!-- Share Link Modal -->
+    <div id="share-modal" class="fixed inset-0 bg-slate-900/60 backdrop-blur-sm z-50 flex items-center justify-center p-4 hidden">
+        <div class="bg-white dark:bg-slate-800 rounded-3xl shadow-2xl max-w-lg w-full p-6 sm:p-8 space-y-5 relative">
+            <button onclick="closeShareModal()" class="absolute top-4 left-4 text-slate-400 hover:text-slate-600 dark:hover:text-slate-200 p-1">
                 <i data-lucide="x" class="w-6 h-6"></i>
             </button>
 
             <div class="text-center space-y-2">
-                <div class="w-14 h-14 bg-amber-100 text-amber-700 rounded-2xl flex items-center justify-center mx-auto shadow-sm">
-                    <i data-lucide="book-open-check" class="w-8 h-8"></i>
+                <div class="w-12 h-12 bg-purple-100 dark:bg-purple-950 text-purple-600 dark:text-purple-300 rounded-2xl flex items-center justify-center mx-auto">
+                    <i data-lucide="share-2" class="w-6 h-6"></i>
                 </div>
-                <h3 class="text-2xl font-black text-slate-900">عن منصة MCQ Maker - مكتبة المصطفى</h3>
-                <p class="text-xs text-slate-500">منصة توليد واختبارات تفاعلية ذكية للجميع</p>
+                <h3 class="text-lg font-black text-slate-900 dark:text-white">مشاركة الاختبار مع الطلاب</h3>
+                <p class="text-xs text-slate-500 dark:text-slate-400">انسخ الرابط وأرسله لطلابك لحل الاختبار وتلقي النتيجة فوراً</p>
             </div>
 
-            <div class="space-y-4 text-xs sm:text-sm text-slate-700 leading-relaxed border-t border-slate-100 pt-4">
-                <div class="bg-blue-50 dark:bg-slate-800/80 p-4 rounded-xl border border-blue-100 dark:border-slate-700 space-y-2">
+            <div class="space-y-3">
+                <div class="flex gap-2">
+                    <input type="text" id="share-url-field" readonly class="flex-1 bg-slate-50 dark:bg-slate-900 border border-slate-300 dark:border-slate-700 rounded-xl px-3 py-2 text-xs font-mono text-slate-700 dark:text-slate-300">
+                    <button onclick="copyShareUrl()" class="bg-purple-600 hover:bg-purple-700 text-white text-xs font-bold px-4 py-2 rounded-xl transition flex items-center gap-1">
+                        <i data-lucide="copy" class="w-4 h-4"></i>
+                        <span id="copy-btn-label">نسخ</span>
+                    </button>
+                </div>
+                <button onclick="launchStudentFlowFromTeacher()" class="w-full bg-slate-900 dark:bg-slate-700 text-white text-xs font-bold py-3 rounded-xl transition flex items-center justify-center gap-2">
+                    <i data-lucide="eye" class="w-4 h-4"></i>
+                    <span>المعاينة بنفس تجربة الطالب</span>
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <!-- About Us Modal (من نحن & إبراء الذمة) -->
+    <div id="about-modal" class="fixed inset-0 bg-slate-900/60 backdrop-blur-sm z-50 flex items-center justify-center p-4 hidden">
+        <div class="bg-white dark:bg-slate-800 rounded-3xl shadow-2xl max-w-2xl w-full p-6 sm:p-8 space-y-6 relative overflow-y-auto max-h-[90vh] transition-colors">
+            <button onclick="closeAboutModal()" class="absolute top-4 left-4 text-slate-400 hover:text-slate-600 dark:hover:text-slate-200 p-1">
+                <i data-lucide="x" class="w-6 h-6"></i>
+            </button>
+
+            <div class="text-center space-y-2">
+                <div class="w-14 h-14 bg-amber-100 dark:bg-amber-950 text-amber-700 dark:text-amber-300 rounded-2xl flex items-center justify-center mx-auto shadow-sm">
+                    <i data-lucide="book-open-check" class="w-8 h-8"></i>
+                </div>
+                <h3 class="text-2xl font-black text-slate-900 dark:text-white">منصة MCQ Maker - مكتبة المصطفى</h3>
+                <p class="text-xs text-slate-500 dark:text-slate-400">منصة مجانية وصانع اختبارات ذكي للجميع</p>
+            </div>
+
+            <div class="space-y-4 text-xs sm:text-sm text-slate-700 dark:text-slate-300 leading-relaxed border-t border-slate-100 dark:border-slate-700 pt-4">
+                <div class="bg-blue-50 dark:bg-slate-900 p-4 rounded-2xl border border-blue-100 dark:border-slate-700 space-y-2">
                     <h4 class="font-bold text-blue-900 dark:text-blue-300 flex items-center gap-2">
                         <i data-lucide="heart" class="w-4 h-4 text-rose-500"></i>
-                        <span>هدفنا والخدمة المجانية:</span>
+                        <span>الهدف والخدمة المجانية:</span>
                     </h4>
-                    <p class="text-slate-600 dark:text-slate-300">
-                        تم إنشاء هذا الموقع كخدمة تعليمية مجانية بالكامل إهداءً من **موقع مكتبة المصطفى**، لمساعدة الطلاب في مذاكرة دروسهم بأسلوب تفاعلي، ولمساندة المعلمين والمدربين في إعداد أسئلة خيارات متعددة صائبة ومشاركتها مع طلابهم بدون أي رسوم أو اشتراكات مالية.
+                    <p class="text-slate-600 dark:text-slate-400">
+                        تم إنشاء المنصة كخدمة تعليمية مجانية بالكامل إهداءً من **موقع مكتبة المصطفى**، لدعم الطلاب والمعلمين في صياغة الاختبارات الإلكترونية بدون رسوم.
                     </p>
                 </div>
 
-                <!-- Strict Non-Acquittal Disclaimer -->
-                <div class="bg-rose-50 dark:bg-rose-950/30 p-4 rounded-xl border border-rose-200 dark:border-rose-900 space-y-2">
+                <div class="bg-rose-50 dark:bg-rose-950/40 p-4 rounded-2xl border border-rose-200 dark:border-rose-900 space-y-2">
                     <h4 class="font-bold text-rose-900 dark:text-rose-300 flex items-center gap-2">
                         <i data-lucide="alert-triangle" class="w-4 h-4 text-rose-600"></i>
                         <span>تنبيه هام وإبراء ذمة شرعي وقانوني:</span>
                     </h4>
                     <p class="text-rose-950 dark:text-rose-200 font-semibold leading-relaxed">
-                        هذا الموقع ومحتواه والبرمجيات الخاصة به هي جهد خاص ومجاني لوجه الله تعالى ومقدم باسم **حقوق موقع مكتبة المصطفى**. 
+                        هذا الموقع والمنصة جهد خاص ومجاني لوجه الله تعالى ومقدم باسم **حقوق موقع مكتبة المصطفى**.
                         <br><br>
-                        <strong class="text-rose-700 dark:text-rose-400">⚠️ غير مبرأ الذمة شرعاً وأخلاقياً</strong> أمام الله تعالى كل من يقوم بسرقة هذا الكود أو إعادة إصداره ونسب هذا الجهد والفضل لغير صاحبه الأصلي، أو مسح وتغيير حقوق **مكتبة المصطفى**.
+                        <strong class="text-rose-700 dark:text-rose-400">⚠️ غير مبرأ الذمة شرعاً وأخلاقياً</strong> أمام الله تعالى كل من يقوم بسرقة هذا الكود أو إعادة إصداره ونسب الفضل لغير صاحبه الأصلي، أو إزالة حقوق **مكتبة المصطفى**.
                     </p>
                 </div>
             </div>
 
-            <div class="pt-2 border-t border-slate-100 text-center">
-                <button onclick="closeAboutModal()" class="w-full bg-slate-900 hover:bg-slate-800 text-white font-bold py-3 rounded-xl text-xs transition">
+            <div class="pt-2 border-t border-slate-100 dark:border-slate-700 text-center">
+                <button onclick="closeAboutModal()" class="w-full bg-slate-900 dark:bg-slate-700 hover:bg-slate-800 text-white font-bold py-3 rounded-xl text-xs transition">
                     فهمت ذلك، إغلاق
                 </button>
             </div>
@@ -602,39 +735,40 @@
     </div>
 
     <!-- Footer -->
-    <footer class="bg-white border-t border-slate-200 mt-auto py-6 transition-colors">
-        <div class="max-w-7xl mx-auto px-4 text-center text-xs text-slate-500 space-y-2">
+    <footer class="bg-white dark:bg-slate-900 border-t border-slate-200 dark:border-slate-800 mt-auto py-6 transition-colors">
+        <div class="max-w-7xl mx-auto px-4 text-center text-xs text-slate-500 dark:text-slate-400 space-y-2">
             <p class="font-bold text-slate-700 dark:text-slate-300">جميع الحقوق محفوظة © 2026 موقع حقوق مكتبة المصطفى - منصة MCQ Maker التفاعلية</p>
-            <p class="text-[11px] text-slate-400">خدمة مجانية مخصصة لدعم التعليم وصياغة الاختبارات الذكية</p>
+            <p class="text-[11px] text-slate-400 dark:text-slate-500">منصة توليد الأسئلة والبطاقات التعليمية الذكية</p>
         </div>
     </footer>
 
     <!-- JavaScript Logic -->
     <script>
+        // Global Application State
         let sampleQuestions = [
             {
                 id: 1,
-                question: "ما هي الوظيفة الرئيسية لمعالج الحاسوب (CPU)؟",
+                question: "ما هي الوظيفة الأساسية لمعالج الحاسوب (CPU)؟",
                 options: [
-                    "تخزين الملفات بشكل دائم",
-                    "تنفيذ التعليمات وإجراء العمليات الحسابية والمنطقية",
-                    "عرض الصور والرسوميات على الشاشة",
-                    "تزويد المكونات بالطاقة الكهربائية"
+                    "تخزين البيانات بصفة دائمة",
+                    "معالجة البيانات وتنفيذ التعليمات الحسابية والمنطقية",
+                    "إخراج الصوت والرسوميات",
+                    "تزويد الأجهزة بالطاقة"
                 ],
                 correct: 1,
-                explanation: "المعالج هو بمثابة العقل في الحاسوب، ويتولى تنفيذ الأوامر ومعالجة البيانات."
+                explanation: "المعالج يتولى معالجة الأوامر وتنفيذ العمليات الحسابية والمنطقية بصفته العقل المدبر."
             },
             {
                 id: 2,
-                question: "أي مما يلي يُعد مثالاً على برمجيات النظام (System Software)؟",
+                question: "أي مما يلي يُعد من أنظمة التشغيل المصدر المفتوح؟",
                 options: [
-                    "محرر النصوص Microsoft Word",
-                    "متصفح Google Chrome",
-                    "نظام التشغيل Linux",
-                    "تطبيق Photoshop"
+                    "Microsoft Windows",
+                    "Apple macOS",
+                    "Linux Kernel",
+                    "iOS"
                 ],
                 correct: 2,
-                explanation: "أنظمة التشغيل مثل Linux و Windows هي برمجيات نظام."
+                explanation: "نظام لينكس Linux يُعتبر المشرع والأشهر في الأنظمة المفتوحة المصدر."
             }
         ];
 
@@ -646,137 +780,316 @@
         let quizTimerInterval = null;
         let timerSeconds = 0;
         let isDarkMode = false;
+        let extractedText = "";
+        let flashcardIndex = 0;
+        let isFlashcardFlipped = false;
 
-        // Initialize Dark Mode & Icons
+        // Initialize App & Read Query Strings
         window.addEventListener('DOMContentLoaded', () => {
             lucide.createIcons();
-            checkAndLoadQuizFromUrl();
+            
+            // PDF.js worker setup
+            if (window.pdfjsLib) {
+                pdfjsLib.GlobalWorkerOptions.workerSrc = 'https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.worker.min.js';
+            }
+
+            // Load Saved Theme Preference
+            if (localStorage.getItem('mcq_theme') === 'dark' || window.matchMedia('(prefers-color-scheme: dark)').matches) {
+                enableDarkMode(true);
+            }
+
+            checkUrlForSharedQuiz();
         });
 
+        // Toast Helper
+        function showToast(msg, type = 'info') {
+            const container = document.getElementById('toast-container');
+            const toast = document.createElement('div');
+            toast.className = `px-4 py-2.5 rounded-xl text-xs font-bold shadow-xl border flex items-center gap-2 transition-all transform duration-300 translate-y-[-10px] opacity-0 ${
+                type === 'success' ? 'bg-emerald-600 text-white border-emerald-500' :
+                type === 'error' ? 'bg-rose-600 text-white border-rose-500' :
+                'bg-slate-900 text-white dark:bg-slate-100 dark:text-slate-900 border-slate-700'
+            }`;
+            toast.innerHTML = `<i data-lucide="${type === 'success' ? 'check-circle' : 'info'}" class="w-4 h-4"></i><span>${msg}</span>`;
+            container.appendChild(toast);
+            lucide.createIcons();
+
+            setTimeout(() => {
+                toast.classList.remove('translate-y-[-10px]', 'opacity-0');
+            }, 10);
+
+            setTimeout(() => {
+                toast.classList.add('opacity-0', 'translate-y-[-10px]');
+                setTimeout(() => toast.remove(), 300);
+            }, 3000);
+        }
+
+        // Dark Mode Functionality
         function toggleDarkMode() {
-            isDarkMode = !isDarkMode;
+            enableDarkMode(!isDarkMode);
+        }
+
+        function enableDarkMode(enable) {
+            isDarkMode = enable;
+            const sunIcon = document.getElementById('theme-icon-sun');
+            const moonIcon = document.getElementById('theme-icon-moon');
+            const statusText = document.getElementById('theme-status-text');
+
             if (isDarkMode) {
                 document.documentElement.classList.add('dark');
-                document.getElementById('theme-icon-sun').classList.remove('hidden');
-                document.getElementById('theme-icon-moon').classList.add('hidden');
+                sunIcon.classList.remove('hidden');
+                moonIcon.classList.add('hidden');
+                if (statusText) statusText.textContent = "الوضع النهاري";
+                localStorage.setItem('mcq_theme', 'dark');
             } else {
                 document.documentElement.classList.remove('dark');
-                document.getElementById('theme-icon-sun').classList.add('hidden');
-                document.getElementById('theme-icon-moon').classList.remove('hidden');
+                sunIcon.classList.add('hidden');
+                moonIcon.classList.remove('hidden');
+                if (statusText) statusText.textContent = "الوضع الليلي";
+                localStorage.setItem('mcq_theme', 'light');
             }
         }
 
-        function openAboutModal() {
-            document.getElementById('about-modal').classList.remove('hidden');
-        }
-        function closeAboutModal() {
-            document.getElementById('about-modal').classList.add('hidden');
-        }
-
-        // Modified finishQuiz function to handle Certificate trigger for passing students
-        function finishQuiz() {
-            clearInterval(quizTimerInterval);
-            let score = 0;
-            sampleQuestions.forEach((q, idx) => {
-                if (userAnswers[idx] === q.correct) score++;
+        // View Navigation Helper
+        function switchView(viewId) {
+            const views = ['generator', 'loading', 'editor', 'quiz', 'results', 'student-entry', 'student-report', 'flashcards'];
+            views.forEach(v => {
+                const el = document.getElementById(`view-${v}`);
+                if (el) el.classList.add('hidden');
             });
 
-            const total = sampleQuestions.length;
-            const pct = Math.round((score / total) * 100);
-            const mins = String(Math.floor(timerSeconds / 60)).padStart(2, '0');
-            const secs = String(timerSeconds % 60).padStart(2, '0');
+            const target = document.getElementById(`view-${viewId}`);
+            if (target) target.classList.remove('hidden');
 
-            if (isStudentSharedSession) {
-                const isPassed = pct >= 50;
-                
-                document.getElementById('report-student-name').textContent = currentStudentName || "طالب بدون اسم";
-                document.getElementById('report-score-num').textContent = `${score} / ${total}`;
-                document.getElementById('report-score-pct').textContent = `${pct}%`;
-                document.getElementById('report-time-spent').textContent = `${mins}:${secs}`;
+            // Toggle top nav extra buttons
+            const navEditor = document.getElementById('nav-editor-btn');
+            const navFlashcards = document.getElementById('nav-flashcards-btn');
+            if (sampleQuestions.length > 0 && viewId !== 'generator') {
+                if (navEditor) navEditor.classList.remove('hidden');
+                if (navFlashcards) navFlashcards.classList.remove('hidden');
+            }
 
-                const banner = document.getElementById('report-status-banner');
-                const icon = document.getElementById('report-status-icon');
-                const title = document.getElementById('report-status-title');
-                const sub = document.getElementById('report-status-sub');
-                const tag = document.getElementById('report-status-tag');
-                const passBadge = document.getElementById('report-pass-badge');
-                const certBox = document.getElementById('certificate-action-box');
+            window.scrollTo({ top: 0, behavior: 'smooth' });
+        }
 
-                if (isPassed) {
-                    banner.className = "p-5 rounded-xl flex items-center justify-between bg-emerald-600 text-white shadow-md";
-                    icon.className = "w-12 h-12 rounded-full flex items-center justify-center bg-white/20 text-white";
-                    icon.innerHTML = `<i data-lucide="check-circle" class="w-7 h-7"></i>`;
-                    title.textContent = "تهانينا! لقد اجتزت الاختبار بنجاح 🎉";
-                    sub.textContent = "أداء ممتاز من موقع مكتبة المصطفى، يمكنك إصدار شهادة التفوق الآن.";
-                    tag.textContent = "ناجح";
-                    passBadge.textContent = "ناجح (اجتاز)";
-                    passBadge.className = "font-extrabold text-sm text-emerald-600 bg-emerald-50 px-2 py-0.5 rounded";
-                    
-                    // Show Certificate Option!
-                    certBox.classList.remove('hidden');
-                } else {
-                    banner.className = "p-5 rounded-xl flex items-center justify-between bg-rose-600 text-white shadow-md";
-                    icon.className = "w-12 h-12 rounded-full flex items-center justify-center bg-white/20 text-white";
-                    icon.innerHTML = `<i data-lucide="x-circle" class="w-7 h-7"></i>`;
-                    title.textContent = "للأسف لم تجتاز الاختبار هذه المرة ⚠️";
-                    sub.textContent = "نسبتك أقل من حد النجاح المطلوب (50%). حاول المراجعة مجدداً.";
-                    tag.textContent = "غير مجتاز";
-                    passBadge.textContent = "راسب (لم يجتاز)";
-                    passBadge.className = "font-extrabold text-sm text-rose-600 bg-rose-50 px-2 py-0.5 rounded";
-                    
-                    // Hide Certificate Option
-                    certBox.classList.add('hidden');
-                }
+        // Tabs Toggle
+        function setInputTab(tab) {
+            const btnFile = document.getElementById('tab-btn-file');
+            const btnText = document.getElementById('tab-btn-text');
+            const contentFile = document.getElementById('tab-content-file');
+            const contentText = document.getElementById('tab-content-text');
 
-                lucide.createIcons();
-                switchView('student-report');
+            if (tab === 'file') {
+                btnFile.className = "flex-1 py-3 px-4 rounded-xl text-xs sm:text-sm font-bold flex items-center justify-center gap-2 bg-white dark:bg-slate-800 text-blue-600 dark:text-blue-400 shadow-sm transition";
+                btnText.className = "flex-1 py-3 px-4 rounded-xl text-xs sm:text-sm font-bold flex items-center justify-center gap-2 text-slate-600 dark:text-slate-400 transition";
+                contentFile.classList.remove('hidden');
+                contentText.classList.add('hidden');
             } else {
-                document.getElementById('res-score').textContent = `${score} / ${total}`;
-                document.getElementById('res-percentage').textContent = `${pct}%`;
-                document.getElementById('res-time').textContent = `${mins}:${secs}`;
-                switchView('results');
+                btnText.className = "flex-1 py-3 px-4 rounded-xl text-xs sm:text-sm font-bold flex items-center justify-center gap-2 bg-white dark:bg-slate-800 text-blue-600 dark:text-blue-400 shadow-sm transition";
+                btnFile.className = "flex-1 py-3 px-4 rounded-xl text-xs sm:text-sm font-bold flex items-center justify-center gap-2 text-slate-600 dark:text-slate-400 transition";
+                contentText.classList.remove('hidden');
+                contentFile.classList.add('hidden');
             }
         }
 
-        // Certificate Functions
-        function generateCertificate() {
-            document.getElementById('cert-student-name').textContent = currentStudentName || "الطالب المتميز";
-            const scorePct = document.getElementById('report-score-pct').textContent;
-            document.getElementById('cert-score-pct').textContent = scorePct;
-            document.getElementById('cert-date').textContent = new Date().toLocaleDateString('ar-EG');
-            document.getElementById('certificate-modal').classList.remove('hidden');
+        function setUserRole(role) {
+            currentRole = role;
+            const studentCard = document.getElementById('role-student-card');
+            const teacherCard = document.getElementById('role-teacher-card');
+
+            if (role === 'student') {
+                studentCard.className = "cursor-pointer border-2 border-blue-600 bg-blue-50/50 dark:bg-blue-950/30 p-4 rounded-2xl flex items-start gap-3 transition";
+                teacherCard.className = "cursor-pointer border-2 border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-800 p-4 rounded-2xl flex items-start gap-3 transition";
+                document.getElementById('role-student').checked = true;
+            } else {
+                teacherCard.className = "cursor-pointer border-2 border-purple-600 bg-purple-50/50 dark:bg-purple-950/30 p-4 rounded-2xl flex items-start gap-3 transition";
+                studentCard.className = "cursor-pointer border-2 border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-800 p-4 rounded-2xl flex items-start gap-3 transition";
+                document.getElementById('role-teacher').checked = true;
+            }
         }
 
-        function closeCertificateModal() {
-            document.getElementById('certificate-modal').classList.add('hidden');
+        // File Selection & Reading Logic
+        async function handleFileSelect(event) {
+            const file = event.target.files[0];
+            if (!file) return;
+
+            document.getElementById('selected-file-name').textContent = `${file.name} (${(file.size / 1024).toFixed(1)} KB)`;
+            showToast("جاري معالجة الملف واستخراج المحتوى النصي...", "info");
+
+            try {
+                if (file.name.endsWith('.txt')) {
+                    extractedText = await file.text();
+                } else if (file.name.endsWith('.docx')) {
+                    const arrayBuffer = await file.arrayBuffer();
+                    const result = await mammoth.extractRawText({ arrayBuffer: arrayBuffer });
+                    extractedText = result.value;
+                } else if (file.name.endsWith('.pdf')) {
+                    const arrayBuffer = await file.arrayBuffer();
+                    const pdf = await pdfjsLib.getDocument({ data: arrayBuffer }).promise;
+                    let fullText = "";
+                    for (let i = 1; i <= pdf.numPages; i++) {
+                        const page = await pdf.getPage(i);
+                        const textContent = await page.getTextContent();
+                        const pageText = textContent.items.map(item => item.str).join(' ');
+                        fullText += pageText + "\n";
+                    }
+                    extractedText = fullText;
+                }
+
+                if (extractedText && extractedText.trim().length > 10) {
+                    const wordsCount = extractedText.trim().split(/\s+/).length;
+                    document.getElementById('extracted-words-count').textContent = `${wordsCount} كلمة`;
+                    document.getElementById('extracted-preview-box').classList.remove('hidden');
+                    showToast("تم استخراج المحتوى بنجاح!", "success");
+                } else {
+                    showToast("تعذر استخراج نص مقروء من الملف.", "error");
+                }
+            } catch (err) {
+                console.error("File Read Error:", err);
+                showToast("حدث خطأ أثناء قراءة الملف.", "error");
+            }
         }
 
-        function printCertificate() {
-            window.print();
-        }
+        // AI Generator Simulation (Generates Questions from Extracted or Typed Text)
+        function startAiGeneration() {
+            const typedText = document.getElementById('raw-text-input').value.trim();
+            const sourceContent = typedText || extractedText;
 
-        // Cleaned up removed Plans Functions
-        function openPlansModal() { openAboutModal(); }
-        function closePlansModal() {}
-                    title.textContent = "استخراج النص وتجاوز التنسيقات...";
+            switchView('loading');
+            const loadingBar = document.getElementById('loading-bar');
+            const title = document.getElementById('loading-status-title');
+            let progress = 0;
+
+            const countVal = parseInt(document.getElementById('opt-count').value) || 10;
+
+            const interval = setInterval(() => {
+                progress += 25;
+                loadingBar.style.width = `${progress}%`;
+
+                if (progress === 25) {
+                    title.textContent = "قراءة المفاهيم والكلمات المفتاحية...";
+                } else if (progress === 50) {
+                    title.textContent = "صياغة أسئلة الخيارات المتعددة والحلول...";
                 } else if (progress === 75) {
-                    title.textContent = "توليد خيارات الأسئلة...";
+                    title.textContent = "إنشاء البطاقات التعليمية والشروح...";
                 } else if (progress >= 100) {
                     clearInterval(interval);
+                    
+                    // Construct Questions dynamically from content or fallbacks
+                    generateSmartQuestionsFromContent(sourceContent, countVal);
                     renderEditorQuestions();
+                    renderFlashcards();
 
                     const shareBtn = document.getElementById('btn-share-students');
                     if (currentRole === 'teacher') {
                         shareBtn.classList.remove('hidden');
+                        switchView('editor');
                     } else {
                         shareBtn.classList.add('hidden');
+                        switchView('editor');
                     }
-
-                    switchView('editor');
+                    showToast("تم إنشاء الاختبار بنجاح!", "success");
                 }
-            }, 300);
+            }, 250);
         }
 
+        function generateSmartQuestionsFromContent(content, requestedCount) {
+            if (!content || content.length < 20) {
+                // Use default rich sample bank
+                sampleQuestions = getFallbackQuestions(requestedCount);
+                return;
+            }
+
+            // Clean sentences
+            const sentences = content
+                .split(/[.!\n؟?]/)
+                .map(s => s.trim())
+                .filter(s => s.length > 15);
+
+            if (sentences.length === 0) {
+                sampleQuestions = getFallbackQuestions(requestedCount);
+                return;
+            }
+
+            const generated = [];
+            for (let i = 0; i < requestedCount; i++) {
+                const targetSentence = sentences[i % sentences.length];
+                const words = targetSentence.split(/\s+/);
+                
+                // Pick a key word to mask
+                let targetWord = words.find(w => w.length > 3) || words[0];
+                let questionStr = targetSentence.replace(targetWord, "........");
+
+                // Distractors
+                const distractors = ["الافتراضي", "التلقائي", "الأساسي", "المتقدم", "العام", "الموازي"];
+                const options = [
+                    targetWord,
+                    distractors[(i + 1) % distractors.length],
+                    distractors[(i + 2) % distractors.length],
+                    distractors[(i + 3) % distractors.length]
+                ].sort(() => Math.random() - 0.5);
+
+                const correctIndex = options.indexOf(targetWord);
+
+                generated.push({
+                    id: Date.now() + i,
+                    question: `ما هو الخيار المناسب لإكمال العبارة: "${questionStr}"؟`,
+                    options: options,
+                    correct: correctIndex,
+                    explanation: `السياق المذكور بالنص: "${targetSentence}"`
+                });
+            }
+
+            sampleQuestions = generated;
+        }
+
+        function getFallbackQuestions(count) {
+            const bank = [
+                {
+                    id: 1,
+                    question: "ما هي الوظيفة الأساسية لمعالج الحاسوب (CPU)؟",
+                    options: ["تخزين الملفات بشكل دائم", "تنفيذ التعليمات والعمليات الحسابية", "إخراج الصوت للسمّاعات", "تزويد الطاقة"],
+                    correct: 1,
+                    explanation: "المعالج يتولى معالجة الأوامر وتنفيذ كافة العمليات البرمجية."
+                },
+                {
+                    id: 2,
+                    question: "أي المكونات التالية تُعد ذاكرة وصول عشوائي مؤقتة؟",
+                    options: ["القرص الصلب SSD", "ذاكرة RAM", "شريحة BIOS", "البطاقة الذكية"],
+                    correct: 1,
+                    explanation: "تُسهم ذاكرة RAM في حفظ البيانات أثناء تشغيل التطبيقات وتُمحى بإيقاف التشغيل."
+                },
+                {
+                    id: 3,
+                    question: "ما المقصود ببرمجيات المصدر المفتوح (Open Source)؟",
+                    options: ["برامج مجانية بدون شروط فقط", "برامج يمكن الاطلاع على كودها المصدري وتعديله", "برامج مخصصة للشركات الكبرى", "برامج تعمل بدون إنترنت"],
+                    correct: 1,
+                    explanation: "تتيح المبادرة مفتوحة المصدر إمكانية التعديل والتطوير الشفاف للكود."
+                },
+                {
+                    id: 4,
+                    question: "ما أهمية الشبكات اللاسلكية Wi-Fi؟",
+                    options: ["تسريع عمل المعالج", "ربط الأجهزة وتبادل البيانات بدون أسلاك", "تخزين الملفات", "حماية الجهاز من الفيروسات"],
+                    correct: 1,
+                    explanation: "تُمكن الشبكات اللاسلكية الأجهزة من الاتصال بالإنترنت والشبكات المحلية."
+                },
+                {
+                    id: 5,
+                    question: "ما هو الخيار السليم لحماية البيانات من الضياع؟",
+                    options: ["حذف الملفات القديمة", "إجراء النسخ الاحتياطي الدوري (Backup)", "تقليل إضاءة الشاشة", "إغلاق المتصفح"],
+                    correct: 1,
+                    explanation: "النسخ الاحتياطي يحفظ نسخة آمنة من البيانات في مكان آخر."
+                }
+            ];
+
+            const result = [];
+            for (let i = 0; i < count; i++) {
+                result.push({ ...bank[i % bank.length], id: Date.now() + i });
+            }
+            return result;
+        }
+
+        // Questions Editor Render
         function renderEditorQuestions() {
             const container = document.getElementById('questions-container');
             document.getElementById('created-count').textContent = sampleQuestions.length;
@@ -784,26 +1097,26 @@
 
             sampleQuestions.forEach((q, index) => {
                 const card = document.createElement('div');
-                card.className = "bg-white p-6 rounded-2xl border border-slate-200 shadow-sm space-y-4 relative";
+                card.className = "bg-white dark:bg-slate-800 p-6 rounded-3xl border border-slate-200 dark:border-slate-700 shadow-sm space-y-4 relative transition-colors";
                 card.innerHTML = `
-                    <div class="flex items-center justify-between gap-2 border-b border-slate-100 pb-3">
-                        <span class="text-xs font-bold text-blue-600 bg-blue-50 px-2.5 py-1 rounded-lg">سؤال #${index + 1}</span>
-                        <button onclick="deleteQuestion(${index})" class="text-slate-400 hover:text-red-500 text-xs font-semibold flex items-center gap-1 transition">
+                    <div class="flex items-center justify-between gap-2 border-b border-slate-100 dark:border-slate-700 pb-3">
+                        <span class="text-xs font-black text-blue-600 dark:text-blue-400 bg-blue-50 dark:bg-blue-950 px-3 py-1 rounded-xl">السؤال #${index + 1}</span>
+                        <button onclick="deleteQuestion(${index})" class="text-rose-500 hover:text-rose-700 text-xs font-bold flex items-center gap-1 transition">
                             <i data-lucide="trash-2" class="w-4 h-4"></i>
                             <span>حذف</span>
                         </button>
                     </div>
 
                     <div>
-                        <label class="block text-xs font-bold text-slate-700 mb-1">نص السؤال:</label>
-                        <input type="text" value="${q.question}" onchange="updateQuestionText(${index}, this.value)" class="w-full bg-slate-50 border border-slate-200 rounded-xl px-3 py-2 text-sm font-semibold text-slate-800 focus:bg-white focus:ring-2 focus:ring-blue-500 focus:outline-none">
+                        <label class="block text-xs font-bold text-slate-700 dark:text-slate-300 mb-1">نص السؤال:</label>
+                        <input type="text" value="${q.question}" onchange="updateQuestionText(${index}, this.value)" class="w-full bg-slate-50 dark:bg-slate-900 border border-slate-200 dark:border-slate-700 rounded-xl px-3 py-2 text-xs sm:text-sm font-bold text-slate-800 dark:text-white focus:ring-2 focus:ring-blue-500 focus:outline-none">
                     </div>
 
                     <div class="grid grid-cols-1 sm:grid-cols-2 gap-3">
                         ${q.options.map((opt, optIndex) => `
-                            <div class="flex items-center gap-2 bg-slate-50 p-2 rounded-xl border ${q.correct === optIndex ? 'border-emerald-400 bg-emerald-50/30' : 'border-slate-200'}">
+                            <div class="flex items-center gap-2 bg-slate-50 dark:bg-slate-900 p-2.5 rounded-xl border ${q.correct === optIndex ? 'border-emerald-500 bg-emerald-50/40 dark:bg-emerald-950/40' : 'border-slate-200 dark:border-slate-700'}">
                                 <input type="radio" name="correct-${index}" ${q.correct === optIndex ? 'checked' : ''} onchange="setCorrectAnswer(${index}, ${optIndex})" class="text-emerald-600 focus:ring-emerald-500">
-                                <input type="text" value="${opt}" onchange="updateOptionText(${index}, ${optIndex}, this.value)" class="w-full bg-transparent text-xs font-medium text-slate-800 focus:outline-none">
+                                <input type="text" value="${opt}" onchange="updateOptionText(${index}, ${optIndex}, this.value)" class="w-full bg-transparent text-xs font-semibold text-slate-800 dark:text-slate-200 focus:outline-none">
                             </div>
                         `).join('')}
                     </div>
@@ -816,24 +1129,30 @@
         function updateQuestionText(idx, val) { sampleQuestions[idx].question = val; }
         function updateOptionText(qIdx, oIdx, val) { sampleQuestions[qIdx].options[oIdx] = val; }
         function setCorrectAnswer(qIdx, oIdx) { sampleQuestions[qIdx].correct = oIdx; renderEditorQuestions(); }
-        
         function deleteQuestion(idx) {
             sampleQuestions.splice(idx, 1);
             renderEditorQuestions();
+            showToast("تم حذف السؤال.", "info");
         }
 
         function addNewQuestion() {
             sampleQuestions.push({
                 id: Date.now(),
-                question: "سؤال جديد...",
+                question: "اكتب نص السؤال الجديد هنا...",
                 options: ["خيار 1", "خيار 2", "خيار 3", "خيار 4"],
                 correct: 0,
-                explanation: ""
+                explanation: "الشرح التوضيحي للحل الصحيح."
             });
             renderEditorQuestions();
+            showToast("تمت إضافة سؤال جديد.", "success");
         }
 
+        // Quiz Interactive Runner
         function startInteractiveQuiz() {
+            if (sampleQuestions.length === 0) {
+                showToast("لا توجد أسئلة متاحة حالياً!", "error");
+                return;
+            }
             currentQuizIndex = 0;
             userAnswers = {};
             timerSeconds = 0;
@@ -859,16 +1178,15 @@
 
             q.options.forEach((opt, idx) => {
                 const btn = document.createElement('button');
-                btn.className = "w-full text-right p-4 rounded-xl border border-slate-200 text-sm font-semibold transition flex items-center justify-between hover:bg-slate-50";
-                
                 const isSelected = userAnswers[currentQuizIndex] === idx;
-                if (isSelected) {
-                    btn.classList.add('border-blue-600', 'bg-blue-50', 'text-blue-900', 'ring-2', 'ring-blue-500/20');
-                }
+                
+                btn.className = `w-full text-right p-4 rounded-2xl border text-xs sm:text-sm font-bold transition flex items-center justify-between hover:bg-slate-50 dark:hover:bg-slate-700 ${
+                    isSelected ? 'border-blue-600 bg-blue-50/80 dark:bg-blue-950 dark:border-blue-500 text-blue-900 dark:text-blue-100 shadow-sm' : 'border-slate-200 dark:border-slate-700 text-slate-800 dark:text-slate-200'
+                }`;
 
                 btn.innerHTML = `
                     <span>${opt}</span>
-                    <span class="w-5 h-5 rounded-full border flex items-center justify-center text-xs font-bold ${isSelected ? 'bg-blue-600 border-blue-600 text-white' : 'border-slate-300 text-slate-500'}">
+                    <span class="w-6 h-6 rounded-full border flex items-center justify-center text-xs font-black ${isSelected ? 'bg-blue-600 border-blue-600 text-white' : 'border-slate-300 dark:border-slate-600 text-slate-400'}">
                         ${String.fromCharCode(65 + idx)}
                     </span>
                 `;
@@ -880,7 +1198,7 @@
             document.getElementById('btn-quiz-prev').disabled = currentQuizIndex === 0;
             const nextBtn = document.getElementById('btn-quiz-next');
             if (currentQuizIndex === sampleQuestions.length - 1) {
-                nextBtn.querySelector('span').textContent = "إنهاء وعرض النتيجة";
+                nextBtn.querySelector('span').textContent = "إنهاء وإرسال النتيجة";
             } else {
                 nextBtn.querySelector('span').textContent = "التالي";
             }
@@ -922,8 +1240,7 @@
             if (isStudentSharedSession) {
                 const isPassed = pct >= 50;
                 
-                document.getElementById('report-student-name').textContent = currentStudentName || "طالب بدون اسم";
-                document.getElementById('report-date').textContent = new Date().toLocaleDateString('ar-EG');
+                document.getElementById('report-student-name').textContent = currentStudentName || "طالب متميز";
                 document.getElementById('report-score-num').textContent = `${score} / ${total}`;
                 document.getElementById('report-score-pct').textContent = `${pct}%`;
                 document.getElementById('report-time-spent').textContent = `${mins}:${secs}`;
@@ -934,25 +1251,31 @@
                 const sub = document.getElementById('report-status-sub');
                 const tag = document.getElementById('report-status-tag');
                 const passBadge = document.getElementById('report-pass-badge');
+                const certBox = document.getElementById('certificate-action-box');
 
                 if (isPassed) {
-                    banner.className = "p-5 rounded-xl flex items-center justify-between bg-emerald-600 text-white shadow-md";
+                    banner.className = "p-5 rounded-2xl flex items-center justify-between bg-emerald-600 text-white shadow-lg";
                     icon.className = "w-12 h-12 rounded-full flex items-center justify-center bg-white/20 text-white";
                     icon.innerHTML = `<i data-lucide="check-circle" class="w-7 h-7"></i>`;
                     title.textContent = "تهانينا! لقد اجتزت الاختبار بنجاح 🎉";
-                    sub.textContent = "أداء ممتاز، يمكنك طباعة التقرير الرسمي وتصديره للمعلم.";
+                    sub.textContent = "أداء ممتاز من مكتبة المصطفى، يمكنك استخراج شهادة التفوق والنجاح فوراً.";
                     tag.textContent = "ناجح";
                     passBadge.textContent = "ناجح (اجتاز)";
-                    passBadge.className = "font-extrabold text-sm text-emerald-600 bg-emerald-50 px-2 py-0.5 rounded";
+                    passBadge.className = "font-extrabold text-sm text-emerald-600 bg-emerald-50 dark:bg-emerald-950 px-2.5 py-0.5 rounded-lg";
+                    
+                    certBox.classList.remove('hidden');
+                    if (window.confetti) confetti({ particleCount: 100, spread: 70, origin: { y: 0.6 } });
                 } else {
-                    banner.className = "p-5 rounded-xl flex items-center justify-between bg-rose-600 text-white shadow-md";
+                    banner.className = "p-5 rounded-2xl flex items-center justify-between bg-rose-600 text-white shadow-lg";
                     icon.className = "w-12 h-12 rounded-full flex items-center justify-center bg-white/20 text-white";
                     icon.innerHTML = `<i data-lucide="x-circle" class="w-7 h-7"></i>`;
-                    title.textContent = "للأسف لم تجتاز الاختبار هذه المرة ⚠️";
-                    sub.textContent = "نسبتك أقل من حد النجاح المطلوب (50%). حاول المراجعة مجدداً.";
+                    title.textContent = "لم تجتاز الاختبار هذه المرة ⚠️";
+                    sub.textContent = "نسبتك أقل من حد النجاح (50%). حاول مراجعة البطاقات التعليمية وإعادة الاختبار.";
                     tag.textContent = "غير مجتاز";
                     passBadge.textContent = "راسب (لم يجتاز)";
-                    passBadge.className = "font-extrabold text-sm text-rose-600 bg-rose-50 px-2 py-0.5 rounded";
+                    passBadge.className = "font-extrabold text-sm text-rose-600 bg-rose-50 dark:bg-rose-950 px-2.5 py-0.5 rounded-lg";
+                    
+                    certBox.classList.add('hidden');
                 }
 
                 lucide.createIcons();
@@ -974,11 +1297,99 @@
             }
         }
 
-        // Generate Full Quiz URL compatible with GitHub Pages
+        // Flashcards Functionality
+        function renderFlashcards() {
+            flashcardIndex = 0;
+            isFlashcardFlipped = false;
+            updateFlashcardUI();
+        }
+
+        function flipFlashcard() {
+            isFlashcardFlipped = !isFlashcardFlipped;
+            const cardInner = document.getElementById('flashcard-inner');
+            if (isFlashcardFlipped) {
+                cardInner.classList.add('rotate-y-180');
+            } else {
+                cardInner.classList.remove('rotate-y-180');
+            }
+        }
+
+        function updateFlashcardUI() {
+            if (sampleQuestions.length === 0) return;
+            const q = sampleQuestions[flashcardIndex];
+            
+            document.getElementById('flashcard-counter').textContent = `${flashcardIndex + 1} / ${sampleQuestions.length}`;
+            document.getElementById('flashcard-front-text').textContent = q.question;
+            document.getElementById('flashcard-back-answer').textContent = q.options[q.correct];
+            document.getElementById('flashcard-back-explanation').textContent = q.explanation || "الإجابة الصحيحة وفقاً للمادة الدراسية والمستند المستخرج.";
+
+            const cardInner = document.getElementById('flashcard-inner');
+            cardInner.classList.remove('rotate-y-180');
+            isFlashcardFlipped = false;
+
+            document.getElementById('btn-flashcard-prev').disabled = flashcardIndex === 0;
+            document.getElementById('btn-flashcard-next').disabled = flashcardIndex === sampleQuestions.length - 1;
+        }
+
+        function prevFlashcard() {
+            if (flashcardIndex > 0) {
+                flashcardIndex--;
+                updateFlashcardUI();
+            }
+        }
+
+        function nextFlashcard() {
+            if (flashcardIndex < sampleQuestions.length - 1) {
+                flashcardIndex++;
+                updateFlashcardUI();
+            }
+        }
+
+        // Certificate Generator
+        function generateCertificate() {
+            document.getElementById('cert-student-name').textContent = currentStudentName || "الطالب المتفوق";
+            document.getElementById('cert-score-pct').textContent = document.getElementById('report-score-pct').textContent;
+            document.getElementById('cert-date').textContent = new Date().toLocaleDateString('ar-EG');
+            document.getElementById('certificate-modal').classList.remove('hidden');
+        }
+
+        function closeCertificateModal() {
+            document.getElementById('certificate-modal').classList.add('hidden');
+        }
+
+        // Export Questions as Word
+        function exportQuizDoc(type) {
+            let docContent = `
+                <html xmlns:o='urn:schemas-microsoft-com:office:office' xmlns:w='urn:schemas-microsoft-com:office:word' xmlns='http://www.w3.org/TR/REC-html40'>
+                <head><title>اختبار MCQ - مكتبة المصطفى</title><style>body{font-family:Arial,sans-serif;direction:rtl;}</style></head>
+                <body>
+                <h2>اختبار الخيارات المتعددة - مكتبة المصطفى</h2>
+                <hr/>
+            `;
+
+            sampleQuestions.forEach((q, idx) => {
+                docContent += `<h3>س${idx + 1}: ${q.question}</h3><ul>`;
+                q.options.forEach((opt, oIdx) => {
+                    docContent += `<li>${String.fromCharCode(65 + oIdx)}) ${opt} ${oIdx === q.correct ? '<strong>(الإجابة الصحيحة)</strong>' : ''}</li>`;
+                });
+                docContent += `</ul><p><em>الشرح: ${q.explanation}</em></p><br/>`;
+            });
+
+            docContent += `</body></html>`;
+
+            const blob = new Blob(['\ufeff' + docContent], { type: 'application/msword' });
+            const url = URL.createObjectURL(blob);
+            const a = document.createElement('a');
+            a.href = url;
+            a.download = `MCQ_Quiz_${Date.now()}.doc`;
+            a.click();
+            showToast("تم تنزيل المستند بتنسيق Word بنجاح!", "success");
+        }
+
+        // Share Link Encoding & Handling
         function openShareModal() {
-            const encodedData = encodeQuizData(sampleQuestions);
-            const baseUrl = window.location.origin + window.location.pathname;
-            const shareUrl = `${baseUrl}?quiz=${encodedData}`;
+            const encoded = btoa(unescape(encodeURIComponent(JSON.stringify(sampleQuestions))));
+            const shareUrl = `${window.location.origin}${window.location.pathname}#quiz=${encoded}`;
             
             document.getElementById('share-url-field').value = shareUrl;
             document.getElementById('share-modal').classList.remove('hidden');
@@ -989,12 +1400,12 @@
         }
 
         function copyShareUrl() {
-            const copyText = document.getElementById('share-url-field');
-            copyText.select();
+            const input = document.getElementById('share-url-field');
+            input.select();
             document.execCommand('copy');
-            const label = document.getElementById('copy-btn-label');
-            label.textContent = "تم النسخ!";
-            setTimeout(() => label.textContent = "نسخ الرابط", 2000);
+            document.getElementById('copy-btn-label').textContent = "تم النسخ!";
+            showToast("تم نسخ رابط الاختبار للحافظة!", "success");
+            setTimeout(() => document.getElementById('copy-btn-label').textContent = "نسخ", 2000);
         }
 
         function launchStudentFlowFromTeacher() {
@@ -1004,30 +1415,37 @@
         }
 
         function startStudentQuizSession() {
-            const nameInput = document.getElementById('student-name-input').value.trim();
-            if (!nameInput) {
-                alert("الرجاء إدخال اسمك الثلاثي للبدء في الاختبار.");
+            const name = document.getElementById('student-name-input').value.trim();
+            if (!name) {
+                showToast("الرجاء إدخال اسمك الثلاثي للبدء.", "error");
                 return;
             }
-            currentStudentName = nameInput;
+            currentStudentName = name;
             isStudentSharedSession = true;
             startInteractiveQuiz();
         }
 
-        function exportStudentReportPDF() {
-            window.print();
+        function checkUrlForSharedQuiz() {
+            const hash = window.location.hash;
+            if (hash && hash.includes('#quiz=')) {
+                try {
+                    const encodedData = hash.replace('#quiz=', '');
+                    const jsonStr = decodeURIComponent(escape(atob(encodedData)));
+                    const questions = JSON.parse(jsonStr);
+                    if (Array.isArray(questions) && questions.length > 0) {
+                        sampleQuestions = questions;
+                        isStudentSharedSession = true;
+                        switchView('student-entry');
+                        showToast("تم تحميل الاختبار المشارك من المعلم!", "success");
+                    }
+                } catch (e) {
+                    console.error("Shared Quiz Parse Error:", e);
+                }
+            }
         }
 
-        function exportDoc(type) {
-            alert(`جاري تجهيز وتنزيل ملف الأسئلة بتنسيق ${type.toUpperCase()}...`);
-        }
-
-        function openPlansModal() {
-            document.getElementById('plans-modal').classList.remove('hidden');
-        }
-        function closePlansModal() {
-            document.getElementById('plans-modal').classList.add('hidden');
-        }
+        function openAboutModal() { document.getElementById('about-modal').classList.remove('hidden'); }
+        function closeAboutModal() { document.getElementById('about-modal').classList.add('hidden'); }
     </script>
 </body>
 </html>
