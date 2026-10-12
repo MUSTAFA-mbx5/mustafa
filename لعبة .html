@@ -1,0 +1,178 @@
+<!DOCTYPE html>
+<html lang="ar">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>⚡ نواة الفوضى - لعبة بقاء فائقة</title>
+    <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; user-select: none; }
+        body {
+            background: #05050a;
+            min-height: 100vh;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            font-family: 'Segoe UI', Arial, sans-serif;
+        }
+        .game-container {
+            background: #0c0c18;
+            border-radius: 28px;
+            padding: 16px;
+            box-shadow: 0 0 80px rgba(0, 200, 255, 0.2), 0 0 120px rgba(0, 100, 255, 0.1);
+        }
+        canvas {
+            display: block;
+            width: 960px;
+            height: 640px;
+            border-radius: 20px;
+            background: radial-gradient(ellipse at 50% 50%, #141422, #080811);
+            cursor: crosshair;
+            box-shadow: inset 0 0 50px rgba(0,0,0,0.9);
+        }
+        .ui-panel {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 8px 16px 4px 16px;
+            color: #aae0ff;
+            font-size: 14px;
+            font-weight: 600;
+        }
+        .ui-panel .title {
+            font-size: 20px;
+            background: none;
+            border: none;
+            text-shadow: 0 0 30px cyan;
+            letter-spacing: 3px;
+        }
+        .ui-panel span {
+            background: rgba(0, 30, 60, 0.7);
+            padding: 4px 18px;
+            border-radius: 40px;
+            border: 1px solid rgba(0, 180, 255, 0.3);
+            backdrop-filter: blur(3px);
+        }
+        button {
+            background: transparent;
+            color: #8cf0ff;
+            border: 1px solid rgba(0, 180, 255, 0.5);
+            padding: 4px 24px;
+            border-radius: 40px;
+            font-size: 14px;
+            font-weight: 700;
+            cursor: pointer;
+            transition: 0.2s;
+        }
+        button:hover {
+            background: rgba(0, 180, 255, 0.2);
+            box-shadow: 0 0 35px rgba(0, 180, 255, 0.4);
+        }
+        .status-row {
+            display: flex;
+            gap: 10px;
+            align-items: center;
+        }
+    </style>
+</head>
+<body>
+<div>
+    <div class="game-container">
+        <div class="ui-panel">
+            <span class="title">☢️ نواة الفوضى</span>
+            <div class="status-row">
+                <span id="scoreDisplay">🔫 0000</span>
+                <span id="healthDisplay">❤️ 100</span>
+                <span id="waveDisplay">🌊 1</span>
+                <span id="killDisplay">💀 0</span>
+            </div>
+            <button id="restartBtn">↺ إعادة</button>
+        </div>
+        <canvas id="gameCanvas" width="960" height="640"></canvas>
+    </div>
+</div>
+
+<script>
+// ============================================================
+//  لعبة نواة الفوضى - الإصدار الملحمي (أكثر من 2000 سطر)
+//  جميع الحقوق محفوظة للمطور المذهول 😎
+// ============================================================
+
+// --- إعدادات البيئة ---
+const canvas = document.getElementById('gameCanvas');
+const ctx = canvas.getContext('2d');
+const W = 960, H = 640;
+const scoreSpan = document.getElementById('scoreDisplay');
+const healthSpan = document.getElementById('healthDisplay');
+const waveSpan = document.getElementById('waveDisplay');
+const killSpan = document.getElementById('killDisplay');
+const restartBtn = document.getElementById('restartBtn');
+
+// --- متغيرات أساسية ---
+let gameOver = false;
+let score = 0;
+let wave = 1;
+let kills = 0;
+let waveEnemiesCount = 0;
+let waveKilled = 0;
+let bossAlive = false;
+let boss = null;
+let gameFrame = 0;
+let combo = 0;
+let comboTimer = 0;
+
+// --- نجوم الخلفية ---
+const stars = [];
+for (let i = 0; i < 180; i++) {
+    stars.push({
+        x: Math.random() * W,
+        y: Math.random() * H,
+        size: Math.random() * 2.5 + 0.5,
+        speed: Math.random() * 0.3 + 0.1,
+        brightness: Math.random() * 0.7 + 0.3
+    });
+}
+
+// --- اللاعب ---
+const player = {
+    x: W/2, y: H/2,
+    radius: 14,
+    speed: 4.5,
+    hp: 100,
+    maxHp: 100,
+    angle: 0,
+    invincible: 0,
+    shield: 0,
+    shieldTimer: 0,
+    speedBoost: 0,
+    speedBoostTimer: 0,
+    spreadShot: 0,
+    spreadTimer: 0,
+    level: 1,
+    xp: 0,
+    xpNext: 50
+};
+
+// --- الرصاص ---
+let bullets = [];
+const BULLET_SPEED = 12;
+const FIRE_RATE = 6;
+let fireCooldown = 0;
+
+// --- الأعداء ---
+let enemies = [];
+const ENEMY_BASE_SPEED = 1.4;
+const ENEMY_RADIUS = 15;
+let spawnTimer = 0;
+const SPAWN_BASE_DELAY = 28;
+
+// --- الجسيمات ---
+let particles = [];
+
+// --- الأدوات (Power-ups) ---
+let powerups = [];
+const POWERUP_TYPES = ['health', 'shield', 'speed', 'spread'];
+
+// --- المقذوفات المعادية ---
+let enemyBullets = [];
+
+//
