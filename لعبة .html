@@ -1,178 +1,881 @@
 <!DOCTYPE html>
-<html lang="ar">
+<html lang="ar" dir="rtl">
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>⚡ نواة الفوضى - لعبة بقاء فائقة</title>
-    <style>
-        * { margin: 0; padding: 0; box-sizing: border-box; user-select: none; }
-        body {
-            background: #05050a;
-            min-height: 100vh;
-            display: flex;
-            justify-content: center;
-            align-items: center;
-            font-family: 'Segoe UI', Arial, sans-serif;
-        }
-        .game-container {
-            background: #0c0c18;
-            border-radius: 28px;
-            padding: 16px;
-            box-shadow: 0 0 80px rgba(0, 200, 255, 0.2), 0 0 120px rgba(0, 100, 255, 0.1);
-        }
-        canvas {
-            display: block;
-            width: 960px;
-            height: 640px;
-            border-radius: 20px;
-            background: radial-gradient(ellipse at 50% 50%, #141422, #080811);
-            cursor: crosshair;
-            box-shadow: inset 0 0 50px rgba(0,0,0,0.9);
-        }
-        .ui-panel {
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-            padding: 8px 16px 4px 16px;
-            color: #aae0ff;
-            font-size: 14px;
-            font-weight: 600;
-        }
-        .ui-panel .title {
-            font-size: 20px;
-            background: none;
-            border: none;
-            text-shadow: 0 0 30px cyan;
-            letter-spacing: 3px;
-        }
-        .ui-panel span {
-            background: rgba(0, 30, 60, 0.7);
-            padding: 4px 18px;
-            border-radius: 40px;
-            border: 1px solid rgba(0, 180, 255, 0.3);
-            backdrop-filter: blur(3px);
-        }
-        button {
-            background: transparent;
-            color: #8cf0ff;
-            border: 1px solid rgba(0, 180, 255, 0.5);
-            padding: 4px 24px;
-            border-radius: 40px;
-            font-size: 14px;
-            font-weight: 700;
-            cursor: pointer;
-            transition: 0.2s;
-        }
-        button:hover {
-            background: rgba(0, 180, 255, 0.2);
-            box-shadow: 0 0 35px rgba(0, 180, 255, 0.4);
-        }
-        .status-row {
-            display: flex;
-            gap: 10px;
-            align-items: center;
-        }
-    </style>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Neon Blaster</title>
+<style>
+  * { margin: 0; padding: 0; box-sizing: border-box; user-select: none; }
+  html, body { width: 100%; height: 100%; background: #050510; overflow: hidden; font-family: 'Segoe UI', Tahoma, sans-serif; }
+  canvas { display: block; cursor: crosshair; }
+  #hud {
+    position: fixed; top: 12px; right: 16px; color: #0ff;
+    text-shadow: 0 0 8px #0ff; font-size: 16px; line-height: 1.7;
+    pointer-events: none; z-index: 10;
+  }
+  #hud b { color: #fff; }
+  #hpbar {
+    position: fixed; top: 16px; left: 16px; width: 240px; height: 22px;
+    background: rgba(255,255,255,0.08); border: 2px solid #0ff;
+    box-shadow: 0 0 15px #0ff; border-radius: 4px; overflow: hidden; z-index: 10;
+  }
+  #hpfill {
+    width: 100%; height: 100%; background: linear-gradient(90deg,#0f0,#0ff);
+    transition: width 0.15s linear;
+  }
+  #xpbar {
+    position: fixed; top: 44px; left: 16px; width: 240px; height: 10px;
+    background: rgba(255,255,255,0.08); border: 1px solid #f0f;
+    box-shadow: 0 0 10px #f0f; border-radius: 4px; overflow: hidden; z-index: 10;
+  }
+  #xpfill { width: 0%; height: 100%; background: #f0f; }
+  #overlay {
+    position: fixed; inset: 0; display: flex; align-items: center; justify-content: center;
+    flex-direction: column; background: radial-gradient(circle at center, rgba(0,20,40,0.9), rgba(0,0,0,0.95));
+    z-index: 20; text-align: center; color: #0ff;
+  }
+  #overlay.hidden { display: none; }
+  #overlay h1 {
+    font-size: 64px; color: #0ff; text-shadow: 0 0 25px #0ff, 0 0 50px #f0f;
+    letter-spacing: 4px; margin-bottom: 10px;
+  }
+  #overlay p { color: #fff; font-size: 18px; margin: 6px 0; opacity: 0.85; }
+  #overlay button {
+    margin-top: 28px; padding: 14px 44px; font-size: 22px;
+    background: transparent; color: #0ff; border: 2px solid #0ff;
+    border-radius: 6px; cursor: pointer; letter-spacing: 2px;
+    box-shadow: 0 0 20px #0ff, inset 0 0 20px rgba(0,255,255,0.2);
+    transition: 0.2s;
+  }
+  #overlay button:hover { background: #0ff; color: #000; box-shadow: 0 0 40px #0ff; }
+  .stat { font-size: 20px; color: #fff; margin-top: 20px; }
+  .stat span { color: #f0f; text-shadow: 0 0 10px #f0f; }
+</style>
 </head>
 <body>
-<div>
-    <div class="game-container">
-        <div class="ui-panel">
-            <span class="title">☢️ نواة الفوضى</span>
-            <div class="status-row">
-                <span id="scoreDisplay">🔫 0000</span>
-                <span id="healthDisplay">❤️ 100</span>
-                <span id="waveDisplay">🌊 1</span>
-                <span id="killDisplay">💀 0</span>
-            </div>
-            <button id="restartBtn">↺ إعادة</button>
-        </div>
-        <canvas id="gameCanvas" width="960" height="640"></canvas>
-    </div>
+<canvas id="game"></canvas>
+
+<div id="hpbar"><div id="hpfill"></div></div>
+<div id="xpbar"><div id="xpfill"></div></div>
+
+<div id="hud">
+  النقاط: <b id="score">0</b><br>
+  الأعلى: <b id="high">0</b><br>
+  الموجة: <b id="wave">0</b><br>
+  المستوى: <b id="level">1</b><br>
+  الأعداء: <b id="ecount">0</b>
+</div>
+
+<div id="overlay">
+  <h1>NEON BLASTER</h1>
+  <p>حركة: WASD أو الأسهم</p>
+  <p>تصويب وضرب: الماوس + كليك</p>
+  <p>إيقاف مؤقت: P</p>
+  <p class="stat">أعلى نتيجة: <span id="overHigh">0</span></p>
+  <button id="startBtn">ابدأ اللعب</button>
 </div>
 
 <script>
-// ============================================================
-//  لعبة نواة الفوضى - الإصدار الملحمي (أكثر من 2000 سطر)
-//  جميع الحقوق محفوظة للمطور المذهول 😎
-// ============================================================
+(() => {
+'use strict';
 
-// --- إعدادات البيئة ---
-const canvas = document.getElementById('gameCanvas');
+/* =========================================================
+   الإعداد
+========================================================= */
+const canvas = document.getElementById('game');
 const ctx = canvas.getContext('2d');
-const W = 960, H = 640;
-const scoreSpan = document.getElementById('scoreDisplay');
-const healthSpan = document.getElementById('healthDisplay');
-const waveSpan = document.getElementById('waveDisplay');
-const killSpan = document.getElementById('killDisplay');
-const restartBtn = document.getElementById('restartBtn');
+let W = 0, H = 0, DPR = Math.min(devicePixelRatio || 1, 2);
 
-// --- متغيرات أساسية ---
-let gameOver = false;
-let score = 0;
-let wave = 1;
-let kills = 0;
-let waveEnemiesCount = 0;
-let waveKilled = 0;
-let bossAlive = false;
-let boss = null;
-let gameFrame = 0;
-let combo = 0;
-let comboTimer = 0;
+function resize() {
+  W = innerWidth; H = innerHeight;
+  canvas.width = W * DPR;
+  canvas.height = H * DPR;
+  canvas.style.width = W + 'px';
+  canvas.style.height = H + 'px';
+  ctx.setTransform(DPR, 0, 0, DPR, 0, 0);
+}
+addEventListener('resize', resize);
+resize();
 
-// --- نجوم الخلفية ---
-const stars = [];
-for (let i = 0; i < 180; i++) {
-    stars.push({
-        x: Math.random() * W,
-        y: Math.random() * H,
-        size: Math.random() * 2.5 + 0.5,
-        speed: Math.random() * 0.3 + 0.1,
-        brightness: Math.random() * 0.7 + 0.3
-    });
+/* =========================================================
+   الصوت
+========================================================= */
+let audioCtx = null;
+function initAudio() {
+  if (!audioCtx) {
+    try { audioCtx = new (window.AudioContext || window.webkitAudioContext)(); } catch(e){}
+  }
+  if (audioCtx && audioCtx.state === 'suspended') audioCtx.resume();
+}
+function beep(freq, dur = 0.08, type = 'sine', vol = 0.06) {
+  if (!audioCtx) return;
+  const o = audioCtx.createOscillator();
+  const g = audioCtx.createGain();
+  o.type = type; o.frequency.value = freq;
+  g.gain.setValueAtTime(vol, audioCtx.currentTime);
+  g.gain.exponentialRampToValueAtTime(0.0001, audioCtx.currentTime + dur);
+  o.connect(g); g.connect(audioCtx.destination);
+  o.start(); o.stop(audioCtx.currentTime + dur);
+}
+function noise(dur = 0.2, vol = 0.1) {
+  if (!audioCtx) return;
+  const buffer = audioCtx.createBuffer(1, audioCtx.sampleRate * dur, audioCtx.sampleRate);
+  const data = buffer.getChannelData(0);
+  for (let i = 0; i < data.length; i++) data[i] = Math.random() * 2 - 1;
+  const src = audioCtx.createBufferSource();
+  src.buffer = buffer;
+  const g = audioCtx.createGain();
+  g.gain.setValueAtTime(vol, audioCtx.currentTime);
+  g.gain.exponentialRampToValueAtTime(0.0001, audioCtx.currentTime + dur);
+  src.connect(g); g.connect(audioCtx.destination);
+  src.start();
 }
 
-// --- اللاعب ---
+/* =========================================================
+   المدخلات
+========================================================= */
+const keys = {};
+const mouse = { x: 0, y: 0, down: false };
+addEventListener('keydown', e => {
+  const k = e.key.toLowerCase();
+  keys[k] = true;
+  if ([' ','arrowup','arrowdown','arrowleft','arrowright'].includes(k)) e.preventDefault();
+  if (k === 'p' && state === 'playing') state = 'paused';
+  else if (k === 'p' && state === 'paused') state = 'playing';
+});
+addEventListener('keyup', e => { keys[e.key.toLowerCase()] = false; });
+canvas.addEventListener('mousemove', e => { mouse.x = e.clientX; mouse.y = e.clientY; });
+canvas.addEventListener('mousedown', e => { mouse.down = true; initAudio(); });
+canvas.addEventListener('mouseup', () => mouse.down = false);
+canvas.addEventListener('contextmenu', e => e.preventDefault());
+
+/* =========================================================
+   الحالة العامة
+========================================================= */
+let state = 'menu'; // menu | playing | paused | gameover
+let score = 0, wave = 0, waveTimer = 0, spawnTimer = 0, difficulty = 1;
+let highScore = parseInt(localStorage.getItem('nb_high') || '0');
+document.getElementById('overHigh').textContent = highScore;
+document.getElementById('high').textContent = highScore;
+
+/* =========================================================
+   الكيانات
+========================================================= */
 const player = {
-    x: W/2, y: H/2,
-    radius: 14,
-    speed: 4.5,
-    hp: 100,
-    maxHp: 100,
-    angle: 0,
-    invincible: 0,
-    shield: 0,
-    shieldTimer: 0,
-    speedBoost: 0,
-    speedBoostTimer: 0,
-    spreadShot: 0,
-    spreadTimer: 0,
-    level: 1,
-    xp: 0,
-    xpNext: 50
+  x: 0, y: 0, r: 14, speed: 4.8,
+  hp: 100, maxHp: 100, level: 1, xp: 0, xpNext: 10,
+  cooldown: 0, fireRate: 9, bulletDamage: 12,
+  bulletCount: 1, spread: 0, pierce: 0, multishotLevel: 0,
+  dashCd: 0, invuln: 0
 };
 
-// --- الرصاص ---
-let bullets = [];
-const BULLET_SPEED = 12;
-const FIRE_RATE = 6;
-let fireCooldown = 0;
+let bullets = [], enemies = [], particles = [], powerups = [], stars = [], floats = [];
+let shakeT = 0, shakeMag = 0;
+let powerupTimers = { rapid: 0, shield: 0 };
 
-// --- الأعداء ---
-let enemies = [];
-const ENEMY_BASE_SPEED = 1.4;
-const ENEMY_RADIUS = 15;
-let spawnTimer = 0;
-const SPAWN_BASE_DELAY = 28;
+/* =========================================================
+   أدوات
+========================================================= */
+const rand = (a, b) => Math.random() * (b - a) + a;
+const dist2 = (a, b) => { const dx = a.x-b.x, dy = a.y-b.y; return dx*dx+dy*dy; };
+const clamp = (v, a, b) => v < a ? a : v > b ? b : v;
 
-// --- الجسيمات ---
-let particles = [];
+function addParticles(x, y, color, count, spread = 5) {
+  for (let i = 0; i < count; i++) {
+    const a = Math.random() * Math.PI * 2;
+    const s = rand(0.5, spread);
+    particles.push({
+      x, y,
+      vx: Math.cos(a) * s, vy: Math.sin(a) * s,
+      life: 30, maxLife: 30,
+      color, size: rand(1.5, 4)
+    });
+  }
+}
+function addFloat(x, y, text, color = '#0ff') {
+  floats.push({ x, y, text, color, life: 40, maxLife: 40 });
+}
+function shake(mag, time) {
+  shakeMag = Math.max(shakeMag, mag);
+  shakeT = Math.max(shakeT, time);
+}
 
-// --- الأدوات (Power-ups) ---
-let powerups = [];
-const POWERUP_TYPES = ['health', 'shield', 'speed', 'spread'];
+/* =========================================================
+   النجوم (خلفية متحركة)
+========================================================= */
+function initStars() {
+  stars = [];
+  for (let i = 0; i < 220; i++) {
+    stars.push({
+      x: Math.random() * W,
+      y: Math.random() * H,
+      z: rand(0.3, 3),
+      size: rand(0.5, 2),
+      hue: Math.random() < 0.5 ? 180 : 300
+    });
+  }
+}
 
-// --- المقذوفات المعادية ---
-let enemyBullets = [];
+/* =========================================================
+   الإطلاق
+========================================================= */
+function shoot() {
+  if (player.cooldown > 0) return;
+  const baseAngle = Math.atan2(mouse.y - player.y, mouse.x - player.x);
+  const n = player.bulletCount;
+  const spreadRad = (player.spread * Math.PI) / 180;
+  for (let i = 0; i < n; i++) {
+    const offset = n === 1 ? 0 : (i - (n - 1) / 2) * (spreadRad / Math.max(1, n - 1));
+    const a = baseAngle + offset;
+    const sp = 14;
+    bullets.push({
+      x: player.x + Math.cos(a) * player.r,
+      y: player.y + Math.sin(a) * player.r,
+      vx: Math.cos(a) * sp, vy: Math.sin(a) * sp,
+      r: 4, damage: player.bulletDamage, color: '#0ff',
+      pierce: player.pierce, hit: []
+    });
+  }
+  player.cooldown = player.fireRate;
+  beep(880 + Math.random() * 80, 0.05, 'square', 0.035);
+}
 
-//
+/* =========================================================
+   توليد الأعداء
+========================================================= */
+const ENEMY_TYPES = {
+  chaser: { r: 12, hp: 20, speed: 1.9, color: '#f44', damage: 8, xp: 5, score: 10 },
+  shooter: { r: 14, hp: 30, speed: 1.1, color: '#f80', damage: 10, xp: 8, score: 15 },
+  tank: { r: 20, hp: 90, speed: 0.7, color: '#a4f', damage: 14, xp: 15, score: 25 },
+  splitter: { r: 16, hp: 40, speed: 1.5, color: '#0f8', damage: 10, xp: 10, score: 20 }
+};
+
+function spawnEnemy(forceType) {
+  const side = Math.floor(Math.random() * 4);
+  let x, y;
+  const pad = 40;
+  if (side === 0) { x = Math.random() * W; y = -pad; }
+  else if (side === 1) { x = W + pad; y = Math.random() * H; }
+  else if (side === 2) { x = Math.random() * W; y = H + pad; }
+  else { x = -pad; y = Math.random() * H; }
+
+  // Boss كل 5 موجات
+  const isBossWave = wave > 0 && wave % 5 === 0 && enemies.filter(e => e.type === 'boss').length === 0;
+  if (isBossWave && !forceType) {
+    enemies.push(makeEnemy(x, y, 'boss'));
+    shake(15, 30); beep(120, 0.5, 'sawtooth', 0.15);
+    return;
+  }
+
+  let type = forceType;
+  if (!type) {
+    const r = Math.random();
+    if (wave < 2) type = 'chaser';
+    else if (r < 0.4) type = 'chaser';
+    else if (r < 0.7) type = 'shooter';
+    else if (r < 0.9) type = 'splitter';
+    else type = 'tank';
+  }
+  enemies.push(makeEnemy(x, y, type));
+}
+
+function makeEnemy(x, y, type) {
+  if (type === 'boss') {
+    const hp = 400 + wave * 80;
+    return {
+      x, y, r: 46, type, hp, maxHp: hp,
+      speed: 0.75, color: '#f0f', damage: 22,
+      xp: 80, score: 500,
+      shootTimer: 90, phase: 0, angle: 0,
+      vx: 0, vy: 0
+    };
+  }
+  const t = ENEMY_TYPES[type];
+  const hpMul = 1 + (wave - 1) * 0.15;
+  const hp = Math.floor(t.hp * hpMul);
+  return {
+    x, y, r: t.r, type, hp, maxHp: hp,
+    speed: t.speed * (1 + (wave - 1) * 0.03),
+    color: t.color, damage: t.damage,
+    xp: t.xp, score: t.score,
+    shootTimer: 60 + Math.random() * 60, angle: 0,
+    vx: 0, vy: 0
+  };
+}
+
+/* =========================================================
+   القوى (Powerups)
+========================================================= */
+function spawnPowerup(x, y) {
+  const roll = Math.random();
+  let type;
+  if (roll < 0.4) type = 'heal';
+  else if (roll < 0.65) type = 'rapid';
+  else if (roll < 0.85) type = 'multishot';
+  else type = 'shield';
+  powerups.push({ x, y, r: 12, type, life: 700, bob: 0 });
+}
+
+function applyPowerup(p) {
+  const colors = { heal: '#0f0', rapid: '#ff0', multishot: '#0ff', shield: '#f0f' };
+  beep(700, 0.15, 'sine', 0.08);
+  addParticles(p.x, p.y, colors[p.type], 15);
+  if (p.type === 'heal') {
+    player.hp = Math.min(player.maxHp, player.hp + 30);
+    addFloat(p.x, p.y, '+30 HP', '#0f0');
+  } else if (p.type === 'rapid') {
+    if (powerupTimers.rapid <= 0) player.fireRate = Math.max(3, player.fireRate - 4);
+    powerupTimers.rapid = 480;
+    addFloat(p.x, p.y, 'RAPID', '#ff0');
+  } else if (p.type === 'multishot') {
+    player.multishotLevel = Math.min(4, player.multishotLevel + 1);
+    player.bulletCount = 1 + player.multishotLevel;
+    player.spread = 12 + player.multishotLevel * 4;
+    addFloat(p.x, p.y, 'x' + player.bulletCount, '#0ff');
+  } else if (p.type === 'shield') {
+    powerupTimers.shield = 420;
+    player.invuln = 420;
+    addFloat(p.x, p.y, 'SHIELD', '#f0f');
+  }
+}
+
+/* =========================================================
+   XP والمستويات
+========================================================= */
+function addXP(n) {
+  player.xp += n;
+  while (player.xp >= player.xpNext) {
+    player.xp -= player.xpNext;
+    player.level++;
+    player.xpNext = Math.floor(player.xpNext * 1.4);
+    player.maxHp += 15;
+    player.hp = Math.min(player.maxHp, player.hp + 25);
+    player.bulletDamage += 3;
+    if (player.level % 3 === 0) player.fireRate = Math.max(3, player.fireRate - 1);
+    beep(1200, 0.25, 'sine', 0.1);
+    addFloat(player.x, player.y - 30, 'LEVEL UP!', '#ff0');
+    // موجة صدمية
+    addParticles(player.x, player.y, '#ff0', 40, 8);
+    // تنظيف المحيط
+    enemies.forEach(e => {
+      if (dist2(e, player) < 200*200 && e.type !== 'boss') {
+        e.hp -= 30;
+        addParticles(e.x, e.y, '#ff0', 6);
+      }
+    });
+  }
+}
+
+/* =========================================================
+   إعادة الضبط
+========================================================= */
+function resetGame() {
+  score = 0; wave = 0; waveTimer = 120; spawnTimer = 30; difficulty = 1;
+  player.x = W / 2; player.y = H / 2;
+  player.hp = 100; player.maxHp = 100;
+  player.level = 1; player.xp = 0; player.xpNext = 10;
+  player.fireRate = 9; player.bulletDamage = 12;
+  player.bulletCount = 1; player.spread = 0; player.multishotLevel = 0;
+  player.cooldown = 0; player.invuln = 0;
+  bullets = []; enemies = []; particles = []; powerups = []; floats = [];
+  powerupTimers = { rapid: 0, shield: 0 };
+  shakeT = 0; shakeMag = 0;
+  initStars();
+}
+
+/* =========================================================
+   التحديث
+========================================================= */
+function update(dt) {
+  // dt: عامل الوقت (1 = 60fps)
+  if (state !== 'playing') return;
+
+  // النجوم
+  for (const s of stars) {
+    s.y += s.z * 0.6;
+    if (s.y > H) { s.y = 0; s.x = Math.random() * W; }
+  }
+
+  // اللاعب
+  let dx = 0, dy = 0;
+  if (keys['w'] || keys['arrowup']) dy -= 1;
+  if (keys['s'] || keys['arrowdown']) dy += 1;
+  if (keys['a'] || keys['arrowleft']) dx -= 1;
+  if (keys['d'] || keys['arrowright']) dx += 1;
+  if (dx || dy) {
+    const len = Math.hypot(dx, dy);
+    player.x += (dx / len) * player.speed * dt;
+    player.y += (dy / len) * player.speed * dt;
+  }
+  player.x = clamp(player.x, player.r, W - player.r);
+  player.y = clamp(player.y, player.r, H - player.r);
+
+  if (player.cooldown > 0) player.cooldown -= dt;
+  if (player.invuln > 0) player.invuln -= dt;
+
+  // إطلاق
+  if (keys[' '] || mouse.down) shoot();
+
+  // المؤقتات
+  for (const k in powerupTimers) {
+    if (powerupTimers[k] > 0) powerupTimers[k] -= dt;
+  }
+  if (powerupTimers.rapid === 0 && player.fireRate < 3 + (player.level % 3 === 0 ? -1 : 0) + 6) {
+    // إعادة fireRate تدريجياً
+    if (player.fireRate < 9) player.fireRate = Math.min(9, player.fireRate + 0.05 * dt);
+  }
+
+  // موجات
+  waveTimer -= dt;
+  if (waveTimer <= 0) {
+    wave++;
+    waveTimer = 60 * 18;
+    difficulty = 1 + wave * 0.12;
+    const count = 3 + Math.min(wave, 15);
+    for (let i = 0; i < count; i++) {
+      setTimeout(() => {
+        if (state === 'playing') spawnEnemy();
+      }, i * 300);
+    }
+    if (wave % 5 === 0) {
+      setTimeout(() => { if (state === 'playing') spawnEnemy(); }, 500);
+    }
+    beep(400, 0.2, 'triangle', 0.08);
+  }
+
+  // توليد مستمر
+  spawnTimer -= dt;
+  if (spawnTimer <= 0 && enemies.length < 12 + wave * 2) {
+    spawnEnemy();
+    spawnTimer = Math.max(20, 80 - wave * 4);
+  }
+
+  // الرصاصات
+  for (let i = bullets.length - 1; i >= 0; i--) {
+    const b = bullets[i];
+    b.x += b.vx * dt;
+    b.y += b.vy * dt;
+    if (b.x < -30 || b.x > W + 30 || b.y < -30 || b.y > H + 30) {
+      bullets.splice(i, 1); continue;
+    }
+    if (b.enemy) {
+      if (player.invuln <= 0 && dist2(b, player) < (b.r + player.r) ** 2) {
+        player.hp -= b.damage;
+        bullets.splice(i, 1);
+        addParticles(player.x, player.y, '#f80', 8);
+        beep(180, 0.1, 'sawtooth', 0.08);
+        shake(8, 8);
+        continue;
+      }
+    } else {
+      for (let j = enemies.length - 1; j >= 0; j--) {
+        const e = enemies[j];
+        if (dist2(b, e) < (b.r + e.r) ** 2) {
+          if (b.hit.includes(e)) continue;
+          e.hp -= b.damage;
+          addParticles(b.x, b.y, e.color, 4, 3);
+          b.hit.push(e);
+          if (b.pierce <= 0) { bullets.splice(i, 1); }
+          else { b.pierce--; }
+          beep(500, 0.03, 'square', 0.03);
+          break;
+        }
+      }
+    }
+  }
+
+  // الأعداء
+  for (let i = enemies.length - 1; i >= 0; i--) {
+    const e = enemies[i];
+    const angle = Math.atan2(player.y - e.y, player.x - e.x);
+    if (e.type === 'chaser') {
+      e.x += Math.cos(angle) * e.speed * dt;
+      e.y += Math.sin(angle) * e.speed * dt;
+    } else if (e.type === 'shooter') {
+      const d = Math.hypot(player.x - e.x, player.y - e.y);
+      if (d > 260) { e.x += Math.cos(angle) * e.speed * dt; e.y += Math.sin(angle) * e.speed * dt; }
+      else if (d < 160) { e.x -= Math.cos(angle) * e.speed * dt; e.y -= Math.sin(angle) * e.speed * dt; }
+      else {
+        // دوران حول اللاعب
+        e.x += Math.cos(angle + Math.PI/2) * e.speed * 0.7 * dt;
+        e.y += Math.sin(angle + Math.PI/2) * e.speed * 0.7 * dt;
+      }
+      e.shootTimer -= dt;
+      if (e.shootTimer <= 0) {
+        e.shootTimer = 100;
+        bullets.push({
+          x: e.x, y: e.y,
+          vx: Math.cos(angle) * 5, vy: Math.sin(angle) * 5,
+          r: 6, damage: 8, color: '#f80', enemy: true
+        });
+        beep(260, 0.06, 'sawtooth', 0.03);
+      }
+    } else if (e.type === 'tank') {
+      e.x += Math.cos(angle) * e.speed * dt;
+      e.y += Math.sin(angle) * e.speed * dt;
+    } else if (e.type === 'splitter') {
+      e.x += Math.cos(angle) * e.speed * dt;
+      e.y += Math.sin(angle) * e.speed * dt;
+      e.angle += 0.05 * dt;
+    } else if (e.type === 'boss') {
+      e.phase += 0.02 * dt;
+      // حركة دائرية + اقتراب بطيء
+      const targetX = player.x + Math.cos(e.phase) * 180;
+      const targetY = player.y + Math.sin(e.phase * 0.7) * 180;
+      e.x += (targetX - e.x) * 0.01 * dt;
+      e.y += (targetY - e.y) * 0.01 * dt;
+      e.shootTimer -= dt;
+      if (e.shootTimer <= 0) {
+        e.shootTimer = 60;
+        const n = 8;
+        for (let k = 0; k < n; k++) {
+          const a = angle + (k / n) * Math.PI * 2;
+          bullets.push({
+            x: e.x, y: e.y,
+            vx: Math.cos(a) * 4, vy: Math.sin(a) * 4,
+            r: 7, damage: 12, color: '#f0f', enemy: true
+          });
+        }
+        beep(150, 0.15, 'sawtooth', 0.1);
+      }
+    }
+
+    // اصطدام مع اللاعب
+    if (player.invuln <= 0 && dist2(e, player) < (e.r + player.r) ** 2) {
+      player.hp -= e.damage * 0.4;
+      player.invuln = 30;
+      addParticles(player.x, player.y, '#f00', 15);
+      beep(120, 0.2, 'sawtooth', 0.12);
+      shake(12, 12);
+      if (e.type !== 'boss' && e.type !== 'tank') { e.hp = 0; }
+      else { e.hp -= 20; }
+    }
+
+    // موت
+    if (e.hp <= 0) {
+      score += e.score;
+      addXP(e.xp);
+      addParticles(e.x, e.y, e.color, e.type === 'boss' ? 60 : 14, e.type === 'boss' ? 10 : 5);
+      beep(e.type === 'boss' ? 100 : 400, e.type === 'boss' ? 0.4 : 0.1, 'sawtooth', 0.1);
+      if (e.type === 'boss') { shake(30, 40); addFloat(e.x, e.y, '+500', '#f0f'); }
+      // splitter يولّد صغار
+      if (e.type === 'splitter') {
+        for (let k = 0; k < 2; k++) {
+          const child = makeEnemy(e.x + rand(-15,15), e.y + rand(-15,15), 'chaser');
+          child.hp = Math.floor(child.hp * 0.5);
+          child.maxHp = child.hp;
+          child.r = 8;
+          child.speed *= 1.4;
+          enemies.push(child);
+        }
+      }
+      // فرص إسقاط
+      const dropChance = e.type === 'boss' ? 1 : (e.type === 'tank' ? 0.4 : 0.12);
+      if (Math.random() < dropChance) spawnPowerup(e.x, e.y);
+      enemies.splice(i, 1);
+    }
+  }
+
+  // الجزيئات
+  for (let i = particles.length - 1; i >= 0; i--) {
+    const p = particles[i];
+    p.x += p.vx * dt;
+    p.y += p.vy * dt;
+    p.vx *= 0.96;
+    p.vy *= 0.96;
+    p.life -= dt;
+    if (p.life <= 0) particles.splice(i, 1);
+  }
+
+  // الأرقام الطائرة
+  for (let i = floats.length - 1; i >= 0; i--) {
+    const f = floats[i];
+    f.y -= 0.8 * dt;
+    f.life -= dt;
+    if (f.life <= 0) floats.splice(i, 1);
+  }
+
+  // القوى
+  for (let i = powerups.length - 1; i >= 0; i--) {
+    const p = powerups[i];
+    p.life -= dt;
+    p.bob += 0.1 * dt;
+    if (dist2(p, player) < (p.r + player.r + 6) ** 2) {
+      applyPowerup(p);
+      powerups.splice(i, 1); continue;
+    }
+    if (p.life <= 0) powerups.splice(i, 1);
+  }
+
+  // Shake
+  if (shakeT > 0) {
+    shakeT -= dt;
+    shakeMag *= 0.9;
+  } else shakeMag = 0;
+
+  // موت اللاعب
+  if (player.hp <= 0) {
+    player.hp = 0;
+    state = 'gameover';
+    if (score > highScore) {
+      highScore = score;
+      localStorage.setItem('nb_high', highScore);
+    }
+    showGameOver();
+  }
+
+  // HUD
+  document.getElementById('score').textContent = score;
+  document.getElementById('wave').textContent = wave;
+  document.getElementById('level').textContent = player.level;
+  document.getElementById('ecount').textContent = enemies.length;
+  document.getElementById('hpfill').style.width = Math.max(0, (player.hp / player.maxHp) * 100) + '%';
+  document.getElementById('xpfill').style.width = Math.min(100, (player.xp / player.xpNext) * 100) + '%';
+}
+
+/* =========================================================
+   الرسم
+========================================================= */
+function draw() {
+  ctx.save();
+  if (shakeMag > 0) {
+    ctx.translate(rand(-shakeMag, shakeMag), rand(-shakeMag, shakeMag));
+  }
+
+  // خلفية
+  ctx.fillStyle = '#050510';
+  ctx.fillRect(-50, -50, W + 100, H + 100);
+
+  // توهج خلفي خفيف
+  const grad = ctx.createRadialGradient(W/2, H/2, 0, W/2, H/2, Math.max(W,H)*0.7);
+  grad.addColorStop(0, 'rgba(0, 60, 100, 0.15)');
+  grad.addColorStop(1, 'rgba(0, 0, 0, 0)');
+  ctx.fillStyle = grad;
+  ctx.fillRect(0, 0, W, H);
+
+  // النجوم
+  for (const s of stars) {
+    ctx.fillStyle = `hsla(${s.hue}, 100%, 70%, ${s.z / 4})`;
+    ctx.fillRect(s.x, s.y, s.size, s.size);
+  }
+
+  // القوى
+  for (const p of powerups) {
+    const colors = { heal: '#0f0', rapid: '#ff0', multishot: '#0ff', shield: '#f0f' };
+    const c = colors[p.type];
+    const bob = Math.sin(p.bob) * 3;
+    ctx.save();
+    ctx.shadowBlur = 20;
+    ctx.shadowColor = c;
+    ctx.fillStyle = c;
+    ctx.beginPath();
+    ctx.arc(p.x, p.y + bob, p.r, 0, Math.PI * 2);
+    ctx.fill();
+    ctx.fillStyle = '#000';
+    ctx.font = 'bold 14px sans-serif';
+    ctx.textAlign = 'center';
+    ctx.textBaseline = 'middle';
+    const ch = p.type === 'heal' ? '+' : p.type === 'rapid' ? 'R' : p.type === 'multishot' ? 'M' : 'S';
+    ctx.fillText(ch, p.x, p.y + bob + 1);
+    ctx.restore();
+  }
+
+  // الجزيئات
+  ctx.save();
+  for (const p of particles) {
+    ctx.globalAlpha = p.life / p.maxLife;
+    ctx.fillStyle = p.color;
+    ctx.beginPath();
+    ctx.arc(p.x, p.y, p.size, 0, Math.PI * 2);
+    ctx.fill();
+  }
+  ctx.restore();
+
+  // الرصاصات
+  for (const b of bullets) {
+    ctx.save();
+    ctx.shadowBlur = 15;
+    ctx.shadowColor = b.color;
+    ctx.fillStyle = b.color;
+    ctx.beginPath();
+    ctx.arc(b.x, b.y, b.r, 0, Math.PI * 2);
+    ctx.fill();
+    ctx.restore();
+  }
+
+  // الأعداء
+  for (const e of enemies) {
+    ctx.save();
+    ctx.shadowBlur = 20;
+    ctx.shadowColor = e.color;
+    ctx.fillStyle = e.color;
+    if (e.type === 'splitter') {
+      // مثلث دوّار
+      ctx.translate(e.x, e.y);
+      ctx.rotate(e.angle);
+      ctx.beginPath();
+      ctx.moveTo(0, -e.r);
+      ctx.lineTo(e.r * 0.87, e.r * 0.5);
+      ctx.lineTo(-e.r * 0.87, e.r * 0.5);
+      ctx.closePath();
+      ctx.fill();
+    } else if (e.type === 'tank') {
+      // مربع
+      ctx.fillRect(e.x - e.r, e.y - e.r, e.r * 2, e.r * 2);
+    } else if (e.type === 'boss') {
+      // شكل نجمة
+      ctx.translate(e.x, e.y);
+      ctx.rotate(e.phase);
+      ctx.beginPath();
+      for (let k = 0; k < 6; k++) {
+        const a = (k / 6) * Math.PI * 2;
+        const rr = k % 2 === 0 ? e.r : e.r * 0.6;
+        ctx.lineTo(Math.cos(a) * rr, Math.sin(a) * rr);
+      }
+      ctx.closePath();
+      ctx.fill();
+    } else {
+      ctx.beginPath();
+      ctx.arc(e.x, e.y, e.r, 0, Math.PI * 2);
+      ctx.fill();
+    }
+    ctx.restore();
+
+    // شريط صحة
+    if (e.hp < e.maxHp) {
+      const w = e.r * 2.2;
+      ctx.fillStyle = 'rgba(0,0,0,0.6)';
+      ctx.fillRect(e.x - w/2, e.y - e.r - 12, w, 5);
+      ctx.fillStyle = e.type === 'boss' ? '#f0f' : '#f44';
+      ctx.fillRect(e.x - w/2, e.y - e.r - 12, w * (e.hp / e.maxHp), 5);
+    }
+  }
+
+  // اللاعب
+  ctx.save();
+  ctx.shadowBlur = 25;
+  ctx.shadowColor = player.invuln > 0 ? '#f0f' : '#0ff';
+  ctx.fillStyle = player.invuln > 0 ? '#f0f' : '#0ff';
+  // جسم متوهج
+  ctx.beginPath();
+  ctx.arc(player.x, player.y, player.r, 0, Math.PI * 2);
+  ctx.fill();
+  // حلقة داخلية
+  ctx.fillStyle = '#fff';
+  ctx.beginPath();
+  ctx.arc(player.x, player.y, player.r * 0.45, 0, Math.PI * 2);
+  ctx.fill();
+  // اتجاه المدفع
+  const aimA = Math.atan2(mouse.y - player.y, mouse.x - player.x);
+  ctx.strokeStyle = '#0ff';
+  ctx.lineWidth = 4;
+  ctx.beginPath();
+  ctx.moveTo(player.x, player.y);
+  ctx.lineTo(player.x + Math.cos(aimA) * (player.r + 10), player.y + Math.sin(aimA) * (player.r + 10));
+  ctx.stroke();
+  ctx.restore();
+
+  // خط التصويب
+  ctx.save();
+  ctx.globalAlpha = 0.15;
+  ctx.strokeStyle = '#0ff';
+  ctx.lineWidth = 1;
+  ctx.setLineDash([5, 5]);
+  ctx.beginPath();
+  ctx.moveTo(player.x, player.y);
+  ctx.lineTo(mouse.x, mouse.y);
+  ctx.stroke();
+  ctx.restore();
+
+  // حلقة shield
+  if (powerupTimers.shield > 0) {
+    ctx.save();
+    ctx.globalAlpha = 0.5 + Math.sin(performance.now() / 100) * 0.3;
+    ctx.strokeStyle = '#f0f';
+    ctx.lineWidth = 3;
+    ctx.beginPath();
+    ctx.arc(player.x, player.y, player.r + 8, 0, Math.PI * 2);
+    ctx.stroke();
+    ctx.restore();
+  }
+
+  // أرقام طائرة
+  ctx.save();
+  ctx.textAlign = 'center';
+  ctx.font = 'bold 18px sans-serif';
+  for (const f of floats) {
+    ctx.globalAlpha = f.life / f.maxLife;
+    ctx.fillStyle = f.color;
+    ctx.shadowBlur = 10;
+    ctx.shadowColor = f.color;
+    ctx.fillText(f.text, f.x, f.y);
+  }
+  ctx.restore();
+
+  ctx.restore();
+
+  // إيقاف مؤقت
+  if (state === 'paused') {
+    ctx.fillStyle = 'rgba(0,0,0,0.6)';
+    ctx.fillRect(0, 0, W, H);
+    ctx.fillStyle = '#0ff';
+    ctx.font = 'bold 56px sans-serif';
+    ctx.textAlign = 'center';
+    ctx.shadowBlur = 25; ctx.shadowColor = '#0ff';
+    ctx.fillText('إيقاف مؤقت', W / 2, H / 2 - 20);
+    ctx.font = '22px sans-serif';
+    ctx.fillStyle = '#fff';
+    ctx.fillText('اضغط P للمتابعة', W / 2, H / 2 + 40);
+  }
+}
+
+/* =========================================================
+   الحلقة الرئيسية
+========================================================= */
+let lastT = performance.now();
+function loop(now) {
+  const dtMs = Math.min(50, now - lastT);
+  lastT = now;
+  const dt = dtMs / 16.6667;
+  update(dt);
+  draw();
+  requestAnimationFrame(loop);
+}
+requestAnimationFrame(loop);
+
+/* =========================================================
+   القوائم
+========================================================= */
+const overlay = document.getElementById('overlay');
+const startBtn = document.getElementById('startBtn');
+startBtn.addEventListener('click', () => {
+  initAudio();
+  overlay.classList.add('hidden');
+  resetGame();
+  state = 'playing';
+});
+
+function showGameOver() {
+  overlay.innerHTML = `
+    <h1 style="color:#f0f;text-shadow:0 0 25px #f0f,0 0 50px #0ff;">انتهت اللعبة</h1>
+    <p class="stat">النقاط: <span>${score}</span></p>
+    <p class="stat">الموجة: <span>${wave}</span></p>
+    <p class="stat">المستوى: <span>${player.level}</span></p>
+    <p class="stat">الأعلى: <span>${highScore}</span></p>
+    <button id="startBtn">إعادة اللعب</button>
+  `;
+  overlay.classList.remove('hidden');
+  document.getElementById('startBtn').addEventListener('click', () => {
+    overlay.classList.add('hidden');
+    resetGame();
+    state = 'playing';
+  });
+}
+
+/* تشغيل النجوم فوراً للخلفية في القائمة */
+initStars();
+
+})();
+</script>
+</body>
+</html>
