@@ -24,11 +24,11 @@
             }
         }
     </script>
-    <!-- Google Fonts: Cairo & Amiri for Certificate -->
+    <!-- Google Fonts: Cairo & Amiri -->
     <link href="https://fonts.googleapis.com/css2?family=Cairo:wght@300;400;600;700;800;900&family=Amiri:wght@700&display=swap" rel="stylesheet">
     <!-- Lucide Icons CDN -->
     <script src="https://unpkg.com/lucide@latest"></script>
-    <!-- External Libraries for Real Parsing & Confetti -->
+    <!-- External Parsing & Effects Libraries -->
     <script src="https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.min.js"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/mammoth/1.6.0/mammoth.browser.min.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/canvas-confetti@1.6.0/dist/confetti.browser.min.js"></script>
@@ -44,14 +44,6 @@
             background-color: #0f172a;
             color: #f8fafc;
         }
-        .dark .bg-card-dark {
-            background-color: #1e293b !important;
-            border-color: #334155 !important;
-        }
-        .dark .bg-subtle-dark {
-            background-color: #111827 !important;
-            border-color: #1f2937 !important;
-        }
         .gradient-text {
             background: linear-gradient(135deg, #2563eb 0%, #7c3aed 100%);
             -webkit-background-clip: text;
@@ -63,7 +55,6 @@
         .certificate-border {
             border: 12px double #d97706;
         }
-        /* Flip Card Effect for Flashcards */
         .perspective-1000 {
             perspective: 1000px;
         }
@@ -219,49 +210,75 @@
 
                     <!-- TAB CONTENT 2: Direct Text Input -->
                     <div id="tab-content-text" class="hidden space-y-3">
-                        <label class="block text-xs font-bold text-slate-700 dark:text-slate-300">أدخل النص أو المادة الدراسية المراد تحويلها إلى أسئلة:</label>
-                        <textarea id="raw-text-input" rows="7" placeholder="ضع الكلمات أو الملخص التعليمي أو الدرس هنا... (مثال: التعريفات، المفاهيم الرئيسية، أو القوانين)" class="w-full bg-slate-50 dark:bg-slate-900 border border-slate-200 dark:border-slate-700 rounded-2xl p-4 text-xs sm:text-sm font-medium focus:ring-2 focus:ring-blue-500 focus:outline-none transition dark:text-slate-100"></textarea>
+                        <div class="flex items-center justify-between">
+                            <label class="block text-xs font-bold text-slate-700 dark:text-slate-300">أدخل النص أو الكود المنسق للأسئلة:</label>
+                            <button onclick="insertSampleCodeFormat()" class="text-[11px] text-blue-600 dark:text-blue-400 font-bold hover:underline flex items-center gap-1">
+                                <i data-lucide="code" class="w-3.5 h-3.5"></i>
+                                <span>تجربة نموذج كود أسئلة جاهز</span>
+                            </button>
+                        </div>
+                        <textarea id="raw-text-input" rows="7" placeholder="ضع النص التعليمي هنا، أو يمكنك كتابة/لصق كود أسئلة جاهز مثل:&#10;Q: ما هي عاصمة العراق؟&#10;A) بغداد&#10;B) أربيل&#10;C) البصرة&#10;D) الموصل&#10;Correct: A&#10;Explanation: بغداد هي العاصمة." class="w-full bg-slate-50 dark:bg-slate-900 border border-slate-200 dark:border-slate-700 rounded-2xl p-4 text-xs sm:text-sm font-medium focus:ring-2 focus:ring-blue-500 focus:outline-none transition dark:text-slate-100 font-mono"></textarea>
                     </div>
 
                     <!-- Preview Extracted Text Badge -->
                     <div id="extracted-preview-box" class="hidden bg-emerald-50 dark:bg-emerald-950/30 border border-emerald-200 dark:border-emerald-800 p-3 rounded-xl flex items-center justify-between text-xs text-emerald-800 dark:text-emerald-300">
                         <div class="flex items-center gap-2">
                             <i data-lucide="check-circle" class="w-4 h-4 text-emerald-600"></i>
-                            <span>تم استخراج النص بنجاح! جاهز للتوليد الذكي.</span>
+                            <span id="extracted-status-msg">تم استخراج المحتوى بنجاح! جاهز للتوليد الذكي.</span>
                         </div>
                         <span id="extracted-words-count" class="font-extrabold bg-emerald-100 dark:bg-emerald-900 px-2 py-0.5 rounded">0 كلمة</span>
                     </div>
 
-                    <!-- User Role Selection -->
-                    <div class="space-y-2 pt-2">
-                        <label class="block text-xs font-bold text-slate-700 dark:text-slate-300 flex items-center gap-1.5">
-                            <i data-lucide="user-check" class="w-4 h-4 text-blue-500"></i>
-                            حدد نوع الاستخدام المطلوب:
-                        </label>
-                        <div class="grid grid-cols-1 sm:grid-cols-2 gap-3">
-                            <div id="role-student-card" onclick="setUserRole('student')" class="cursor-pointer border-2 border-blue-600 bg-blue-50/50 dark:bg-blue-950/30 p-4 rounded-2xl flex items-start gap-3 transition">
-                                <input type="radio" id="role-student" name="user_role" value="student" checked class="mt-1 text-blue-600">
-                                <div>
-                                    <div class="text-xs font-bold text-slate-900 dark:text-white flex items-center gap-1.5">
-                                        <span>طالب / متدرب</span>
-                                        <span class="text-[10px] bg-blue-100 dark:bg-blue-900 text-blue-700 dark:text-blue-300 px-2 py-0.5 rounded-md font-bold">دراسة وتدريب</span>
-                                    </div>
-                                    <p class="text-[11px] text-slate-500 dark:text-slate-400 mt-1 leading-relaxed">
-                                        خوض الاختبار وحل الأسئلة تفاعلياً والحصول على النتيجة والشهادة فوراً.
-                                    </p>
-                                </div>
+                    <!-- User Role Selection & Supervisor Name -->
+                    <div class="space-y-4 pt-2 border-t border-slate-100 dark:border-slate-700">
+                        <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                            <div>
+                                <label class="block text-xs font-bold text-slate-700 dark:text-slate-300 mb-1 flex items-center gap-1.5">
+                                    <i data-lucide="user-check" class="w-4 h-4 text-blue-500"></i>
+                                    اسم الأستاذ / المشرف على الاختبار:
+                                </label>
+                                <input type="text" id="opt-teacher-name" placeholder="افتراضي: مكتبة المصطفى" class="w-full bg-slate-50 dark:bg-slate-900 border border-slate-200 dark:border-slate-700 rounded-xl px-3 py-2.5 text-xs font-bold text-slate-800 dark:text-slate-200 focus:ring-2 focus:ring-blue-500 focus:outline-none">
                             </div>
 
-                            <div id="role-teacher-card" onclick="setUserRole('teacher')" class="cursor-pointer border-2 border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-800 p-4 rounded-2xl flex items-start gap-3 transition">
-                                <input type="radio" id="role-teacher" name="user_role" value="teacher" class="mt-1 text-blue-600">
-                                <div>
-                                    <div class="text-xs font-bold text-slate-900 dark:text-white flex items-center gap-1.5">
-                                        <span>معلم / مدرب</span>
-                                        <span class="text-[10px] bg-purple-100 dark:bg-purple-900 text-purple-700 dark:text-purple-300 px-2 py-0.5 rounded-md font-bold">إنشاء ومشاركة</span>
+                            <div>
+                                <label class="block text-xs font-bold text-slate-700 dark:text-slate-300 mb-1 flex items-center gap-1.5">
+                                    <i data-lucide="shield-check" class="w-4 h-4 text-amber-500"></i>
+                                    الجهة الراعية وتذييل التقرير:
+                                </label>
+                                <input type="text" value="مكتبة المصطفى - ٠٧٨١٣٩٨٥٨٥٣" readonly class="w-full bg-slate-100 dark:bg-slate-800/60 border border-slate-200 dark:border-slate-700 rounded-xl px-3 py-2.5 text-xs font-bold text-amber-700 dark:text-amber-400 cursor-not-allowed">
+                            </div>
+                        </div>
+
+                        <div class="space-y-2">
+                            <label class="block text-xs font-bold text-slate-700 dark:text-slate-300 flex items-center gap-1.5">
+                                <i data-lucide="users" class="w-4 h-4 text-purple-500"></i>
+                                حدد وضع الاستخدام:
+                            </label>
+                            <div class="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                                <div id="role-student-card" onclick="setUserRole('student')" class="cursor-pointer border-2 border-blue-600 bg-blue-50/50 dark:bg-blue-950/30 p-4 rounded-2xl flex items-start gap-3 transition">
+                                    <input type="radio" id="role-student" name="user_role" value="student" checked class="mt-1 text-blue-600">
+                                    <div>
+                                        <div class="text-xs font-bold text-slate-900 dark:text-white flex items-center gap-1.5">
+                                            <span>طالب / متدرب</span>
+                                            <span class="text-[10px] bg-blue-100 dark:bg-blue-900 text-blue-700 dark:text-blue-300 px-2 py-0.5 rounded-md font-bold">دراسة واختبار</span>
+                                        </div>
+                                        <p class="text-[11px] text-slate-500 dark:text-slate-400 mt-1 leading-relaxed">
+                                            تقديم الاختبار التفاعلي والحصول على تقرير الدرجة والسرعة والشهادة.
+                                        </p>
                                     </div>
-                                    <p class="text-[11px] text-slate-500 dark:text-slate-400 mt-1 leading-relaxed">
-                                        تعديل ومراجعة الأسئلة وتصدير ملفات PDF أو مشاركة رابط مخصص للطلاب.
-                                    </p>
+                                </div>
+
+                                <div id="role-teacher-card" onclick="setUserRole('teacher')" class="cursor-pointer border-2 border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-800 p-4 rounded-2xl flex items-start gap-3 transition">
+                                    <input type="radio" id="role-teacher" name="user_role" value="teacher" class="mt-1 text-blue-600">
+                                    <div>
+                                        <div class="text-xs font-bold text-slate-900 dark:text-white flex items-center gap-1.5">
+                                            <span>معلم / مدرب</span>
+                                            <span class="text-[10px] bg-purple-100 dark:bg-purple-900 text-purple-700 dark:text-purple-300 px-2 py-0.5 rounded-md font-bold">مراجعة وتعديل ومشاركة</span>
+                                        </div>
+                                        <p class="text-[11px] text-slate-500 dark:text-slate-400 mt-1 leading-relaxed">
+                                            تعديل ومراجعة الأسئلة وتصدير الملفات ومشاركة رابط الاختبار للطلاب.
+                                        </p>
+                                    </div>
                                 </div>
                             </div>
                         </div>
@@ -291,6 +308,8 @@
                                 <option value="10" selected>10 أسئلة (موصى به)</option>
                                 <option value="15">15 سؤالاً</option>
                                 <option value="20">20 سؤالاً (مكتمل)</option>
+                                <option value="30">30 سؤالاً</option>
+                                <option value="50">50 سؤالاً</option>
                             </select>
                         </div>
 
@@ -349,7 +368,7 @@
                 <div class="flex flex-wrap items-center gap-2 w-full md:w-auto">
                     <button onclick="startInteractiveQuiz()" class="flex-1 md:flex-none bg-blue-600 hover:bg-blue-700 text-white text-xs font-bold px-4 py-3 rounded-xl flex items-center justify-center gap-2 shadow-md transition">
                         <i data-lucide="play-circle" class="w-4 h-4"></i>
-                        <span>تقديم الاختبار الان</span>
+                        <span>تقديم الاختبار الآن</span>
                     </button>
                     <button onclick="switchView('flashcards')" class="flex-1 md:flex-none bg-amber-500 hover:bg-amber-600 text-white text-xs font-bold px-4 py-3 rounded-xl flex items-center justify-center gap-2 shadow-md transition">
                         <i data-lucide="layers" class="w-4 h-4"></i>
@@ -428,7 +447,28 @@
             </div>
         </section>
 
-        <!-- VIEW 5: Interactive Quiz Mode -->
+        <!-- VIEW 5: Student Name Entry Section -->
+        <section id="view-student-entry" class="hidden max-w-lg mx-auto space-y-6 text-center py-8">
+            <div class="bg-white dark:bg-slate-800 rounded-3xl shadow-xl border border-slate-200 dark:border-slate-700 p-8 space-y-5">
+                <div class="w-16 h-16 bg-blue-100 dark:bg-blue-950 text-blue-600 dark:text-blue-400 rounded-2xl flex items-center justify-center mx-auto shadow-sm">
+                    <i data-lucide="user-check" class="w-8 h-8"></i>
+                </div>
+                <div>
+                    <h3 class="text-xl font-black text-slate-900 dark:text-white">مرحباً بك في الاختبار التفاعلي</h3>
+                    <p class="text-xs text-slate-500 dark:text-slate-400 mt-1">الرجاء إدخال اسمك الكامل لبدء تقديم الاختبار وتوثيق النتيجة</p>
+                </div>
+                <div class="space-y-3 text-right">
+                    <label class="block text-xs font-bold text-slate-700 dark:text-slate-300">اسم الطالب / المتدرب:</label>
+                    <input type="text" id="student-name-input" placeholder="أدخل اسمك الثلاثي هنا..." class="w-full bg-slate-50 dark:bg-slate-900 border border-slate-200 dark:border-slate-700 rounded-xl px-4 py-3 text-sm font-bold text-slate-800 dark:text-slate-100 focus:ring-2 focus:ring-blue-500 focus:outline-none">
+                </div>
+                <button onclick="startStudentQuizSession()" class="w-full gradient-bg hover:opacity-95 text-white font-extrabold py-3.5 rounded-xl shadow-md flex items-center justify-center gap-2 text-sm transition">
+                    <i data-lucide="play" class="w-4 h-4"></i>
+                    <span>بدء الاختبار الآن</span>
+                </button>
+            </div>
+        </section>
+
+        <!-- VIEW 6: Interactive Quiz Mode -->
         <section id="view-quiz" class="hidden max-w-3xl mx-auto space-y-6">
             <div class="bg-white dark:bg-slate-800 p-4 rounded-2xl border border-slate-200 dark:border-slate-700 shadow-sm flex items-center justify-between transition-colors">
                 <div class="flex items-center gap-2">
@@ -462,7 +502,7 @@
             </div>
         </section>
 
-        <!-- VIEW 6: Teacher/Self Quiz Results -->
+        <!-- VIEW 7: Quiz Results View -->
         <section id="view-results" class="hidden max-w-2xl mx-auto space-y-6 text-center">
             <div class="bg-white dark:bg-slate-800 rounded-3xl shadow-xl border border-slate-200 dark:border-slate-700 p-8 space-y-6 transition-colors">
                 <div class="w-20 h-20 bg-emerald-100 dark:bg-emerald-950 text-emerald-600 dark:text-emerald-400 rounded-full flex items-center justify-center mx-auto shadow-sm">
@@ -492,44 +532,36 @@
 
                 <div class="flex flex-col sm:flex-row gap-3 pt-4">
                     <button onclick="switchView('editor')" class="flex-1 bg-slate-900 dark:bg-slate-700 text-white hover:bg-slate-800 py-3 rounded-xl font-bold text-xs flex items-center justify-center gap-2">
-                        <i data-lucide="edit" class="w-4 h-4"></i>
-                        <span>مراجعة وتعديل الأسئلة</span>
+                        <i data-lucide="file-edit" class="w-4 h-4"></i>
+                        <span>مراجعة الأسئلة</span>
                     </button>
-                    <button onclick="window.print()" class="flex-1 gradient-bg text-white hover:opacity-95 py-3 rounded-xl font-bold text-xs flex items-center justify-center gap-2 shadow-md">
-                        <i data-lucide="printer" class="w-4 h-4"></i>
-                        <span>طباعة التقرير</span>
+                    <button onclick="startInteractiveQuiz()" class="flex-1 gradient-bg text-white hover:opacity-95 py-3 rounded-xl font-bold text-xs flex items-center justify-center gap-2 shadow-md">
+                        <i data-lucide="rotate-ccw" class="w-4 h-4"></i>
+                        <span>إعادة المحاولة</span>
                     </button>
                 </div>
             </div>
         </section>
 
-        <!-- VIEW 7: Student Name Entry View -->
-        <section id="view-student-entry" class="hidden max-w-md mx-auto my-12 space-y-6">
-            <div class="bg-white dark:bg-slate-800 rounded-3xl shadow-xl border border-slate-200 dark:border-slate-700 p-6 sm:p-8 space-y-6 text-center transition-colors">
-                <div class="w-16 h-16 gradient-bg text-white rounded-2xl flex items-center justify-center mx-auto shadow-md">
-                    <i data-lucide="graduation-cap" class="w-8 h-8"></i>
-                </div>
-                <div>
-                    <h2 class="text-2xl font-black text-slate-900 dark:text-white">مرحباً بك في الاختبار</h2>
-                    <p class="text-xs text-slate-500 dark:text-slate-400 mt-1">الرجاء إدخال اسمك للبدء في حل الاختبار واستخراج شهادتك</p>
-                </div>
-
-                <div class="space-y-4 text-right">
-                    <div>
-                        <label class="block text-xs font-bold text-slate-700 dark:text-slate-300 mb-1.5">اسم الطالب الثلاثي:</label>
-                        <input type="text" id="student-name-input" placeholder="مثال: علي محمد حسن" class="w-full bg-slate-50 dark:bg-slate-900 border border-slate-300 dark:border-slate-700 rounded-xl px-4 py-3 text-sm font-semibold text-slate-800 dark:text-white focus:ring-2 focus:ring-blue-500 focus:outline-none transition">
+        <!-- VIEW 8: Student Final Report View (Detailed Breakdown & QR Code) -->
+        <section id="view-student-report" class="hidden max-w-3xl mx-auto space-y-6">
+            <div id="printable-report" class="bg-white dark:bg-slate-800 rounded-3xl shadow-xl border border-slate-200 dark:border-slate-700 p-6 sm:p-8 space-y-6 relative overflow-hidden transition-colors">
+                
+                <!-- Report Header with QR Code -->
+                <div class="flex flex-col sm:flex-row items-center justify-between gap-4 border-b border-slate-200 dark:border-slate-700 pb-5">
+                    <div class="space-y-1 text-center sm:text-right">
+                        <span class="text-[11px] font-extrabold text-blue-600 dark:text-blue-400 uppercase tracking-widest block">تقرير تقييم أداء طالب</span>
+                        <h2 class="text-2xl font-black text-slate-900 dark:text-white">نتيجة الاختبار الإلكتروني</h2>
+                        <p class="text-xs text-slate-500 dark:text-slate-400">إشراف: <span id="report-supervisor-name" class="font-extrabold text-slate-800 dark:text-slate-200">مكتبة المصطفى</span></p>
                     </div>
-                    <button onclick="startStudentQuizSession()" class="w-full gradient-bg hover:opacity-95 text-white font-bold py-3.5 rounded-xl text-sm shadow-md flex items-center justify-center gap-2 transition">
-                        <span>بدء الاختبار الآن</span>
-                        <i data-lucide="arrow-left" class="w-4 h-4"></i>
-                    </button>
+                    
+                    <!-- QR Code Display Box -->
+                    <div class="flex flex-col items-center bg-slate-50 dark:bg-slate-900 p-2.5 rounded-2xl border border-slate-200 dark:border-slate-700">
+                        <img id="report-qr-code" src="" alt="QR Verification" class="w-24 h-24 rounded-lg bg-white p-1">
+                        <span class="text-[9px] font-bold text-slate-500 mt-1">رمز التحقق والنتيجة</span>
+                    </div>
                 </div>
-            </div>
-        </section>
 
-        <!-- VIEW 8: Student Final Report View (Pass / Fail) -->
-        <section id="view-student-report" class="hidden max-w-2xl mx-auto space-y-6">
-            <div id="printable-report" class="bg-white dark:bg-slate-800 rounded-3xl shadow-xl border border-slate-200 dark:border-slate-700 p-8 space-y-6 relative overflow-hidden transition-colors">
                 <div id="report-status-banner" class="p-5 rounded-2xl flex items-center justify-between">
                     <div class="flex items-center gap-3">
                         <div id="report-status-icon" class="w-12 h-12 rounded-full flex items-center justify-center text-white font-bold"></div>
@@ -541,52 +573,71 @@
                     <span id="report-status-tag" class="text-xs font-black px-3 py-1 rounded-full bg-white/30"></span>
                 </div>
 
-                <div class="bg-slate-50 dark:bg-slate-900 p-4 rounded-xl border border-slate-200 dark:border-slate-700 flex flex-wrap items-center justify-between gap-4 text-xs">
-                    <div>
-                        <span class="text-slate-400 font-bold block">اسم الطالب:</span>
-                        <span id="report-student-name" class="text-sm font-extrabold text-slate-900 dark:text-white"></span>
+                <!-- Basic Metadata Grid -->
+                <div class="grid grid-cols-2 sm:grid-cols-4 gap-3 text-center">
+                    <div class="bg-slate-50 dark:bg-slate-900 p-3 rounded-xl border border-slate-100 dark:border-slate-800">
+                        <span class="text-[10px] font-bold text-slate-400 block">اسم الطالب</span>
+                        <span id="report-student-name" class="text-xs sm:text-sm font-black text-slate-800 dark:text-slate-100 truncate block"></span>
                     </div>
-                    <div>
-                        <span class="text-slate-400 font-bold block">جهة الإشراف:</span>
-                        <span class="text-sm font-bold text-amber-600 dark:text-amber-400">مكتبة المصطفى</span>
+                    <div class="bg-slate-50 dark:bg-slate-900 p-3 rounded-xl border border-slate-100 dark:border-slate-800">
+                        <span class="text-[10px] font-bold text-slate-400 block">الدرجة المكتسبة</span>
+                        <span id="report-score-num" class="text-xs sm:text-sm font-black text-slate-800 dark:text-slate-100 block"></span>
                     </div>
-                    <div>
-                        <span class="text-slate-400 font-bold block">نتيجة التقييم:</span>
-                        <span id="report-pass-badge" class="font-extrabold text-sm"></span>
+                    <div class="bg-slate-50 dark:bg-slate-900 p-3 rounded-xl border border-slate-100 dark:border-slate-800">
+                        <span class="text-[10px] font-bold text-slate-400 block">النسبة والتقييم</span>
+                        <span id="report-score-pct" class="text-xs sm:text-sm font-black text-blue-600 dark:text-blue-400 block"></span>
+                    </div>
+                    <div class="bg-slate-50 dark:bg-slate-900 p-3 rounded-xl border border-slate-100 dark:border-slate-800">
+                        <span class="text-[10px] font-bold text-slate-400 block">الوقت / السرعة</span>
+                        <span id="report-time-spent" class="text-xs sm:text-sm font-black text-slate-800 dark:text-slate-100 block"></span>
                     </div>
                 </div>
 
-                <div class="grid grid-cols-3 gap-3 text-center">
-                    <div class="bg-slate-50 dark:bg-slate-900 p-4 rounded-xl border border-slate-100 dark:border-slate-800">
-                        <span class="text-xs font-bold text-slate-500 dark:text-slate-400 block">النتيجة</span>
-                        <span id="report-score-num" class="text-xl font-black text-slate-800 dark:text-slate-100"></span>
-                    </div>
-                    <div class="bg-slate-50 dark:bg-slate-900 p-4 rounded-xl border border-slate-100 dark:border-slate-800">
-                        <span class="text-xs font-bold text-slate-500 dark:text-slate-400 block">النسبة المئوية</span>
-                        <span id="report-score-pct" class="text-xl font-black text-blue-600 dark:text-blue-400"></span>
-                    </div>
-                    <div class="bg-slate-50 dark:bg-slate-900 p-4 rounded-xl border border-slate-100 dark:border-slate-800">
-                        <span class="text-xs font-bold text-slate-500 dark:text-slate-400 block">الوقت المستغرق</span>
-                        <span id="report-time-spent" class="text-xl font-black text-slate-800 dark:text-slate-100"></span>
+                <!-- Comprehensive Questions Breakdown Table -->
+                <div class="space-y-3 pt-2">
+                    <h4 class="text-xs font-extrabold text-slate-800 dark:text-slate-200 flex items-center gap-1.5">
+                        <i data-lucide="list-ordered" class="w-4 h-4 text-blue-500"></i>
+                        <span>جدول تفاصيل الأسئلة والإجابات:</span>
+                    </h4>
+                    <div class="overflow-x-auto rounded-2xl border border-slate-200 dark:border-slate-700">
+                        <table class="w-full text-right border-collapse text-xs">
+                            <thead>
+                                <tr class="bg-slate-100 dark:bg-slate-900 text-slate-700 dark:text-slate-300 font-bold border-b border-slate-200 dark:border-slate-700">
+                                    <th class="p-3 w-10 text-center">#</th>
+                                    <th class="p-3">السؤال</th>
+                                    <th class="p-3">إجابة الطالب المختارة</th>
+                                    <th class="p-3">الإجابة النموذجية الصحيحة</th>
+                                </tr>
+                            </thead>
+                            <tbody id="report-breakdown-tbody" class="divide-y divide-slate-100 dark:divide-slate-800 text-slate-800 dark:text-slate-200">
+                                <!-- Populated dynamically -->
+                            </tbody>
+                        </table>
                     </div>
                 </div>
 
                 <!-- Certificate Button Section -->
-                <div id="certificate-action-box" class="hidden bg-amber-50 dark:bg-amber-950/40 border border-amber-200 dark:border-amber-800 p-5 rounded-2xl text-center space-y-3">
+                <div id="certificate-action-box" class="hidden bg-amber-50 dark:bg-amber-950/40 border border-amber-200 dark:border-amber-800 p-5 rounded-2xl text-center space-y-3 print:hidden">
                     <div class="flex items-center justify-center gap-2 text-amber-800 dark:text-amber-300 font-bold text-sm">
                         <i data-lucide="award" class="w-5 h-5 text-amber-600"></i>
-                        <span>مبارك! استحققت شهادة تقديرية من مكتبة المصطفى</span>
+                        <span>مبارك! استحققت شهادة تقديرية معتمدة</span>
                     </div>
                     <button onclick="generateCertificate()" class="bg-amber-600 hover:bg-amber-700 text-white font-extrabold text-xs px-6 py-3 rounded-xl shadow-md transition flex items-center justify-center gap-2 mx-auto">
                         <i data-lucide="file-badge-2" class="w-4 h-4"></i>
-                        <span>استخراج شهادة التفوق والناجحين</span>
+                        <span>استخراج شهادة التفوق والتخرج</span>
                     </button>
+                </div>
+
+                <!-- Report Footer Branding -->
+                <div class="border-t border-slate-200 dark:border-slate-700 pt-4 flex flex-col sm:flex-row items-center justify-between text-[11px] font-bold text-slate-500 dark:text-slate-400 gap-2">
+                    <span>الأستاذ المشرف: <strong id="report-footer-supervisor" class="text-slate-800 dark:text-slate-200">مكتبة المصطفى</strong></span>
+                    <span class="text-amber-700 dark:text-amber-400 font-extrabold">حقوق المنصة: مكتبة المصطفى - ٠٧٨١٣٩٨٥٨٥٣</span>
                 </div>
 
                 <div class="flex flex-col sm:flex-row gap-3 pt-2 print:hidden">
                     <button onclick="window.print()" class="flex-1 gradient-bg text-white hover:opacity-95 py-3 rounded-xl font-bold text-xs flex items-center justify-center gap-2 shadow-md">
                         <i data-lucide="printer" class="w-4 h-4"></i>
-                        <span>طباعة التقرير الرسمي</span>
+                        <span>طباعة / حفظ التقرير (PDF)</span>
                     </button>
                     <button onclick="switchView('generator')" class="bg-slate-100 dark:bg-slate-700 hover:bg-slate-200 text-slate-800 dark:text-slate-200 px-5 py-3 rounded-xl font-bold text-xs border border-slate-300 dark:border-slate-600">
                         العودة للرئيسية
@@ -610,7 +661,7 @@
                 <div class="flex justify-between items-center border-b border-amber-200 pb-4">
                     <div class="text-right">
                         <span class="text-xs font-bold text-amber-700 block">منصة الاختبارات الإلكترونية</span>
-                        <span class="text-xl font-black text-slate-900" style="font-family: 'Amiri', serif;">موقع مكتبة المصطفى</span>
+                        <span class="text-xl font-black text-slate-900" style="font-family: 'Amiri', serif;" id="cert-supervisor-title">مكتبة المصطفى</span>
                     </div>
                     <div class="w-14 h-14 bg-amber-500 text-white rounded-full flex items-center justify-center shadow-lg">
                         <i data-lucide="award" class="w-8 h-8"></i>
@@ -628,7 +679,7 @@
                         اسم الطالب
                     </div>
                     <p class="text-xs sm:text-sm text-slate-700 leading-relaxed pt-2">
-                        وذلك لاجتياز اختبار الأسئلة الإلكترونية بنجاح وتقدير ممتاز بنسبة (<span id="cert-score-pct" class="font-bold text-amber-700">0%</span>) عبر منصة MCQ Maker التابعة لموقع <span class="font-bold text-amber-800">مكتبة المصطفى</span>.
+                        وذلك لاجتياز اختبار الأسئلة الإلكترونية بنجاح وتقدير ممتاز بنسبة (<span id="cert-score-pct" class="font-bold text-amber-700">0%</span>) تحت إشراف <span class="font-bold text-blue-900" id="cert-supervisor-body">مكتبة المصطفى</span>.
                     </p>
                 </div>
 
@@ -639,8 +690,12 @@
                     </div>
                     <div>
                         <span class="block text-slate-400 font-normal">التوقيع والاعتماد:</span>
-                        <span class="text-amber-800 font-black text-sm" style="font-family: 'Amiri', serif;">إدارة موقع مكتبة المصطفى</span>
+                        <span class="text-amber-800 font-black text-sm" style="font-family: 'Amiri', serif;" id="cert-signature-name">إدارة موقع مكتبة المصطفى</span>
                     </div>
+                </div>
+
+                <div class="text-[11px] font-bold text-amber-800 border-t border-amber-200 pt-3">
+                    مكتبة المصطفى - ٠٧٨١٣٩٨٥٨٥٣
                 </div>
             </div>
 
@@ -668,7 +723,22 @@
                     <i data-lucide="share-2" class="w-6 h-6"></i>
                 </div>
                 <h3 class="text-lg font-black text-slate-900 dark:text-white">مشاركة الاختبار مع الطلاب</h3>
-                <p class="text-xs text-slate-500 dark:text-slate-400">انسخ الرابط وأرسله لطلابك لحل الاختبار وتلقي النتيجة فوراً</p>
+                <p class="text-xs text-slate-500 dark:text-slate-400">انسخ الرابط، أو اختصره بنقرة واحدة، أو حمل رمز الباركود (QR Code)</p>
+            </div>
+
+            <!-- QR Code Section & Fast Shorten Tool -->
+            <div class="flex flex-col items-center bg-slate-50 dark:bg-slate-900 p-4 rounded-2xl border border-slate-200 dark:border-slate-700 space-y-3">
+                <img id="share-qr-img" src="" alt="رمز الباركود للاختبار" class="w-44 h-44 rounded-xl bg-white p-2 border shadow-sm object-contain">
+                <div class="flex gap-2 w-full">
+                    <button onclick="downloadQrCode()" class="flex-1 bg-emerald-600 hover:bg-emerald-700 text-white text-xs font-bold py-2.5 px-3 rounded-xl transition flex items-center justify-center gap-1.5 shadow-sm">
+                        <i data-lucide="download" class="w-4 h-4"></i>
+                        <span>تحميل الباركود (QR)</span>
+                    </button>
+                    <button id="btn-shorten-url" onclick="shortenShareUrl()" class="flex-1 bg-amber-500 hover:bg-amber-600 text-white text-xs font-bold py-2.5 px-3 rounded-xl transition flex items-center justify-center gap-1.5 shadow-sm">
+                        <i data-lucide="scissors" class="w-4 h-4"></i>
+                        <span>تقصير الرابط</span>
+                    </button>
+                </div>
             </div>
 
             <div class="space-y-3">
@@ -687,7 +757,7 @@
         </div>
     </div>
 
-    <!-- About Us Modal (من نحن & إبراء الذمة) -->
+    <!-- About Us Modal -->
     <div id="about-modal" class="fixed inset-0 bg-slate-900/60 backdrop-blur-sm z-50 flex items-center justify-center p-4 hidden">
         <div class="bg-white dark:bg-slate-800 rounded-3xl shadow-2xl max-w-2xl w-full p-6 sm:p-8 space-y-6 relative overflow-y-auto max-h-[90vh] transition-colors">
             <button onclick="closeAboutModal()" class="absolute top-4 left-4 text-slate-400 hover:text-slate-600 dark:hover:text-slate-200 p-1">
@@ -737,8 +807,8 @@
     <!-- Footer -->
     <footer class="bg-white dark:bg-slate-900 border-t border-slate-200 dark:border-slate-800 mt-auto py-6 transition-colors">
         <div class="max-w-7xl mx-auto px-4 text-center text-xs text-slate-500 dark:text-slate-400 space-y-2">
-            <p class="font-bold text-slate-700 dark:text-slate-300">جميع الحقوق محفوظة © 2026 موقع حقوق مكتبة المصطفى - منصة MCQ Maker التفاعلية</p>
-            <p class="text-[11px] text-slate-400 dark:text-slate-500">منصة توليد الأسئلة والبطاقات التعليمية الذكية</p>
+            <p class="font-bold text-slate-700 dark:text-slate-300">جميع الحقوق محفوظة © 2026 موقع حقوق مكتبة المصطفى - ٠٧٨١٣٩٨٥٨٥٣</p>
+            <p class="text-[11px] text-slate-400 dark:text-slate-500">منصة MCQ Maker لتوليد وإدارة الاختبارات الذكية والتقارير التفصيلية</p>
         </div>
     </footer>
 
@@ -783,21 +853,21 @@
         let extractedText = "";
         let flashcardIndex = 0;
         let isFlashcardFlipped = false;
+        let currentSupervisorName = 'مكتبة المصطفى';
 
-        // Initialize App & Read Query Strings
+        // Initialize App
         window.addEventListener('DOMContentLoaded', () => {
             lucide.createIcons();
             
-            // PDF.js worker setup
             if (window.pdfjsLib) {
                 pdfjsLib.GlobalWorkerOptions.workerSrc = 'https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.worker.min.js';
             }
 
-            // Load Saved Theme Preference
             if (localStorage.getItem('mcq_theme') === 'dark' || window.matchMedia('(prefers-color-scheme: dark)').matches) {
                 enableDarkMode(true);
             }
 
+            setupDragAndDrop();
             checkUrlForSharedQuiz();
         });
 
@@ -824,187 +894,329 @@
             }, 3000);
         }
 
-        // Dark Mode Functionality
+        // Dark Mode
         function toggleDarkMode() {
             enableDarkMode(!isDarkMode);
         }
 
         function enableDarkMode(enable) {
             isDarkMode = enable;
+            const html = document.documentElement;
             const sunIcon = document.getElementById('theme-icon-sun');
             const moonIcon = document.getElementById('theme-icon-moon');
             const statusText = document.getElementById('theme-status-text');
 
-            if (isDarkMode) {
-                document.documentElement.classList.add('dark');
-                sunIcon.classList.remove('hidden');
-                moonIcon.classList.add('hidden');
-                if (statusText) statusText.textContent = "الوضع النهاري";
+            if (enable) {
+                html.classList.add('dark');
                 localStorage.setItem('mcq_theme', 'dark');
+                if (sunIcon) sunIcon.classList.remove('hidden');
+                if (moonIcon) moonIcon.classList.add('hidden');
+                if (statusText) statusText.textContent = "الوضع النهاري";
             } else {
-                document.documentElement.classList.remove('dark');
-                sunIcon.classList.add('hidden');
-                moonIcon.classList.remove('hidden');
-                if (statusText) statusText.textContent = "الوضع الليلي";
+                html.classList.remove('dark');
                 localStorage.setItem('mcq_theme', 'light');
+                if (sunIcon) sunIcon.classList.add('hidden');
+                if (moonIcon) moonIcon.classList.remove('hidden');
+                if (statusText) statusText.textContent = "الوضع الليلي";
             }
         }
 
-        // View Navigation Helper
-        function switchView(viewId) {
-            const views = ['generator', 'loading', 'editor', 'quiz', 'results', 'student-entry', 'student-report', 'flashcards'];
+        // View Navigation Switcher
+        function switchView(viewName) {
+            const views = ['generator', 'loading', 'editor', 'flashcards', 'student-entry', 'quiz', 'results', 'student-report'];
             views.forEach(v => {
                 const el = document.getElementById(`view-${v}`);
                 if (el) el.classList.add('hidden');
             });
 
-            const target = document.getElementById(`view-${viewId}`);
-            if (target) target.classList.remove('hidden');
+            const targetView = document.getElementById(`view-${viewName}`);
+            if (targetView) targetView.classList.remove('hidden');
 
-            // Toggle top nav extra buttons
-            const navEditor = document.getElementById('nav-editor-btn');
-            const navFlashcards = document.getElementById('nav-flashcards-btn');
-            if (sampleQuestions.length > 0 && viewId !== 'generator') {
-                if (navEditor) navEditor.classList.remove('hidden');
-                if (navFlashcards) navFlashcards.classList.remove('hidden');
+            const navEditorBtn = document.getElementById('nav-editor-btn');
+            const navFlashcardsBtn = document.getElementById('nav-flashcards-btn');
+
+            if (sampleQuestions.length > 0) {
+                if (navEditorBtn) navEditorBtn.classList.remove('hidden');
+                if (navFlashcardsBtn) navFlashcardsBtn.classList.remove('hidden');
             }
 
             window.scrollTo({ top: 0, behavior: 'smooth' });
+            lucide.createIcons();
         }
 
-        // Tabs Toggle
+        // Input Tab Switching (File vs Text)
         function setInputTab(tab) {
-            const btnFile = document.getElementById('tab-btn-file');
-            const btnText = document.getElementById('tab-btn-text');
-            const contentFile = document.getElementById('tab-content-file');
-            const contentText = document.getElementById('tab-content-text');
+            const fileBtn = document.getElementById('tab-btn-file');
+            const textBtn = document.getElementById('tab-btn-text');
+            const fileContent = document.getElementById('tab-content-file');
+            const textContent = document.getElementById('tab-content-text');
 
             if (tab === 'file') {
-                btnFile.className = "flex-1 py-3 px-4 rounded-xl text-xs sm:text-sm font-bold flex items-center justify-center gap-2 bg-white dark:bg-slate-800 text-blue-600 dark:text-blue-400 shadow-sm transition";
-                btnText.className = "flex-1 py-3 px-4 rounded-xl text-xs sm:text-sm font-bold flex items-center justify-center gap-2 text-slate-600 dark:text-slate-400 transition";
-                contentFile.classList.remove('hidden');
-                contentText.classList.add('hidden');
+                fileBtn.className = "flex-1 py-3 px-4 rounded-xl text-xs sm:text-sm font-bold flex items-center justify-center gap-2 bg-white dark:bg-slate-800 text-blue-600 dark:text-blue-400 shadow-sm transition";
+                textBtn.className = "flex-1 py-3 px-4 rounded-xl text-xs sm:text-sm font-bold flex items-center justify-center gap-2 text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-white transition";
+                fileContent.classList.remove('hidden');
+                textContent.classList.add('hidden');
             } else {
-                btnText.className = "flex-1 py-3 px-4 rounded-xl text-xs sm:text-sm font-bold flex items-center justify-center gap-2 bg-white dark:bg-slate-800 text-blue-600 dark:text-blue-400 shadow-sm transition";
-                btnFile.className = "flex-1 py-3 px-4 rounded-xl text-xs sm:text-sm font-bold flex items-center justify-center gap-2 text-slate-600 dark:text-slate-400 transition";
-                contentText.classList.remove('hidden');
-                contentFile.classList.add('hidden');
+                textBtn.className = "flex-1 py-3 px-4 rounded-xl text-xs sm:text-sm font-bold flex items-center justify-center gap-2 bg-white dark:bg-slate-800 text-blue-600 dark:text-blue-400 shadow-sm transition";
+                fileBtn.className = "flex-1 py-3 px-4 rounded-xl text-xs sm:text-sm font-bold flex items-center justify-center gap-2 text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-white transition";
+                textContent.classList.remove('hidden');
+                fileContent.classList.add('hidden');
             }
         }
 
+        // User Role Setting
         function setUserRole(role) {
             currentRole = role;
             const studentCard = document.getElementById('role-student-card');
             const teacherCard = document.getElementById('role-teacher-card');
+            const studentRadio = document.getElementById('role-student');
+            const teacherRadio = document.getElementById('role-teacher');
 
             if (role === 'student') {
+                studentRadio.checked = true;
                 studentCard.className = "cursor-pointer border-2 border-blue-600 bg-blue-50/50 dark:bg-blue-950/30 p-4 rounded-2xl flex items-start gap-3 transition";
                 teacherCard.className = "cursor-pointer border-2 border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-800 p-4 rounded-2xl flex items-start gap-3 transition";
-                document.getElementById('role-student').checked = true;
             } else {
+                teacherRadio.checked = true;
                 teacherCard.className = "cursor-pointer border-2 border-purple-600 bg-purple-50/50 dark:bg-purple-950/30 p-4 rounded-2xl flex items-start gap-3 transition";
                 studentCard.className = "cursor-pointer border-2 border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-800 p-4 rounded-2xl flex items-start gap-3 transition";
-                document.getElementById('role-teacher').checked = true;
             }
         }
 
-        // File Selection & Reading Logic
+        function getSupervisorName() {
+            const inputVal = document.getElementById('opt-teacher-name')?.value.trim();
+            return inputVal && inputVal.length > 0 ? inputVal : 'مكتبة المصطفى';
+        }
+
+        // File Drag & Drop Setup
+        function setupDragAndDrop() {
+            const dropZone = document.getElementById('drop-zone');
+            if (!dropZone) return;
+
+            ['dragenter', 'dragover', 'dragleave', 'drop'].forEach(eventName => {
+                dropZone.addEventListener(eventName, e => {
+                    e.preventDefault();
+                    e.stopPropagation();
+                }, false);
+            });
+
+            dropZone.addEventListener('drop', async e => {
+                const dt = e.dataTransfer;
+                const file = dt.files[0];
+                if (file) await processUploadedFile(file);
+            });
+        }
+
         async function handleFileSelect(event) {
             const file = event.target.files[0];
-            if (!file) return;
+            if (file) await processUploadedFile(file);
+        }
 
-            document.getElementById('selected-file-name').textContent = `${file.name} (${(file.size / 1024).toFixed(1)} KB)`;
-            showToast("جاري معالجة الملف واستخراج المحتوى النصي...", "info");
+        async function processUploadedFile(file) {
+            const fileNameSpan = document.getElementById('selected-file-name');
+            if (fileNameSpan) fileNameSpan.textContent = file.name;
 
+            showToast("جاري قراءة واستخراج المحتوى من الملف...", "info");
             try {
-                if (file.name.endsWith('.txt')) {
-                    extractedText = await file.text();
-                } else if (file.name.endsWith('.docx')) {
-                    const arrayBuffer = await file.arrayBuffer();
-                    const result = await mammoth.extractRawText({ arrayBuffer: arrayBuffer });
-                    extractedText = result.value;
-                } else if (file.name.endsWith('.pdf')) {
-                    const arrayBuffer = await file.arrayBuffer();
-                    const pdf = await pdfjsLib.getDocument({ data: arrayBuffer }).promise;
-                    let fullText = "";
-                    for (let i = 1; i <= pdf.numPages; i++) {
-                        const page = await pdf.getPage(i);
-                        const textContent = await page.getTextContent();
-                        const pageText = textContent.items.map(item => item.str).join(' ');
-                        fullText += pageText + "\n";
-                    }
-                    extractedText = fullText;
+                let text = "";
+                const ext = file.name.split('.').pop().toLowerCase();
+                if (ext === 'pdf') {
+                    text = await parsePdfFile(file);
+                } else if (ext === 'docx') {
+                    text = await parseDocxFile(file);
+                } else {
+                    text = await parseTxtFile(file);
                 }
 
-                if (extractedText && extractedText.trim().length > 10) {
-                    const wordsCount = extractedText.trim().split(/\s+/).length;
-                    document.getElementById('extracted-words-count').textContent = `${wordsCount} كلمة`;
-                    document.getElementById('extracted-preview-box').classList.remove('hidden');
-                    showToast("تم استخراج المحتوى بنجاح!", "success");
-                } else {
-                    showToast("تعذر استخراج نص مقروء من الملف.", "error");
+                extractedText = text;
+                const wordCount = text.trim() ? text.trim().split(/\s+/).length : 0;
+                
+                const previewBox = document.getElementById('extracted-preview-box');
+                const countSpan = document.getElementById('extracted-words-count');
+                if (previewBox && countSpan) {
+                    previewBox.classList.remove('hidden');
+                    countSpan.textContent = `${wordCount} كلمة`;
                 }
+                showToast("تم استخراج نص الملف بنجاح!", "success");
             } catch (err) {
-                console.error("File Read Error:", err);
-                showToast("حدث خطأ أثناء قراءة الملف.", "error");
+                console.error(err);
+                showToast("فشل قراءة الملف! يرجى التأكد من أن الملف محتواه نصوص.", "error");
             }
         }
 
-        // AI Generator Simulation (Generates Questions from Extracted or Typed Text)
+        async function parsePdfFile(file) {
+            const arrayBuffer = await file.arrayBuffer();
+            const pdf = await pdfjsLib.getDocument({ data: arrayBuffer }).promise;
+            let fullText = "";
+            for (let i = 1; i <= pdf.numPages; i++) {
+                const page = await pdf.getPage(i);
+                const textContent = await page.getTextContent();
+                const pageText = textContent.items.map(item => item.str).join(" ");
+                fullText += pageText + "\n";
+            }
+            return fullText;
+        }
+
+        async function parseDocxFile(file) {
+            const arrayBuffer = await file.arrayBuffer();
+            const result = await mammoth.extractRawText({ arrayBuffer: arrayBuffer });
+            return result.value;
+        }
+
+        function parseTxtFile(file) {
+            return new Promise((resolve, reject) => {
+                const reader = new FileReader();
+                reader.onload = e => resolve(e.target.result);
+                reader.onerror = err => reject(err);
+                reader.readAsText(file, 'UTF-8');
+            });
+        }
+
+        // Insert code format demo into textarea
+        function insertSampleCodeFormat() {
+            const sampleCode = `Q: ما هي المكونات الأساسية للحاسوب؟
+A) المعالج والذاكرة والتخزين
+B) الشاشة فقط
+C) السماعات والماوس
+D) الطاقة الخارجية
+Correct: A
+Explanation: حاسوب بدون معالج وذاكرة لا يمكنه التشغيل.
+
+Q: أي النظم التالية يُعد نظام تشغيل للهواتف؟
+A) Android
+B) Windows 98
+C) MS-DOS
+D) HTML
+Correct: A
+Explanation: أندرويد هو النظام الأكثر انتشاراً للهواتف الذكية.`;
+
+            document.getElementById('raw-text-input').value = sampleCode;
+            showToast("تم إدراج نموذج كود الأسئلة بنجاح!", "success");
+        }
+
+        function tryParseCustomCodeFormat(text) {
+            if (!text || text.trim().length === 0) return null;
+
+            try {
+                const parsed = JSON.parse(text);
+                if (Array.isArray(parsed) && parsed.length > 0 && parsed[0].question) {
+                    return parsed.map((item, i) => ({
+                        id: Date.now() + i,
+                        question: item.question || `سؤال ${i+1}`,
+                        options: item.options || ["أ", "ب", "ج", "د"],
+                        correct: item.correct !== undefined ? item.correct : 0,
+                        explanation: item.explanation || "إجابة معتمدة."
+                    }));
+                }
+            } catch(e) {}
+
+            const blocks = text.split(/(?:^|\n)(?=Q:|سؤال:|س:)/i).filter(b => b.trim().length > 0);
+            if (blocks.length > 0 && (text.includes('A)') || text.includes('Correct:') || text.includes('الخيارات:'))) {
+                const questions = [];
+                blocks.forEach((block, idx) => {
+                    const lines = block.split('\n').map(l => l.trim()).filter(l => l.length > 0);
+                    let qText = "";
+                    let opts = [];
+                    let correctIdx = 0;
+                    let exp = "إجابة نموذجية.";
+
+                    lines.forEach(line => {
+                        if (/^(Q:|سؤال:|س:)/i.test(line)) {
+                            qText = line.replace(/^(Q:|سؤال:|س:)/i, '').trim();
+                        } else if (/^[A-D\d][\)\.-]/i.test(line) || /^[أ-د][\)\.-]/i.test(line)) {
+                            opts.push(line.replace(/^[A-D\dأ-د][\)\.-]/i, '').trim());
+                        } else if (/^(Correct:|الإجابة:|الجواب:)/i.test(line)) {
+                            const val = line.replace(/^(Correct:|الإجابة:|الجواب:)/i, '').trim();
+                            if (/^A|1|أ/i.test(val)) correctIdx = 0;
+                            else if (/^B|2|ب/i.test(val)) correctIdx = 1;
+                            else if (/^C|3|ج/i.test(val)) correctIdx = 2;
+                            else if (/^D|4|د/i.test(val)) correctIdx = 3;
+                            else if (!isNaN(parseInt(val))) correctIdx = Math.max(0, parseInt(val) - 1);
+                        } else if (/^(Explanation:|الشرح:|التوضيح:)/i.test(line)) {
+                            exp = line.replace(/^(Explanation:|الشرح:|التوضيح:)/i, '').trim();
+                        }
+                    });
+
+                    if (qText) {
+                        while (opts.length < 4) opts.push(`خيار إضافي ${opts.length + 1}`);
+                        questions.push({
+                            id: Date.now() + idx,
+                            question: qText,
+                            options: opts.slice(0, 4),
+                            correct: correctIdx,
+                            explanation: exp
+                        });
+                    }
+                });
+
+                if (questions.length > 0) return questions;
+            }
+
+            return null;
+        }
+
         function startAiGeneration() {
             const typedText = document.getElementById('raw-text-input').value.trim();
             const sourceContent = typedText || extractedText;
+            currentSupervisorName = getSupervisorName();
 
             switchView('loading');
-            const loadingBar = document.getElementById('loading-bar');
-            const title = document.getElementById('loading-status-title');
-            let progress = 0;
+            
+            const parsedCustomQuestions = tryParseCustomCodeFormat(sourceContent);
 
-            const countVal = parseInt(document.getElementById('opt-count').value) || 10;
+            let progress = 0;
+            const countVal = parseInt(document.getElementById('opt-count').value);
+            const progressBar = document.getElementById('loading-bar');
+            const statusTitle = document.getElementById('loading-status-title');
 
             const interval = setInterval(() => {
-                progress += 25;
-                loadingBar.style.width = `${progress}%`;
+                progress += 20;
+                if (progressBar) progressBar.style.width = `${progress}%`;
 
-                if (progress === 25) {
-                    title.textContent = "قراءة المفاهيم والكلمات المفتاحية...";
-                } else if (progress === 50) {
-                    title.textContent = "صياغة أسئلة الخيارات المتعددة والحلول...";
-                } else if (progress === 75) {
-                    title.textContent = "إنشاء البطاقات التعليمية والشروح...";
-                } else if (progress >= 100) {
+                if (progress === 40 && statusTitle) {
+                    statusTitle.textContent = "جاري مطابقة المعايير وإعداد مفاتيح الإجابات...";
+                } else if (progress === 80 && statusTitle) {
+                    statusTitle.textContent = "جاري معالجة الهيكلية والتنسيق النهائي...";
+                }
+
+                if (progress >= 100) {
                     clearInterval(interval);
                     
-                    // Construct Questions dynamically from content or fallbacks
-                    generateSmartQuestionsFromContent(sourceContent, countVal);
+                    if (parsedCustomQuestions && parsedCustomQuestions.length > 0) {
+                        sampleQuestions = parsedCustomQuestions;
+                        showToast(`تم التعرف على كود الأسئلة وتحميل ${sampleQuestions.length} سؤالاً بنجاح!`, "success");
+                    } else {
+                        generateSmartQuestionsFromContent(sourceContent, countVal);
+                    }
+
                     renderEditorQuestions();
                     renderFlashcards();
 
                     const shareBtn = document.getElementById('btn-share-students');
                     if (currentRole === 'teacher') {
-                        shareBtn.classList.remove('hidden');
+                        if (shareBtn) shareBtn.classList.remove('hidden');
                         switchView('editor');
+                        showToast(`تم إنشاء الاختبار بنجاح تحت إشراف (${currentSupervisorName})!`, "success");
                     } else {
-                        shareBtn.classList.add('hidden');
-                        switchView('editor');
+                        if (shareBtn) shareBtn.classList.add('hidden');
+                        isStudentSharedSession = true;
+                        switchView('student-entry');
+                        showToast("تم إنشاء الاختبار! أدخل اسمك للبدء مباشرة.", "success");
                     }
-                    showToast("تم إنشاء الاختبار بنجاح!", "success");
                 }
-            }, 250);
+            }, 200);
         }
 
         function generateSmartQuestionsFromContent(content, requestedCount) {
             if (!content || content.length < 20) {
-                // Use default rich sample bank
                 sampleQuestions = getFallbackQuestions(requestedCount);
                 return;
             }
 
-            // Clean sentences
             const sentences = content
                 .split(/[.!\n؟?]/)
                 .map(s => s.trim())
-                .filter(s => s.length > 15);
+                .filter(s => s.length > 20 && !s.includes('{') && !s.includes('}'));
 
             if (sentences.length === 0) {
                 sampleQuestions = getFallbackQuestions(requestedCount);
@@ -1012,31 +1224,32 @@
             }
 
             const generated = [];
+            const distractorsPool = [
+                "الافتراضي الموحد", "الموازي المباشر", "التحليلي المتكامل", "المرن النمطية",
+                "المستقل الثانوي", "المتقدم التلقائي", "الخاص الاستثنائي", "المحلي البرمجي"
+            ];
+
             for (let i = 0; i < requestedCount; i++) {
                 const targetSentence = sentences[i % sentences.length];
                 const words = targetSentence.split(/\s+/);
                 
-                // Pick a key word to mask
-                let targetWord = words.find(w => w.length > 3) || words[0];
-                let questionStr = targetSentence.replace(targetWord, "........");
+                let candidateWords = words.filter(w => w.length > 3 && !/^[0-9]+$/.test(w));
+                let targetWord = candidateWords.length > 0 ? candidateWords[i % candidateWords.length] : words[0];
+                let questionStem = targetSentence.replace(targetWord, " ( ..... ) ");
 
-                // Distractors
-                const distractors = ["الافتراضي", "التلقائي", "الأساسي", "المتقدم", "العام", "الموازي"];
-                const options = [
-                    targetWord,
-                    distractors[(i + 1) % distractors.length],
-                    distractors[(i + 2) % distractors.length],
-                    distractors[(i + 3) % distractors.length]
-                ].sort(() => Math.random() - 0.5);
+                const d1 = distractorsPool[(i * 3 + 1) % distractorsPool.length];
+                const d2 = distractorsPool[(i * 3 + 2) % distractorsPool.length];
+                const d3 = distractorsPool[(i * 3 + 3) % distractorsPool.length];
 
+                const options = [targetWord, d1, d2, d3].sort(() => Math.random() - 0.5);
                 const correctIndex = options.indexOf(targetWord);
 
                 generated.push({
-                    id: Date.now() + i,
-                    question: `ما هو الخيار المناسب لإكمال العبارة: "${questionStr}"؟`,
+                    id: Date.now() + i + Math.floor(Math.random() * 1000),
+                    question: `أكمل الفراغ في العبارة التالية: "${questionStem}"`,
                     options: options,
                     correct: correctIndex,
-                    explanation: `السياق المذكور بالنص: "${targetSentence}"`
+                    explanation: `النص الأصلي الوارد في المستند: "${targetSentence}"`
                 });
             }
 
@@ -1044,55 +1257,40 @@
         }
 
         function getFallbackQuestions(count) {
-            const bank = [
+            const base = [
                 {
-                    id: 1,
-                    question: "ما هي الوظيفة الأساسية لمعالج الحاسوب (CPU)؟",
-                    options: ["تخزين الملفات بشكل دائم", "تنفيذ التعليمات والعمليات الحسابية", "إخراج الصوت للسمّاعات", "تزويد الطاقة"],
-                    correct: 1,
-                    explanation: "المعالج يتولى معالجة الأوامر وتنفيذ كافة العمليات البرمجية."
+                    question: "ما هي الوظيفة الرئيسية للذاكرة العشوائية (RAM)؟",
+                    options: ["تخزين المؤقت للبيانات أثناء التشغيل", "حفظ الملفات بصفة دائمة", "معالجة الرسومات القوية", "تزويد اللوحة الأم بالكهرباء"],
+                    correct: 0,
+                    explanation: "الذاكرة العشوائية RAM تحفظ البيانات المؤقتة الخاصة بالبرامج الشغالة حالياً."
                 },
                 {
-                    id: 2,
-                    question: "أي المكونات التالية تُعد ذاكرة وصول عشوائي مؤقتة؟",
-                    options: ["القرص الصلب SSD", "ذاكرة RAM", "شريحة BIOS", "البطاقة الذكية"],
-                    correct: 1,
-                    explanation: "تُسهم ذاكرة RAM في حفظ البيانات أثناء تشغيل التطبيقات وتُمحى بإيقاف التشغيل."
-                },
-                {
-                    id: 3,
-                    question: "ما المقصود ببرمجيات المصدر المفتوح (Open Source)؟",
-                    options: ["برامج مجانية بدون شروط فقط", "برامج يمكن الاطلاع على كودها المصدري وتعديله", "برامج مخصصة للشركات الكبرى", "برامج تعمل بدون إنترنت"],
-                    correct: 1,
-                    explanation: "تتيح المبادرة مفتوحة المصدر إمكانية التعديل والتطوير الشفاف للكود."
-                },
-                {
-                    id: 4,
-                    question: "ما أهمية الشبكات اللاسلكية Wi-Fi؟",
-                    options: ["تسريع عمل المعالج", "ربط الأجهزة وتبادل البيانات بدون أسلاك", "تخزين الملفات", "حماية الجهاز من الفيروسات"],
-                    correct: 1,
-                    explanation: "تُمكن الشبكات اللاسلكية الأجهزة من الاتصال بالإنترنت والشبكات المحلية."
-                },
-                {
-                    id: 5,
-                    question: "ما هو الخيار السليم لحماية البيانات من الضياع؟",
-                    options: ["حذف الملفات القديمة", "إجراء النسخ الاحتياطي الدوري (Backup)", "تقليل إضاءة الشاشة", "إغلاق المتصفح"],
-                    correct: 1,
-                    explanation: "النسخ الاحتياطي يحفظ نسخة آمنة من البيانات في مكان آخر."
+                    question: "ما هو الأسلوب الأمثل لحماية الأجهزة من الهجمات المباشرة؟",
+                    options: ["تثبيت برامج الجدار الناري والتحديث المستمر", "إغلاق الشاشة عند ترك الجهاز", "زيادة سعة القرص الصلب", "تغيير نوع خط النظام"],
+                    correct: 0,
+                    explanation: "تحديث النظام واستخدام الجدار الناري Firewall يضمن الحماية الأمثل."
                 }
             ];
-
-            const result = [];
-            for (let i = 0; i < count; i++) {
-                result.push({ ...bank[i % bank.length], id: Date.now() + i });
+            const list = [];
+            for(let i=0; i<count; i++) {
+                const item = base[i % base.length];
+                list.push({
+                    id: Date.now() + i,
+                    question: `${item.question} (سؤال رقم ${i+1})`,
+                    options: [...item.options],
+                    correct: item.correct,
+                    explanation: item.explanation
+                });
             }
-            return result;
+            return list;
         }
 
-        // Questions Editor Render
         function renderEditorQuestions() {
             const container = document.getElementById('questions-container');
-            document.getElementById('created-count').textContent = sampleQuestions.length;
+            const createdCount = document.getElementById('created-count');
+            if (createdCount) createdCount.textContent = sampleQuestions.length;
+            if (!container) return;
+
             container.innerHTML = '';
 
             sampleQuestions.forEach((q, index) => {
@@ -1103,7 +1301,7 @@
                         <span class="text-xs font-black text-blue-600 dark:text-blue-400 bg-blue-50 dark:bg-blue-950 px-3 py-1 rounded-xl">السؤال #${index + 1}</span>
                         <button onclick="deleteQuestion(${index})" class="text-rose-500 hover:text-rose-700 text-xs font-bold flex items-center gap-1 transition">
                             <i data-lucide="trash-2" class="w-4 h-4"></i>
-                            <span>حذف</span>
+                            <span>حذف السؤال</span>
                         </button>
                     </div>
 
@@ -1112,13 +1310,22 @@
                         <input type="text" value="${q.question}" onchange="updateQuestionText(${index}, this.value)" class="w-full bg-slate-50 dark:bg-slate-900 border border-slate-200 dark:border-slate-700 rounded-xl px-3 py-2 text-xs sm:text-sm font-bold text-slate-800 dark:text-white focus:ring-2 focus:ring-blue-500 focus:outline-none">
                     </div>
 
-                    <div class="grid grid-cols-1 sm:grid-cols-2 gap-3">
-                        ${q.options.map((opt, optIndex) => `
-                            <div class="flex items-center gap-2 bg-slate-50 dark:bg-slate-900 p-2.5 rounded-xl border ${q.correct === optIndex ? 'border-emerald-500 bg-emerald-50/40 dark:bg-emerald-950/40' : 'border-slate-200 dark:border-slate-700'}">
-                                <input type="radio" name="correct-${index}" ${q.correct === optIndex ? 'checked' : ''} onchange="setCorrectAnswer(${index}, ${optIndex})" class="text-emerald-600 focus:ring-emerald-500">
-                                <input type="text" value="${opt}" onchange="updateOptionText(${index}, ${optIndex}, this.value)" class="w-full bg-transparent text-xs font-semibold text-slate-800 dark:text-slate-200 focus:outline-none">
-                            </div>
-                        `).join('')}
+                    <div>
+                        <label class="block text-xs font-bold text-slate-700 dark:text-slate-300 mb-1">الخيارات (حدد الخيار الصحيح بوضع إشارة الدائرة):</label>
+                        <div class="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                            ${q.options.map((opt, optIndex) => `
+                                <div class="flex items-center gap-2 bg-slate-50 dark:bg-slate-900 p-2.5 rounded-xl border ${q.correct === optIndex ? 'border-emerald-500 bg-emerald-50/40 dark:bg-emerald-950/40' : 'border-slate-200 dark:border-slate-700'}">
+                                    <input type="radio" name="correct-${index}" ${q.correct === optIndex ? 'checked' : ''} onchange="setCorrectAnswer(${index}, ${optIndex})" class="text-emerald-600 focus:ring-emerald-500 cursor-pointer">
+                                    <span class="text-xs font-bold text-slate-400">${String.fromCharCode(65 + optIndex)})</span>
+                                    <input type="text" value="${opt}" onchange="updateOptionText(${index}, ${optIndex}, this.value)" class="w-full bg-transparent text-xs font-semibold text-slate-800 dark:text-slate-200 focus:outline-none">
+                                </div>
+                            `).join('')}
+                        </div>
+                    </div>
+
+                    <div>
+                        <label class="block text-xs font-bold text-slate-700 dark:text-slate-300 mb-1">الشرح التوضيحي للحل:</label>
+                        <input type="text" value="${q.explanation || ''}" onchange="updateExplanationText(${index}, this.value)" placeholder="أدخل الشرح التوضيحي..." class="w-full bg-slate-50 dark:bg-slate-900 border border-slate-200 dark:border-slate-700 rounded-xl px-3 py-2 text-xs font-semibold text-slate-700 dark:text-slate-300 focus:ring-2 focus:ring-blue-500 focus:outline-none">
                     </div>
                 `;
                 container.appendChild(card);
@@ -1127,84 +1334,235 @@
         }
 
         function updateQuestionText(idx, val) { sampleQuestions[idx].question = val; }
-        function updateOptionText(qIdx, oIdx, val) { sampleQuestions[qIdx].options[oIdx] = val; }
-        function setCorrectAnswer(qIdx, oIdx) { sampleQuestions[qIdx].correct = oIdx; renderEditorQuestions(); }
-        function deleteQuestion(idx) {
-            sampleQuestions.splice(idx, 1);
+        function updateOptionText(qIdx, optIdx, val) { sampleQuestions[qIdx].options[optIdx] = val; }
+        function setCorrectAnswer(qIdx, optIdx) { 
+            sampleQuestions[qIdx].correct = optIdx; 
             renderEditorQuestions();
-            showToast("تم حذف السؤال.", "info");
+        }
+        function updateExplanationText(qIdx, val) { sampleQuestions[qIdx].explanation = val; }
+
+        function deleteQuestion(index) {
+            if (sampleQuestions.length <= 1) {
+                showToast("يجب أن يحتوي الاختبار على سؤال واحد على الأقل!", "error");
+                return;
+            }
+            sampleQuestions.splice(index, 1);
+            renderEditorQuestions();
+            showToast("تم حذف السؤال بنجاح", "info");
         }
 
         function addNewQuestion() {
             sampleQuestions.push({
                 id: Date.now(),
-                question: "اكتب نص السؤال الجديد هنا...",
-                options: ["خيار 1", "خيار 2", "خيار 3", "خيار 4"],
+                question: "أدخل نص السؤال الجديد هنا...",
+                options: ["الخيار الأول", "الخيار الثاني", "الخيار الثالث", "الخيار الرابع"],
                 correct: 0,
-                explanation: "الشرح التوضيحي للحل الصحيح."
+                explanation: "الشرح التوضيحي للإجابة الصحيحة."
             });
             renderEditorQuestions();
-            showToast("تمت إضافة سؤال جديد.", "success");
+            showToast("تم إضافة سؤال جديد بنجاح", "success");
         }
 
-        // Quiz Interactive Runner
-        function startInteractiveQuiz() {
-            if (sampleQuestions.length === 0) {
-                showToast("لا توجد أسئلة متاحة حالياً!", "error");
+        // Export Questions to Word Document (.doc)
+        function exportQuizDoc(format = 'word') {
+            if (!sampleQuestions || sampleQuestions.length === 0) {
+                showToast("لا توجد أسئلة للتصدير!", "error");
                 return;
             }
+
+            const supervisor = getSupervisorName();
+            let content = `
+                <html xmlns:o='urn:schemas-microsoft-com:office:office' xmlns:w='urn:schemas-microsoft-com:office:word' xmlns='http://www.w3.org/TR/REC-html40'>
+                <head><meta charset='utf-8'><title>اختبار إلكتروني - ${supervisor}</title>
+                <style>
+                    body { font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; direction: rtl; text-align: right; padding: 20px; }
+                    .header { text-align: center; border-bottom: 2px solid #2563eb; padding-bottom: 10px; margin-bottom: 20px; }
+                    .q-box { background: #f8fafc; border: 1px solid #cbd5e1; border-radius: 8px; padding: 15px; margin-bottom: 15px; }
+                    .q-title { font-weight: bold; color: #0f172a; margin-bottom: 8px; }
+                    .opt { margin-right: 15px; color: #334155; margin-bottom: 4px; }
+                    .ans { font-weight: bold; color: #16a34a; margin-top: 8px; border-top: 1px dashed #cbd5e1; pt-5px; }
+                    .footer { text-align: center; margin-top: 30px; font-size: 11px; color: #64748b; }
+                </style>
+                </head>
+                <body>
+                    <div class='header'>
+                        <h2>اختبار الأسئلة متعددة الخيارات (MCQ)</h2>
+                        <p>إشراف / إعداد: ${supervisor} | إهداء من مكتبة المصطفى (٠٧٨١٣٩٨٥٨٥٣)</p>
+                    </div>
+            `;
+
+            sampleQuestions.forEach((q, idx) => {
+                content += `
+                    <div class='q-box'>
+                        <div class='q-title'>س ${idx + 1}: ${q.question}</div>
+                `;
+                q.options.forEach((opt, oIdx) => {
+                    const letter = String.fromCharCode(65 + oIdx);
+                    content += `<div class='opt'>${letter}) ${opt}</div>`;
+                });
+                const correctLetter = String.fromCharCode(65 + q.correct);
+                content += `
+                        <div class='ans'>الإجابة الصحيحة: ${correctLetter}) ${q.options[q.correct]}</div>
+                        ${q.explanation ? `<div style='font-size: 11px; color: #475569;'>الشرح: ${q.explanation}</div>` : ''}
+                    </div>
+                `;
+            });
+
+            content += `
+                    <div class='footer'>تم توليد هذا الاختبار بواسطة منصة MCQ Maker - مكتبة المصطفى</div>
+                </body>
+                </html>
+            `;
+
+            const blob = new Blob(['\ufeff' + content], { type: 'application/msword' });
+            const url = URL.createObjectURL(blob);
+            const a = document.createElement('a');
+            a.href = url;
+            a.download = `اختبار_${supervisor.replace(/\s+/g, '_')}_${Date.now()}.doc`;
+            document.body.appendChild(a);
+            a.click();
+            document.body.removeChild(a);
+            URL.revokeObjectURL(url);
+            showToast("تم تصدير ملف Word بنجاح!", "success");
+        }
+
+        function renderFlashcards() {
+            if (!sampleQuestions || sampleQuestions.length === 0) return;
+            flashcardIndex = 0;
+            isFlashcardFlipped = false;
+            updateFlashcardUI();
+        }
+
+        function flipFlashcard() {
+            const inner = document.getElementById('flashcard-inner');
+            isFlashcardFlipped = !isFlashcardFlipped;
+            if (inner) {
+                if (isFlashcardFlipped) {
+                    inner.classList.add('rotate-y-180');
+                } else {
+                    inner.classList.remove('rotate-y-180');
+                }
+            }
+        }
+
+        function updateFlashcardUI() {
+            const current = sampleQuestions[flashcardIndex];
+            if (!current) return;
+
+            const counter = document.getElementById('flashcard-counter');
+            const frontText = document.getElementById('flashcard-front-text');
+            const backAnswer = document.getElementById('flashcard-back-answer');
+            const backExp = document.getElementById('flashcard-back-explanation');
+            const inner = document.getElementById('flashcard-inner');
+
+            if (counter) counter.textContent = `${flashcardIndex + 1} / ${sampleQuestions.length}`;
+            if (frontText) frontText.textContent = current.question;
+            if (backAnswer) backAnswer.textContent = current.options[current.correct];
+            if (backExp) backExp.textContent = current.explanation || "لا يوجد شرح إضافي.";
+
+            isFlashcardFlipped = false;
+            if (inner) inner.classList.remove('rotate-y-180');
+        }
+
+        function nextFlashcard() {
+            if (flashcardIndex < sampleQuestions.length - 1) {
+                flashcardIndex++;
+                updateFlashcardUI();
+            } else {
+                showToast("وصلت للبطاقة الأخيرة!", "info");
+            }
+        }
+
+        function prevFlashcard() {
+            if (flashcardIndex > 0) {
+                flashcardIndex--;
+                updateFlashcardUI();
+            }
+        }
+
+        function startStudentQuizSession() {
+            const nameInput = document.getElementById('student-name-input');
+            const name = nameInput ? nameInput.value.trim() : '';
+            if (!name) {
+                showToast("الرجاء إدخال اسمك الثلاثي للبدء.", "error");
+                return;
+            }
+            currentStudentName = name;
+            isStudentSharedSession = true;
+            startInteractiveQuiz();
+        }
+
+        function startInteractiveQuiz() {
+            if (!sampleQuestions || sampleQuestions.length === 0) {
+                showToast("لا توجد أسئلة متاحة لبدء الاختبار!", "error");
+                return;
+            }
+
             currentQuizIndex = 0;
             userAnswers = {};
             timerSeconds = 0;
-            switchView('quiz');
-            renderQuizQuestion();
 
             if (quizTimerInterval) clearInterval(quizTimerInterval);
             quizTimerInterval = setInterval(() => {
                 timerSeconds++;
                 const mins = String(Math.floor(timerSeconds / 60)).padStart(2, '0');
                 const secs = String(timerSeconds % 60).padStart(2, '0');
-                document.getElementById('quiz-timer').textContent = `${mins}:${secs}`;
+                const timerEl = document.getElementById('quiz-timer');
+                if (timerEl) timerEl.textContent = `${mins}:${secs}`;
             }, 1000);
+
+            switchView('quiz');
+            renderQuizQuestion();
         }
 
         function renderQuizQuestion() {
             const q = sampleQuestions[currentQuizIndex];
-            document.getElementById('quiz-progress-text').textContent = `${currentQuizIndex + 1} / ${sampleQuestions.length}`;
-            document.getElementById('quiz-question-title').textContent = `${currentQuizIndex + 1}. ${q.question}`;
+            if (!q) return;
 
-            const optionsBox = document.getElementById('quiz-options-container');
-            optionsBox.innerHTML = '';
-
-            q.options.forEach((opt, idx) => {
-                const btn = document.createElement('button');
-                const isSelected = userAnswers[currentQuizIndex] === idx;
-                
-                btn.className = `w-full text-right p-4 rounded-2xl border text-xs sm:text-sm font-bold transition flex items-center justify-between hover:bg-slate-50 dark:hover:bg-slate-700 ${
-                    isSelected ? 'border-blue-600 bg-blue-50/80 dark:bg-blue-950 dark:border-blue-500 text-blue-900 dark:text-blue-100 shadow-sm' : 'border-slate-200 dark:border-slate-700 text-slate-800 dark:text-slate-200'
-                }`;
-
-                btn.innerHTML = `
-                    <span>${opt}</span>
-                    <span class="w-6 h-6 rounded-full border flex items-center justify-center text-xs font-black ${isSelected ? 'bg-blue-600 border-blue-600 text-white' : 'border-slate-300 dark:border-slate-600 text-slate-400'}">
-                        ${String.fromCharCode(65 + idx)}
-                    </span>
-                `;
-
-                btn.onclick = () => selectQuizAnswer(idx);
-                optionsBox.appendChild(btn);
-            });
-
-            document.getElementById('btn-quiz-prev').disabled = currentQuizIndex === 0;
+            const progressEl = document.getElementById('quiz-progress-text');
+            const titleEl = document.getElementById('quiz-question-title');
+            const container = document.getElementById('quiz-options-container');
+            const prevBtn = document.getElementById('btn-quiz-prev');
             const nextBtn = document.getElementById('btn-quiz-next');
-            if (currentQuizIndex === sampleQuestions.length - 1) {
-                nextBtn.querySelector('span').textContent = "إنهاء وإرسال النتيجة";
-            } else {
-                nextBtn.querySelector('span').textContent = "التالي";
+
+            if (progressEl) progressEl.textContent = `${currentQuizIndex + 1} / ${sampleQuestions.length}`;
+            if (titleEl) titleEl.textContent = q.question;
+
+            if (prevBtn) prevBtn.disabled = currentQuizIndex === 0;
+
+            if (nextBtn) {
+                if (currentQuizIndex === sampleQuestions.length - 1) {
+                    nextBtn.innerHTML = `<span>إنهاء وتسليم الاختبار</span><i data-lucide="check-circle" class="w-4 h-4"></i>`;
+                } else {
+                    nextBtn.innerHTML = `<span>التالي</span><i data-lucide="arrow-left" class="w-4 h-4"></i>`;
+                }
             }
+
+            if (container) {
+                container.innerHTML = '';
+                q.options.forEach((opt, idx) => {
+                    const isSelected = userAnswers[currentQuizIndex] === idx;
+                    const optBtn = document.createElement('button');
+                    optBtn.onclick = () => selectQuizOption(idx);
+                    optBtn.className = `w-full text-right p-4 rounded-2xl border text-xs sm:text-sm font-bold flex items-center justify-between transition ${
+                        isSelected 
+                        ? 'border-blue-600 bg-blue-50/80 dark:bg-blue-950/50 text-blue-900 dark:text-blue-200 shadow-sm' 
+                        : 'border-slate-200 dark:border-slate-700 bg-slate-50/50 dark:bg-slate-900/50 text-slate-800 dark:text-slate-200 hover:border-blue-400'
+                    }`;
+                    optBtn.innerHTML = `
+                        <div class="flex items-center gap-3">
+                            <span class="w-7 h-7 rounded-xl flex items-center justify-center font-black ${isSelected ? 'bg-blue-600 text-white' : 'bg-slate-200 dark:bg-slate-700 text-slate-600 dark:text-slate-300'}">${String.fromCharCode(65 + idx)}</span>
+                            <span>${opt}</span>
+                        </div>
+                        ${isSelected ? '<i data-lucide="check-circle" class="w-5 h-5 text-blue-600 dark:text-blue-400"></i>' : ''}
+                    `;
+                    container.appendChild(optBtn);
+                });
+            }
+            lucide.createIcons();
         }
 
-        function selectQuizAnswer(optIdx) {
+        function selectQuizOption(optIdx) {
             userAnswers[currentQuizIndex] = optIdx;
             renderQuizQuestion();
         }
@@ -1217,6 +1575,11 @@
         }
 
         function nextQuizQuestion() {
+            if (userAnswers[currentQuizIndex] === undefined) {
+                showToast("الرجاء اختيار إجابة قبل الانتقال للسؤال التالي", "error");
+                return;
+            }
+
             if (currentQuizIndex < sampleQuestions.length - 1) {
                 currentQuizIndex++;
                 renderQuizQuestion();
@@ -1225,8 +1588,14 @@
             }
         }
 
+        function exitQuiz() {
+            if (quizTimerInterval) clearInterval(quizTimerInterval);
+            switchView('editor');
+            showToast("تم الخروج من الاختبار.", "info");
+        }
+
         function finishQuiz() {
-            clearInterval(quizTimerInterval);
+            if (quizTimerInterval) clearInterval(quizTimerInterval);
             let score = 0;
             sampleQuestions.forEach((q, idx) => {
                 if (userAnswers[idx] === q.correct) score++;
@@ -1236,193 +1605,230 @@
             const pct = Math.round((score / total) * 100);
             const mins = String(Math.floor(timerSeconds / 60)).padStart(2, '0');
             const secs = String(timerSeconds % 60).padStart(2, '0');
+            const supervisor = getSupervisorName();
 
             if (isStudentSharedSession) {
                 const isPassed = pct >= 50;
                 
-                document.getElementById('report-student-name').textContent = currentStudentName || "طالب متميز";
-                document.getElementById('report-score-num').textContent = `${score} / ${total}`;
-                document.getElementById('report-score-pct').textContent = `${pct}%`;
-                document.getElementById('report-time-spent').textContent = `${mins}:${secs}`;
+                const rStudentName = document.getElementById('report-student-name');
+                const rSupervisorName = document.getElementById('report-supervisor-name');
+                const rFooterSupervisor = document.getElementById('report-footer-supervisor');
+                const rScoreNum = document.getElementById('report-score-num');
+                const rScorePct = document.getElementById('report-score-pct');
+                const rTimeSpent = document.getElementById('report-time-spent');
+
+                if (rStudentName) rStudentName.textContent = currentStudentName || "طالب متميز";
+                if (rSupervisorName) rSupervisorName.textContent = supervisor;
+                if (rFooterSupervisor) rFooterSupervisor.textContent = supervisor;
+                if (rScoreNum) rScoreNum.textContent = `${score} / ${total}`;
+                if (rScorePct) rScorePct.textContent = `${pct}%`;
+                if (rTimeSpent) rTimeSpent.textContent = `${mins}:${secs}`;
+
+                const qrData = encodeURIComponent(`Student: ${currentStudentName} | Supervisor: ${supervisor} | Score: ${score}/${total} (${pct}%) | Platform: Al-Mustafa Library 07813985853`);
+                const qrImg = document.getElementById('report-qr-code');
+                if (qrImg) qrImg.src = `https://api.qrserver.com/v1/create-qr-code/?size=150x150&data=${qrData}`;
+
+                const tbody = document.getElementById('report-breakdown-tbody');
+                if (tbody) {
+                    tbody.innerHTML = '';
+                    sampleQuestions.forEach((q, idx) => {
+                        const studentAnsIdx = userAnswers[idx];
+                        const isCorrect = studentAnsIdx === q.correct;
+                        const studentAnsText = studentAnsIdx !== undefined ? q.options[studentAnsIdx] : "لم يتم إجابة السؤال";
+                        const correctAnsText = q.options[q.correct];
+
+                        const tr = document.createElement('tr');
+                        tr.className = "hover:bg-slate-50/50 dark:hover:bg-slate-900/50 transition";
+                        tr.innerHTML = `
+                            <td class="p-3 font-bold text-center border-b border-slate-100 dark:border-slate-800">${idx + 1}</td>
+                            <td class="p-3 font-semibold border-b border-slate-100 dark:border-slate-800">
+                                <div>${q.question}</div>
+                                ${q.explanation ? `<div class="text-[10px] text-slate-400 mt-0.5">💡 ${q.explanation}</div>` : ''}
+                            </td>
+                            <td class="p-3 font-bold border-b border-slate-100 dark:border-slate-800 ${isCorrect ? 'text-emerald-600 dark:text-emerald-400 bg-emerald-50/30 dark:bg-emerald-950/30' : 'text-rose-600 dark:text-rose-400 bg-rose-50/30 dark:bg-rose-950/30'}">
+                                ${isCorrect ? '✓ ' : '✗ '} ${studentAnsText}
+                            </td>
+                            <td class="p-3 font-bold text-emerald-700 dark:text-emerald-300 border-b border-slate-100 dark:border-slate-800 bg-emerald-50/20 dark:bg-emerald-950/20">
+                                ✓ ${correctAnsText}
+                            </td>
+                        `;
+                        tbody.appendChild(tr);
+                    });
+                }
 
                 const banner = document.getElementById('report-status-banner');
                 const icon = document.getElementById('report-status-icon');
                 const title = document.getElementById('report-status-title');
                 const sub = document.getElementById('report-status-sub');
-                const tag = document.getElementById('report-status-tag');
-                const passBadge = document.getElementById('report-pass-badge');
                 const certBox = document.getElementById('certificate-action-box');
 
-                if (isPassed) {
+                if (banner && isPassed) {
                     banner.className = "p-5 rounded-2xl flex items-center justify-between bg-emerald-600 text-white shadow-lg";
-                    icon.className = "w-12 h-12 rounded-full flex items-center justify-center bg-white/20 text-white";
-                    icon.innerHTML = `<i data-lucide="check-circle" class="w-7 h-7"></i>`;
-                    title.textContent = "تهانينا! لقد اجتزت الاختبار بنجاح 🎉";
-                    sub.textContent = "أداء ممتاز من مكتبة المصطفى، يمكنك استخراج شهادة التفوق والنجاح فوراً.";
-                    tag.textContent = "ناجح";
-                    passBadge.textContent = "ناجح (اجتاز)";
-                    passBadge.className = "font-extrabold text-sm text-emerald-600 bg-emerald-50 dark:bg-emerald-950 px-2.5 py-0.5 rounded-lg";
-                    
-                    certBox.classList.remove('hidden');
-                    if (window.confetti) confetti({ particleCount: 100, spread: 70, origin: { y: 0.6 } });
-                } else {
+                    if (icon) {
+                        icon.className = "w-12 h-12 rounded-full flex items-center justify-center bg-white/20 text-white";
+                        icon.innerHTML = `<i data-lucide="check-circle" class="w-7 h-7"></i>`;
+                    }
+                    if (title) title.textContent = "تهانينا! لقد اجتزت الاختبار بنجاح 🎉";
+                    if (sub) sub.textContent = `أداء ممتاز بإشراف ${supervisor}، يمكنك استخراج شهادة التفوق والنجاح.`;
+                    if (certBox) certBox.classList.remove('hidden');
+
+                    if (typeof confetti === 'function') {
+                        confetti({ particleCount: 100, spread: 70, origin: { y: 0.6 } });
+                    }
+                } else if (banner) {
                     banner.className = "p-5 rounded-2xl flex items-center justify-between bg-rose-600 text-white shadow-lg";
-                    icon.className = "w-12 h-12 rounded-full flex items-center justify-center bg-white/20 text-white";
-                    icon.innerHTML = `<i data-lucide="x-circle" class="w-7 h-7"></i>`;
-                    title.textContent = "لم تجتاز الاختبار هذه المرة ⚠️";
-                    sub.textContent = "نسبتك أقل من حد النجاح (50%). حاول مراجعة البطاقات التعليمية وإعادة الاختبار.";
-                    tag.textContent = "غير مجتاز";
-                    passBadge.textContent = "راسب (لم يجتاز)";
-                    passBadge.className = "font-extrabold text-sm text-rose-600 bg-rose-50 dark:bg-rose-950 px-2.5 py-0.5 rounded-lg";
-                    
-                    certBox.classList.add('hidden');
+                    if (icon) {
+                        icon.className = "w-12 h-12 rounded-full flex items-center justify-center bg-white/20 text-white";
+                        icon.innerHTML = `<i data-lucide="x-circle" class="w-7 h-7"></i>`;
+                    }
+                    if (title) title.textContent = "لم تجتز الاختبار هذه المرة";
+                    if (sub) sub.textContent = "راجع الإجابات بالجدول أدناه وحاول مرة أخرى للوصول للدرجة المطلوبة.";
+                    if (certBox) certBox.classList.add('hidden');
                 }
 
-                lucide.createIcons();
                 switchView('student-report');
             } else {
-                document.getElementById('res-score').textContent = `${score} / ${total}`;
-                document.getElementById('res-percentage').textContent = `${pct}%`;
-                document.getElementById('res-time').textContent = `${mins}:${secs}`;
+                const resScore = document.getElementById('res-score');
+                const resPct = document.getElementById('res-percentage');
+                const resTime = document.getElementById('res-time');
+
+                if (resScore) resScore.textContent = `${score} / ${total}`;
+                if (resPct) resPct.textContent = `${pct}%`;
+                if (resTime) resTime.textContent = `${mins}:${secs}`;
+
                 switchView('results');
             }
         }
 
-        function exitQuiz() {
-            clearInterval(quizTimerInterval);
-            if (isStudentSharedSession) {
-                switchView('student-entry');
-            } else {
-                switchView('editor');
-            }
-        }
-
-        // Flashcards Functionality
-        function renderFlashcards() {
-            flashcardIndex = 0;
-            isFlashcardFlipped = false;
-            updateFlashcardUI();
-        }
-
-        function flipFlashcard() {
-            isFlashcardFlipped = !isFlashcardFlipped;
-            const cardInner = document.getElementById('flashcard-inner');
-            if (isFlashcardFlipped) {
-                cardInner.classList.add('rotate-y-180');
-            } else {
-                cardInner.classList.remove('rotate-y-180');
-            }
-        }
-
-        function updateFlashcardUI() {
-            if (sampleQuestions.length === 0) return;
-            const q = sampleQuestions[flashcardIndex];
-            
-            document.getElementById('flashcard-counter').textContent = `${flashcardIndex + 1} / ${sampleQuestions.length}`;
-            document.getElementById('flashcard-front-text').textContent = q.question;
-            document.getElementById('flashcard-back-answer').textContent = q.options[q.correct];
-            document.getElementById('flashcard-back-explanation').textContent = q.explanation || "الإجابة الصحيحة وفقاً للمادة الدراسية والمستند المستخرج.";
-
-            const cardInner = document.getElementById('flashcard-inner');
-            cardInner.classList.remove('rotate-y-180');
-            isFlashcardFlipped = false;
-
-            document.getElementById('btn-flashcard-prev').disabled = flashcardIndex === 0;
-            document.getElementById('btn-flashcard-next').disabled = flashcardIndex === sampleQuestions.length - 1;
-        }
-
-        function prevFlashcard() {
-            if (flashcardIndex > 0) {
-                flashcardIndex--;
-                updateFlashcardUI();
-            }
-        }
-
-        function nextFlashcard() {
-            if (flashcardIndex < sampleQuestions.length - 1) {
-                flashcardIndex++;
-                updateFlashcardUI();
-            }
-        }
-
-        // Certificate Generator
         function generateCertificate() {
-            document.getElementById('cert-student-name').textContent = currentStudentName || "الطالب المتفوق";
-            document.getElementById('cert-score-pct').textContent = document.getElementById('report-score-pct').textContent;
-            document.getElementById('cert-date').textContent = new Date().toLocaleDateString('ar-EG');
-            document.getElementById('certificate-modal').classList.remove('hidden');
+            let score = 0;
+            sampleQuestions.forEach((q, idx) => {
+                if (userAnswers[idx] === q.correct) score++;
+            });
+            const pct = Math.round((score / sampleQuestions.length) * 100);
+            const supervisor = getSupervisorName();
+
+            const certStudent = document.getElementById('cert-student-name');
+            const certPct = document.getElementById('cert-score-pct');
+            const certSupTitle = document.getElementById('cert-supervisor-title');
+            const certSupBody = document.getElementById('cert-supervisor-body');
+            const certDate = document.getElementById('cert-date');
+
+            if (certStudent) certStudent.textContent = currentStudentName || "طالب متميز";
+            if (certPct) certPct.textContent = `${pct}%`;
+            if (certSupTitle) certSupTitle.textContent = supervisor;
+            if (certSupBody) certSupBody.textContent = supervisor;
+            if (certDate) certDate.textContent = new Date().toLocaleDateString('ar-EG');
+
+            const modal = document.getElementById('certificate-modal');
+            if (modal) modal.classList.remove('hidden');
+
+            if (typeof confetti === 'function') {
+                confetti({ particleCount: 150, spread: 90, origin: { y: 0.5 } });
+            }
         }
 
         function closeCertificateModal() {
-            document.getElementById('certificate-modal').classList.add('hidden');
+            const modal = document.getElementById('certificate-modal');
+            if (modal) modal.classList.add('hidden');
         }
 
-        // Export Questions as Word
-        function exportQuizDoc(type) {
-            let docContent = `
-                <html xmlns:o='urn:schemas-microsoft-com:office:office' xmlns:w='urn:schemas-microsoft-com:office:word' xmlns='http://www.w3.org/TR/REC-html40'>
-                <head><title>اختبار MCQ - مكتبة المصطفى</title><style>body{font-family:Arial,sans-serif;direction:rtl;}</style></head>
-                <body>
-                <h2>اختبار الخيارات المتعددة - مكتبة المصطفى</h2>
-                <hr/>
-            `;
-
-            sampleQuestions.forEach((q, idx) => {
-                docContent += `<h3>س${idx + 1}: ${q.question}</h3><ul>`;
-                q.options.forEach((opt, oIdx) => {
-                    docContent += `<li>${String.fromCharCode(65 + oIdx)}) ${opt} ${oIdx === q.correct ? '<strong>(الإجابة الصحيحة)</strong>' : ''}</li>`;
-                });
-                docContent += `</ul><p><em>الشرح: ${q.explanation}</em></p><br/>`;
-            });
-
-            docContent += `</body></html>`;
-
-            const blob = new Blob(['\ufeff' + docContent], { type: 'application/msword' });
-            const url = URL.createObjectURL(blob);
-            const a = document.createElement('a');
-            a.href = url;
-            a.download = `MCQ_Quiz_${Date.now()}.doc`;
-            a.click();
-            showToast("تم تنزيل المستند بتنسيق Word بنجاح!", "success");
-        }
-
-        // Share Link Encoding & Handling
+        // Share Link Encoding & QR Code Generation
         function openShareModal() {
             const encoded = btoa(unescape(encodeURIComponent(JSON.stringify(sampleQuestions))));
             const shareUrl = `${window.location.origin}${window.location.pathname}#quiz=${encoded}`;
             
-            document.getElementById('share-url-field').value = shareUrl;
-            document.getElementById('share-modal').classList.remove('hidden');
+            const shareField = document.getElementById('share-url-field');
+            if (shareField) shareField.value = shareUrl;
+            
+            const qrUrl = `https://api.qrserver.com/v1/create-qr-code/?size=300x300&data=${encodeURIComponent(shareUrl)}`;
+            const qrImg = document.getElementById('share-qr-img');
+            if (qrImg) qrImg.src = qrUrl;
+
+            const shortenBtn = document.getElementById('btn-shorten-url');
+            if (shortenBtn) {
+                shortenBtn.disabled = false;
+                shortenBtn.innerHTML = `<i data-lucide="scissors" class="w-4 h-4"></i><span>تقصير الرابط</span>`;
+            }
+
+            const modal = document.getElementById('share-modal');
+            if (modal) modal.classList.remove('hidden');
+            lucide.createIcons();
+        }
+
+        async function downloadQrCode() {
+            const qrImg = document.getElementById('share-qr-img');
+            if (!qrImg || !qrImg.src) return;
+
+            try {
+                showToast("جاري تجهيز صورة الباركود للتحميل...", "info");
+                const response = await fetch(qrImg.src);
+                const blob = await response.blob();
+                const blobUrl = URL.createObjectURL(blob);
+                const a = document.createElement('a');
+                a.href = blobUrl;
+                a.download = `Quiz_QR_Code_${Date.now()}.png`;
+                document.body.appendChild(a);
+                a.click();
+                document.body.removeChild(a);
+                URL.revokeObjectURL(blobUrl);
+                showToast("تم تحميل رمز الباركود بنجاح!", "success");
+            } catch (err) {
+                window.open(qrImg.src, '_blank');
+                showToast("تم فتح صورة الباركود في نافذة جديدة للحفظ", "info");
+            }
+        }
+
+        async function shortenShareUrl() {
+            const field = document.getElementById('share-url-field');
+            const btn = document.getElementById('btn-shorten-url');
+            if (!field || !btn) return;
+
+            const longUrl = field.value;
+            if (!longUrl) return;
+
+            btn.disabled = true;
+            btn.innerHTML = `<i data-lucide="loader-2" class="w-4 h-4 animate-spin"></i><span>جاري التقصير...</span>`;
+            lucide.createIcons();
+
+            try {
+                const res = await fetch(`https://tinyurl.com/api-create.php?url=${encodeURIComponent(longUrl)}`);
+                if (res.ok) {
+                    const shortUrl = await res.text();
+                    field.value = shortUrl.trim();
+                    showToast("تم تقصير الرابط بنجاح!", "success");
+                } else {
+                    throw new Error("Shortening failed");
+                }
+            } catch (e) {
+                showToast("تعذر تقصير الرابط، يمكنك استخدام الباركود أو النسخ المباشر", "error");
+            } finally {
+                btn.disabled = false;
+                btn.innerHTML = `<i data-lucide="scissors" class="w-4 h-4"></i><span>تم التقصير</span>`;
+                lucide.createIcons();
+            }
         }
 
         function closeShareModal() {
-            document.getElementById('share-modal').classList.add('hidden');
+            const modal = document.getElementById('share-modal');
+            if (modal) modal.classList.add('hidden');
         }
 
         function copyShareUrl() {
             const input = document.getElementById('share-url-field');
+            if (!input) return;
             input.select();
             document.execCommand('copy');
-            document.getElementById('copy-btn-label').textContent = "تم النسخ!";
+            const label = document.getElementById('copy-btn-label');
+            if (label) label.textContent = "تم النسخ!";
             showToast("تم نسخ رابط الاختبار للحافظة!", "success");
-            setTimeout(() => document.getElementById('copy-btn-label').textContent = "نسخ", 2000);
+            setTimeout(() => { if (label) label.textContent = "نسخ"; }, 2000);
         }
 
         function launchStudentFlowFromTeacher() {
             closeShareModal();
             isStudentSharedSession = true;
             switchView('student-entry');
-        }
-
-        function startStudentQuizSession() {
-            const name = document.getElementById('student-name-input').value.trim();
-            if (!name) {
-                showToast("الرجاء إدخال اسمك الثلاثي للبدء.", "error");
-                return;
-            }
-            currentStudentName = name;
-            isStudentSharedSession = true;
-            startInteractiveQuiz();
         }
 
         function checkUrlForSharedQuiz() {
@@ -1444,8 +1850,15 @@
             }
         }
 
-        function openAboutModal() { document.getElementById('about-modal').classList.remove('hidden'); }
-        function closeAboutModal() { document.getElementById('about-modal').classList.add('hidden'); }
+        function openAboutModal() {
+            const modal = document.getElementById('about-modal');
+            if (modal) modal.classList.remove('hidden');
+        }
+
+        function closeAboutModal() {
+            const modal = document.getElementById('about-modal');
+            if (modal) modal.classList.add('hidden');
+        }
     </script>
 </body>
 </html>
