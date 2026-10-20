@@ -1,0 +1,774 @@
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1">
+<title>دردشة بالأرقام</title>
+<script src="https://unpkg.com/peerjs@1.5.2/dist/peerjs.min.js"></script>
+<style>
+  * { box-sizing: border-box; margin: 0; padding: 0; font-family: 'Segoe UI', Tahoma, sans-serif; }
+
+  body {
+    background: #0b1120;
+    color: #e2e8f0;
+    height: 100dvh;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    padding: 10px;
+    overflow: hidden;
+  }
+
+  .app {
+    width: 100%;
+    max-width: 460px;
+    height: 100%;
+    max-height: 800px;
+    background: #111c31;
+    border-radius: 22px;
+    display: flex;
+    flex-direction: column;
+    overflow: hidden;
+    box-shadow: 0 25px 70px rgba(0,0,0,.65);
+    border: 1px solid #1e293b;
+    position: relative;
+  }
+
+  /* ---------- الهيدر ---------- */
+  header {
+    padding: 14px 16px;
+    background: linear-gradient(135deg, #6366f1, #8b5cf6);
+  }
+  .title { font-size: 16px; font-weight: 700; margin-bottom: 10px; }
+
+  .myid-box {
+    background: rgba(0,0,0,.28);
+    border-radius: 14px;
+    padding: 9px 14px;
+    display: flex;
+    align-items: center;
+    gap: 10px;
+  }
+  .myid-box .label { font-size: 11px; opacity: .85; margin-bottom: 2px; }
+  .myid-box .num {
+    font-size: 21px;
+    font-weight: 800;
+    letter-spacing: 3px;
+    font-variant-numeric: tabular-nums;
+  }
+  .myid-box > div { flex: 1; }
+  .copy {
+    background: rgba(255,255,255,.22);
+    border: none;
+    color: #fff;
+    padding: 7px 14px;
+    border-radius: 10px;
+    font-size: 12px;
+    cursor: pointer;
+    transition: .2s;
+    align-self: center;
+  }
+  .copy:hover { background: rgba(255,255,255,.35); }
+
+  /* ---------- شريط الحالة ---------- */
+  .status {
+    font-size: 12.5px;
+    padding: 8px 16px;
+    text-align: center;
+    transition: .3s;
+  }
+  .status.wait { background: #1e293b; color: #94a3b8; }
+  .status.ok   { background: #064e3b; color: #6ee7b7; }
+  .status.bad  { background: #4c0519; color: #fda4af; cursor: pointer; }
+
+  /* ---------- الاتصال ---------- */
+  .connect {
+    display: flex;
+    gap: 8px;
+    padding: 12px 16px;
+  }
+  .connect input {
+    flex: 1;
+    background: #0b1120;
+    border: 1px solid #29384f;
+    color: #e2e8f0;
+    padding: 12px 14px;
+    border-radius: 12px;
+    font-size: 16px;
+    letter-spacing: 2px;
+    outline: none;
+    direction: ltr;
+    text-align: center;
+  }
+  .connect input:focus { border-color: #6366f1; }
+  .connect button {
+    background: linear-gradient(135deg,#6366f1,#8b5cf6);
+    border: none;
+    color: #fff;
+    padding: 0 22px;
+    border-radius: 12px;
+    font-size: 14px;
+    font-weight: 700;
+    cursor: pointer;
+  }
+  .connect button:disabled { opacity: .45; cursor: not-allowed; }
+
+  .connected-bar {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 10px 16px;
+    background: #064e3b;
+    color: #6ee7b7;
+    font-size: 13px;
+  }
+  .connected-bar button {
+    background: rgba(255,255,255,.15);
+    border: none;
+    color: #fff;
+    padding: 6px 14px;
+    border-radius: 9px;
+    font-size: 12px;
+    cursor: pointer;
+  }
+
+  /* ---------- الرسائل ---------- */
+  .messages {
+    flex: 1;
+    overflow-y: auto;
+    padding: 16px;
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+    background:
+      radial-gradient(circle at 20% 10%, rgba(99,102,241,.07), transparent 45%),
+      radial-gradient(circle at 80% 80%, rgba(139,92,246,.07), transparent 45%);
+  }
+  .messages::-webkit-scrollbar { width: 6px; }
+  .messages::-webkit-scrollbar-thumb { background: #29384f; border-radius: 3px; }
+
+  .msg { display: flex; }
+  .msg.me   { justify-content: flex-end; }
+  .msg.them { justify-content: flex-start; }
+
+  .bubble {
+    max-width: 78%;
+    padding: 9px 13px 20px;
+    border-radius: 16px;
+    font-size: 14.5px;
+    line-height: 1.5;
+    position: relative;
+    word-wrap: break-word;
+    animation: pop .18s ease;
+  }
+  @keyframes pop { from { transform: scale(.92); opacity: 0 } to { transform: scale(1); opacity: 1 } }
+
+  .msg.me .bubble {
+    background: linear-gradient(135deg,#6366f1,#8b5cf6);
+    color: #fff;
+    border-bottom-left-radius: 5px;
+  }
+  .msg.them .bubble {
+    background: #1e293b;
+    color: #e2e8f0;
+    border-bottom-right-radius: 5px;
+  }
+
+  .time {
+    position: absolute;
+    bottom: 4px;
+    left: 10px;
+    font-size: 10px;
+    opacity: .65;
+  }
+
+  .sys-msg {
+    text-align: center;
+    font-size: 12px;
+    color: #64748b;
+    padding: 4px 0;
+  }
+
+  /* ---------- وسائط ---------- */
+  .media-bubble {
+    padding: 6px 6px 22px !important;
+    max-width: 82% !important;
+  }
+  .media-content {
+    max-width: 100%;
+    max-height: 300px;
+    border-radius: 10px;
+    display: block;
+    user-select: none;
+    -webkit-user-drag: none;
+    -webkit-touch-callout: none;
+    background: #000;
+  }
+  img.media-content {
+    pointer-events: none;  /* يمنع السحب / الحفظ بالزر الأيمن للصور */
+  }
+  video.media-content {
+    outline: none;
+  }
+
+  .self-destruct-badge {
+    position: absolute;
+    top: 10px;
+    right: 10px;
+    background: linear-gradient(135deg, #ef4444, #f97316);
+    color: #fff;
+    padding: 3px 9px;
+    border-radius: 20px;
+    font-size: 11px;
+    font-weight: 700;
+    box-shadow: 0 0 12px rgba(249,115,22,.6);
+    animation: pulse 1s infinite;
+  }
+  @keyframes pulse {
+    0%, 100% { opacity: 1; transform: scale(1); }
+    50% { opacity: .8; transform: scale(1.06); }
+  }
+
+  .media-timer {
+    position: absolute;
+    bottom: 4px;
+    left: 10px;
+    font-size: 11px;
+    color: #fca5a5;
+    font-weight: 700;
+  }
+
+  /* ---------- صندوق الكتابة ---------- */
+  .composer {
+    display: flex;
+    gap: 6px;
+    padding: 12px;
+    background: #0d1626;
+    border-top: 1px solid #1e293b;
+  }
+  .composer input[type=text] {
+    flex: 1;
+    min-width: 0;
+    background: #111c31;
+    border: 1px solid #29384f;
+    color: #e2e8f0;
+    padding: 11px 16px;
+    border-radius: 24px;
+    font-size: 14.5px;
+    outline: none;
+  }
+  .composer input[type=text]:focus { border-color: #6366f1; }
+  .composer input[type=text]:disabled { opacity: .5; }
+
+  .icon-btn, .send-btn {
+    width: 42px;
+    height: 42px;
+    border-radius: 50%;
+    border: 1px solid #29384f;
+    background: #111c31;
+    color: #e2e8f0;
+    font-size: 17px;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    flex-shrink: 0;
+    transition: .2s;
+  }
+  .icon-btn:hover { background: #1e293b; }
+  .icon-btn:disabled, .send-btn:disabled { opacity: .35; cursor: not-allowed; }
+
+  .send-btn {
+    border: none;
+    background: linear-gradient(135deg,#6366f1,#8b5cf6);
+    color: #fff;
+    font-size: 15px;
+  }
+
+  .fire-btn.active {
+    background: linear-gradient(135deg, #ef4444, #f97316);
+    border-color: #f97316;
+    box-shadow: 0 0 18px rgba(249,115,22,.7);
+    animation: fireGlow 1.2s infinite;
+  }
+  @keyframes fireGlow {
+    0%, 100% { box-shadow: 0 0 18px rgba(249,115,22,.7); }
+    50% { box-shadow: 0 0 26px rgba(239,68,68,.9); }
+  }
+
+  /* ---------- حماية الخصوصية ---------- */
+  .privacy-overlay {
+    position: fixed;
+    inset: 0;
+    background: rgba(10,15,30,.96);
+    backdrop-filter: blur(18px);
+    -webkit-backdrop-filter: blur(18px);
+    display: none;
+    align-items: center;
+    justify-content: center;
+    flex-direction: column;
+    gap: 14px;
+    color: #fda4af;
+    font-size: 17px;
+    z-index: 9999;
+    text-align: center;
+    padding: 24px;
+  }
+  .privacy-overlay.show { display: flex; }
+  .privacy-overlay .lock { font-size: 52px; }
+  .privacy-overlay .hint { font-size: 13px; color: #64748b; }
+
+  .hidden { display: none !important; }
+</style>
+</head>
+<body>
+
+<div class="app">
+
+  <header>
+    <div class="title">💬 دردشة بالأرقام</div>
+    <div class="myid-box">
+      <div>
+        <div class="label">رقمك الثابت 💾</div>
+        <div class="num" id="myNumber">•••••••</div>
+      </div>
+      <button class="copy" id="copyBtn">نسخ</button>
+    </div>
+  </header>
+
+  <div class="status wait" id="statusBar">جارِ الاتصال بالسيرفر...</div>
+
+  <div class="connect" id="connectPanel">
+    <input id="friendInput" type="tel" inputmode="numeric" maxlength="7" placeholder="أدخل رقم صديقك">
+    <button id="connectBtn">اتصال</button>
+  </div>
+
+  <div class="connected-bar hidden" id="connectedBar">
+    <span>🔗 متصل</span>
+    <button id="disconnectBtn">قطع الاتصال</button>
+  </div>
+
+  <div class="messages" id="messages">
+    <div class="sys-msg">شارك رقمك مع صديقك ليتواصل معك 🔒</div>
+  </div>
+
+  <!-- إدخال ملف مخفي -->
+  <input type="file" id="fileInput" accept="image/*,video/*" hidden>
+
+  <div class="composer">
+    <button id="attachBtn" class="icon-btn" title="إرفاق صورة أو مقطع" disabled>📎</button>
+    <input id="msgInput" type="text" placeholder="اكتب رسالة..." disabled>
+    <button id="selfDestructBtn" class="icon-btn fire-btn" title="وضع التدمير الذاتي" disabled>🔥</button>
+    <button id="sendBtn" class="send-btn" disabled>➤</button>
+  </div>
+
+</div>
+
+<!-- طبقة الحماية عند مغادرة النافذة -->
+<div class="privacy-overlay" id="privacyOverlay">
+  <div class="lock">🔒</div>
+  <div>المحتوى محمي</div>
+  <div class="hint">عد إلى النافذة لمتابعة العرض</div>
+</div>
+
+<script>
+/* ================= العناصر ================= */
+const myNumberEl   = document.getElementById('myNumber');
+const statusBar    = document.getElementById('statusBar');
+const friendInput  = document.getElementById('friendInput');
+const connectBtn   = document.getElementById('connectBtn');
+const connectPanel = document.getElementById('connectPanel');
+const connectedBar = document.getElementById('connectedBar');
+const disconnectBtn= document.getElementById('disconnectBtn');
+const messagesEl   = document.getElementById('messages');
+const msgInput     = document.getElementById('msgInput');
+const sendBtn      = document.getElementById('sendBtn');
+const copyBtn      = document.getElementById('copyBtn');
+const attachBtn    = document.getElementById('attachBtn');
+const selfDestructBtn = document.getElementById('selfDestructBtn');
+const fileInput    = document.getElementById('fileInput');
+const privacyOverlay = document.getElementById('privacyOverlay');
+
+/* ================= المتغيرات ================= */
+let peer = null;
+let conn = null;
+let myNumber = null;
+let selfDestructMode = false;
+let destructDuration = 10; // ثانية
+
+const MAX_FILE_SIZE = 15 * 1024 * 1024; // 15 ميجابايت
+
+/* ================= أدوات مساعدة ================= */
+function setStatus(text, type, onclick) {
+  statusBar.textContent = text;
+  statusBar.className = 'status ' + type;
+  statusBar.onclick = onclick || null;
+}
+
+/* رقم ثابت محفوظ في ذاكرة المتصفح */
+function getOrCreateNumber() {
+  try {
+    let n = localStorage.getItem('chatNumber');
+    if (!n || !/^\d{7}$/.test(n)) {
+      n = String(Math.floor(1000000 + Math.random() * 9000000));
+      localStorage.setItem('chatNumber', n);
+    }
+    return n;
+  } catch (e) {
+    // localStorage غير متاح (وضع خاص)
+    return String(Math.floor(1000000 + Math.random() * 9000000));
+  }
+}
+
+function addMsg(text, who) {
+  const row = document.createElement('div');
+  row.className = 'msg ' + who;
+
+  const bubble = document.createElement('div');
+  bubble.className = 'bubble';
+  bubble.textContent = text;
+
+  const time = document.createElement('div');
+  time.className = 'time';
+  time.textContent = new Date().toLocaleTimeString('ar-EG', { hour: '2-digit', minute: '2-digit' });
+  bubble.appendChild(time);
+
+  row.appendChild(bubble);
+  messagesEl.appendChild(row);
+  messagesEl.scrollTop = messagesEl.scrollHeight;
+}
+
+function addSystem(text) {
+  const d = document.createElement('div');
+  d.className = 'sys-msg';
+  d.textContent = text;
+  messagesEl.appendChild(d);
+  messagesEl.scrollTop = messagesEl.scrollHeight;
+}
+
+/* ================= إنشاء الاتصال بالسيرفر ================= */
+function startPeer() {
+  if (peer) { try { peer.destroy(); } catch(e){} }
+
+  myNumber = getOrCreateNumber();
+  myNumberEl.textContent = myNumber;
+  const peerId = 'chat-' + myNumber;
+
+  setStatus('جارِ الاتصال بالسيرفر...', 'wait');
+  peer = new Peer(peerId, { debug: 1 });
+
+  peer.on('open', () => {
+    setStatus('جاهز ✓ شارك رقمك مع صديقك', 'ok');
+  });
+
+  /* شخص يتصل بنا */
+  peer.on('connection', (c) => {
+    if (conn && conn.open) { c.close(); return; }
+    conn = c;
+    bindConnection();
+  });
+
+  peer.on('error', (err) => {
+    if (err.type === 'unavailable-id') {
+      setStatus('⚠️ رقمك مستخدم في نافذة أخرى — اضغط لتوليد رقم جديد', 'bad', () => {
+        if (confirm('سيتم توليد رقم جديد. هل تريد المتابعة؟')) {
+          try { localStorage.removeItem('chatNumber'); } catch(e){}
+          location.reload();
+        }
+      });
+    } else if (err.type === 'peer-unavailable') {
+      setStatus('❌ هذا الرقم غير موجود أو غير متصل حالياً', 'bad');
+      connectBtn.disabled = false;
+    } else if (err.type === 'network' || err.type === 'server-error') {
+      setStatus('⚠️ مشكلة في الاتصال بالسيرفر', 'bad');
+    } else {
+      console.warn('Peer error:', err.type);
+    }
+  });
+
+  peer.on('disconnected', () => {
+    setStatus('انقطع الاتصال بالسيرفر... إعادة المحاولة', 'bad');
+    try { peer.reconnect(); } catch(e){}
+  });
+}
+
+/* ================= ربط أحداث الاتصال ================= */
+function bindConnection() {
+  const c = conn;
+
+  c.on('open', () => {
+    setStatus('متصل ✓', 'ok');
+    connectPanel.classList.add('hidden');
+    connectedBar.classList.remove('hidden');
+    msgInput.disabled = false;
+    sendBtn.disabled = false;
+    attachBtn.disabled = false;
+    selfDestructBtn.disabled = false;
+    msgInput.focus();
+    addSystem('تم الاتصال 🔗');
+  });
+
+  c.on('data', (data) => {
+    if (!data) return;
+    if (data.type === 'msg') {
+      addMsg(data.text, 'them');
+    } else if (data.type === 'media') {
+      addMediaMessage(data.data, data.kind, 'them', data.selfDestruct || 0);
+    }
+  });
+
+  c.on('close', () => resetToDisconnected('انقطع الاتصال بالطرف الآخر'));
+  c.on('error', () => resetToDisconnected('حدث خطأ في الاتصال'));
+}
+
+function resetToDisconnected(reason) {
+  conn = null;
+  setStatus(reason, 'bad');
+  connectPanel.classList.remove('hidden');
+  connectedBar.classList.add('hidden');
+  msgInput.disabled = true;
+  sendBtn.disabled = true;
+  attachBtn.disabled = true;
+  selfDestructBtn.disabled = true;
+  connectBtn.disabled = false;
+  addSystem(reason);
+}
+
+/* ================= عرض رسالة وسائط ================= */
+function addMediaMessage(src, kind, who, selfDestruct) {
+  const row = document.createElement('div');
+  row.className = 'msg ' + who;
+
+  const bubble = document.createElement('div');
+  bubble.className = 'bubble media-bubble';
+
+  let el;
+  if (kind === 'image') {
+    el = document.createElement('img');
+    el.src = src;
+    el.draggable = false;
+    el.oncontextmenu = () => false;
+  } else {
+    el = document.createElement('video');
+    el.src = src;
+    el.controls = true;
+    el.oncontextmenu = () => false;
+    el.setAttribute('controlsList', 'nodownload noremoteplayback noplaybackrate');
+    el.setAttribute('disablePictureInPicture', '');
+    el.setAttribute('playsinline', '');
+    if (selfDestruct) {
+      el.autoplay = true;
+      el.muted = true; // يسمح بالتشغيل التلقائي في المتصفحات
+    }
+  }
+  el.className = 'media-content';
+
+  bubble.appendChild(el);
+
+  if (selfDestruct > 0) {
+    bubble.classList.add('self-destruct');
+    const badge = document.createElement('div');
+    badge.className = 'self-destruct-badge';
+    badge.textContent = '🔥 تدمير ذاتي';
+    bubble.appendChild(badge);
+
+    const timer = document.createElement('div');
+    timer.className = 'media-timer';
+    timer.textContent = '⏳ ' + selfDestruct + ' ثانية';
+    bubble.appendChild(timer);
+
+    let remaining = selfDestruct;
+    const interval = setInterval(() => {
+      if (!row.isConnected) { clearInterval(interval); return; }
+      remaining--;
+      if (remaining <= 0) {
+        clearInterval(interval);
+        try { if (el.tagName === 'VIDEO') el.pause(); } catch(e){}
+        el.removeAttribute('src');
+        el.load && el.load();
+        row.remove();
+      } else {
+        timer.textContent = '⏳ ' + remaining + ' ثانية';
+      }
+    }, 1000);
+  }
+
+  row.appendChild(bubble);
+  messagesEl.appendChild(row);
+  messagesEl.scrollTop = messagesEl.scrollHeight;
+}
+
+/* ================= إرسال وسائط ================= */
+function sendMedia(dataURL, kind) {
+  if (!conn || !conn.open) {
+    addSystem('⚠️ لا يوجد اتصال');
+    return;
+  }
+  const sd = selfDestructMode ? destructDuration : 0;
+  try {
+    conn.send({ type: 'media', kind, data: dataURL, selfDestruct: sd });
+    addMediaMessage(dataURL, kind, 'me', sd);
+  } catch (e) {
+    addSystem('⚠️ فشل إرسال الملف — ربما الحجم كبير جداً');
+  }
+}
+
+/* ================= أحداث إرفاق الملفات ================= */
+attachBtn.addEventListener('click', () => fileInput.click());
+
+fileInput.addEventListener('change', (e) => {
+  const file = e.target.files[0];
+  fileInput.value = '';
+  if (!file) return;
+
+  if (!conn || !conn.open) {
+    addSystem('⚠️ لا يوجد اتصال');
+    return;
+  }
+  if (!file.type.startsWith('image/') && !file.type.startsWith('video/')) {
+    addSystem('⚠️ يُسمح فقط بالصور والمقاطع');
+    return;
+  }
+  if (file.size > MAX_FILE_SIZE) {
+    addSystem('⚠️ حجم الملف كبير جداً (الحد 15 ميجابايت)');
+    return;
+  }
+
+  const kind = file.type.startsWith('image') ? 'image' : 'video';
+  addSystem('📤 جارِ تجهيز الملف...');
+
+  const reader = new FileReader();
+  reader.onload = () => sendMedia(reader.result, kind);
+  reader.onerror = () => addSystem('⚠️ فشل قراءة الملف');
+  reader.readAsDataURL(file);
+});
+
+/* ================= وضع التدمير الذاتي ================= */
+selfDestructBtn.addEventListener('click', () => {
+  selfDestructMode = !selfDestructMode;
+  selfDestructBtn.classList.toggle('active', selfDestructMode);
+  msgInput.placeholder = selfDestructMode
+    ? '🔥 التدمير الذاتي مفعل (10 ثوانٍ)...'
+    : 'اكتب رسالة...';
+});
+
+/* ================= الاتصال بصديق ================= */
+function connectToFriend() {
+  const num = friendInput.value.replace(/\D/g, '');
+  if (num.length !== 7) {
+    setStatus('أدخل رقماً صحيحاً (7 أرقام)', 'bad');
+    return;
+  }
+  if (num === myNumber) {
+    setStatus('لا يمكنك الاتصال برقمك نفسه', 'bad');
+    return;
+  }
+  if (!peer || !peer.open) {
+    setStatus('لم يتم الاتصال بالسيرفر بعد', 'bad');
+    return;
+  }
+
+  if (conn) { try { conn.close(); } catch(e){} conn = null; }
+
+  connectBtn.disabled = true;
+  setStatus('جارِ الاتصال بالرقم ' + num + ' ...', 'wait');
+
+  conn = peer.connect('chat-' + num, { reliable: true });
+  bindConnection();
+
+  const timer = setTimeout(() => {
+    if (!conn || !conn.open) {
+      if (conn) { try { conn.close(); } catch(e){} conn = null; }
+      setStatus('❌ تعذر الاتصال — تأكد من الرقم وأن صديقك متصل', 'bad');
+      connectBtn.disabled = false;
+    }
+  }, 12000);
+
+  conn.on('open', () => clearTimeout(timer));
+}
+
+/* ================= إرسال رسالة نصية ================= */
+function sendMessage() {
+  const text = msgInput.value.trim();
+  if (!text) return;
+  if (!conn || !conn.open) { setStatus('لا يوجد اتصال', 'bad'); return; }
+  conn.send({ type: 'msg', text });
+  addMsg(text, 'me');
+  msgInput.value = '';
+  msgInput.focus();
+}
+
+/* ================= الأحداث ================= */
+connectBtn.addEventListener('click', connectToFriend);
+
+friendInput.addEventListener('input', (e) => {
+  e.target.value = e.target.value.replace(/\D/g, '').slice(0, 7);
+});
+friendInput.addEventListener('keydown', (e) => {
+  if (e.key === 'Enter') connectToFriend();
+});
+
+sendBtn.addEventListener('click', sendMessage);
+msgInput.addEventListener('keydown', (e) => {
+  if (e.key === 'Enter') sendMessage();
+});
+
+disconnectBtn.addEventListener('click', () => {
+  if (conn) { try { conn.close(); } catch(e){} }
+  resetToDisconnected('قمت بقطع الاتصال');
+});
+
+copyBtn.addEventListener('click', async () => {
+  if (!myNumber) return;
+  try {
+    await navigator.clipboard.writeText(myNumber);
+    copyBtn.textContent = 'تم النسخ ✓';
+  } catch (e) {
+    copyBtn.textContent = myNumber;
+  }
+  setTimeout(() => copyBtn.textContent = 'نسخ', 1500);
+});
+
+/* ================= حماية المحتوى من اللقطات ================= */
+
+// تعتيم عند مغادرة النافذة أو التبويب
+function showPrivacy() { privacyOverlay.classList.add('show'); }
+function hidePrivacy() { privacyOverlay.classList.remove('show'); }
+
+window.addEventListener('blur', showPrivacy);
+window.addEventListener('focus', hidePrivacy);
+document.addEventListener('visibilitychange', () => {
+  if (document.hidden) showPrivacy(); else hidePrivacy();
+});
+
+// تعطيل الزر الأيمن على الوسائط (مباشرة بعد تحميل DOM)
+document.addEventListener('contextmenu', (e) => {
+  if (e.target.closest('.media-bubble')) e.preventDefault();
+});
+
+// تعطيل اختصارات الحفظ/الطباعة/اللقطة
+document.addEventListener('keydown', (e) => {
+  const k = e.key.toLowerCase();
+  if ((e.ctrlKey || e.metaKey) && (k === 's' || k === 'p' || k === 'u')) {
+    e.preventDefault();
+  }
+  if ((e.ctrlKey || e.metaKey) && e.shiftKey && (k === 's' || k === 'i' || k === 'j')) {
+    e.preventDefault();
+  }
+  if (e.key === 'PrintScreen') {
+    e.preventDefault();
+    try { navigator.clipboard.writeText('').catch(()=>{}); } catch(err){}
+  }
+});
+
+// منع سحب الصور لسطح المكتب
+document.addEventListener('dragstart', (e) => {
+  if (e.target.tagName === 'IMG') e.preventDefault();
+});
+
+/* ================= التشغيل ================= */
+startPeer();
+</script>
+
+</body>
+</html>
