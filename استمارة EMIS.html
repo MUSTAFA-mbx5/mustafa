@@ -1,0 +1,539 @@
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>استمارة الموظفين والمعلمين - نظام EMIS</title>
+    <!-- Tailwind CSS CDN -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <!-- html2canvas for Image Saving -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
+    <!-- Google Fonts Arabic -->
+    <link href="https://fonts.googleapis.com/css2?family=Amiri:wght@400;700&family=Cairo:wght@400;600;700&display=swap" rel="stylesheet">
+    <style>
+        body {
+            font-family: 'Cairo', 'Amiri', sans-serif;
+            background-color: #f3f4f6;
+            color: #000;
+        }
+
+        /* Printable Sheet A4 setup */
+        .page-container {
+            width: 210mm;
+            min-height: 297mm;
+            padding: 12mm 15mm;
+            margin: 0 auto;
+            background: white;
+            box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06);
+            border: 2px solid #000;
+            box-sizing: border-box;
+            position: relative;
+        }
+
+        /* Border inside image frame style */
+        .double-border {
+            border: 4px double #000;
+            padding: 10px;
+        }
+
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            margin-bottom: 8px;
+            table-layout: fixed;
+        }
+
+        th, td {
+            border: 1px solid #000;
+            text-align: center;
+            padding: 2px 4px;
+            font-size: 11px;
+            font-weight: 600;
+        }
+
+        th {
+            background-color: #f8fafc;
+            color: #000;
+            font-size: 11px;
+        }
+
+        input[type="text"], input[type="number"], select, input[type="date"] {
+            width: 100%;
+            border: none;
+            outline: none;
+            background: transparent;
+            text-align: center;
+            font-family: inherit;
+            font-size: 12px;
+            font-weight: 600;
+            padding: 2px 0;
+        }
+
+        input[type="text"]:focus, select:focus {
+            background-color: #eff6ff;
+        }
+
+        /* Print styles */
+        @media print {
+            body {
+                background: white;
+                padding: 0;
+                margin: 0;
+            }
+
+            .no-print {
+                display: none !important;
+            }
+
+            .page-container {
+                box-shadow: none;
+                border: 2px solid #000;
+                width: 100%;
+                height: 100%;
+                margin: 0;
+                padding: 10mm;
+            }
+
+            input, select {
+                border: none !important;
+                background: transparent !important;
+                -webkit-appearance: none;
+                -moz-appearance: none;
+                appearance: none;
+            }
+
+            /* Hide dropdown arrows in print */
+            select {
+                text-align-last: center;
+            }
+        }
+
+        .photo-box {
+            width: 100px;
+            height: 120px;
+            border: 1px solid #000;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            cursor: pointer;
+            overflow: hidden;
+            position: relative;
+        }
+
+        .photo-box img {
+            width: 100%;
+            height: 100%;
+            object-fit: cover;
+        }
+    </style>
+</head>
+<body class="p-4 md:p-8">
+
+    <!-- Action Bar (Top Controls) -->
+    <div class="max-w-[210mm] mx-auto mb-6 bg-white p-4 rounded-xl shadow-md flex flex-wrap gap-4 items-center justify-between no-print border border-gray-200">
+        <div>
+            <h1 class="text-xl font-bold text-gray-800">استمارة الموظفين والمعلمين (EMIS)</h1>
+            <p class="text-xs text-gray-500">قم بملء الحقول المطلوبة ثم يمكنك الطباعة أو الحفظ كصورة</p>
+        </div>
+        <div class="flex flex-wrap gap-2">
+            <button onclick="clearForm()" class="px-4 py-2 bg-gray-100 hover:bg-gray-200 text-gray-700 text-sm font-semibold rounded-lg transition flex items-center gap-1">
+                🔄 تفريغ الحقول
+            </button>
+            <button onclick="saveAsImage()" class="px-4 py-2 bg-emerald-600 hover:bg-emerald-700 text-white text-sm font-semibold rounded-lg shadow transition flex items-center gap-1">
+                🖼️ حفظ كـ صورة (PNG)
+            </button>
+            <button onclick="window.print()" class="px-4 py-2 bg-blue-600 hover:bg-blue-700 text-white text-sm font-semibold rounded-lg shadow transition flex items-center gap-1">
+                🖨️ طباعة الاستمارة
+            </button>
+        </div>
+    </div>
+
+    <!-- Main Form Sheet (A4 Printable Area) -->
+    <div id="form-sheet" class="page-container double-border bg-white flex flex-col justify-between">
+        <div>
+            <!-- Header Section -->
+            <div class="flex justify-between items-start mb-2">
+                <!-- Photo Box Left Top -->
+                <div class="photo-box" onclick="document.getElementById('photo-input').click()">
+                    <img id="photo-preview" src="" alt="" class="hidden">
+                    <div id="photo-placeholder" class="text-center p-2">
+                        <span class="block text-xs font-bold text-gray-600">صورة حديثة</span>
+                        <span class="text-[9px] text-gray-400 no-print block mt-1">(اضغط للرفع)</span>
+                    </div>
+                    <input type="file" id="photo-input" accept="image/*" class="hidden" onchange="loadPhoto(event)">
+                </div>
+
+                <!-- Title Header Center -->
+                <div class="text-center flex-1 mx-4">
+                    <h2 class="text-xl font-bold mb-1 tracking-wide">نظام EMIS</h2>
+                    <h3 class="text-lg font-bold mb-2">استمارة الموظفين والمعلمين</h3>
+                    <p class="text-xs font-semibold leading-relaxed border-t border-b border-black py-1">
+                        ملاحظة / يجب أن تملأ الحقول كاملة بصورة صحيحة وخاط واضح مع رفق كافة المستمسكات والأوامر الإدارية والوزارية
+                    </p>
+                </div>
+                
+                <!-- Spacer to balance header layout -->
+                <div class="w-[100px] hidden sm:block"></div>
+            </div>
+
+            <!-- Top Identity Numbers Section -->
+            <div class="space-y-1.5 my-3">
+                <div class="flex justify-end items-center gap-2">
+                    <span class="text-xs font-bold min-w-[110px] text-left">رقم الهوية الموحدة</span>
+                    <div class="w-64 border border-black px-1">
+                        <input type="text" placeholder="...">
+                    </div>
+                </div>
+                
+                <div class="flex justify-end items-center gap-2">
+                    <span class="text-xs font-bold min-w-[110px] text-left">رقم الجنسية</span>
+                    <div class="w-48 border border-black px-1">
+                        <input type="text" placeholder="...">
+                    </div>
+                    <span class="text-xs font-bold">رقم السجل</span>
+                    <div class="w-24 border border-black px-1">
+                        <input type="text" placeholder="...">
+                    </div>
+                    <span class="text-xs font-bold">رقم الصحيفة</span>
+                    <div class="w-24 border border-black px-1">
+                        <input type="text" placeholder="...">
+                    </div>
+                </div>
+
+                <div class="flex justify-end items-center gap-2">
+                    <span class="text-xs font-bold min-w-[110px] text-left">الرقم الوظيفي</span>
+                    <div class="w-64 border border-black px-1">
+                        <input type="text" placeholder="...">
+                    </div>
+                </div>
+            </div>
+
+            <!-- Full Name Section -->
+            <table class="w-full">
+                <thead>
+                    <tr>
+                        <th class="w-1/5">الاسم</th>
+                        <th class="w-1/5">اسم الأب</th>
+                        <th class="w-1/5">اسم والد الأب</th>
+                        <th class="w-1/5">اسم جد الأب</th>
+                        <th class="w-1/5">اللقب</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    <tr>
+                        <td><input type="text"></td>
+                        <td><input type="text"></td>
+                        <td><input type="text"></td>
+                        <td><input type="text"></td>
+                        <td><input type="text"></td>
+                    </tr>
+                </tbody>
+            </table>
+
+            <!-- Mother's Name Section -->
+            <div class="flex justify-end mb-2">
+                <table class="w-3/5">
+                    <thead>
+                        <tr>
+                            <th class="w-1/3">اسم الأم</th>
+                            <th class="w-1/3">اسم أب الأم</th>
+                            <th class="w-1/3">اسم جد الأم</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        <tr>
+                            <td><input type="text"></td>
+                            <td><input type="text"></td>
+                            <td><input type="text"></td>
+                        </tr>
+                    </tbody>
+                </table>
+            </div>
+
+            <!-- Personal Data Section -->
+            <table class="w-full">
+                <thead>
+                    <tr>
+                        <th colspan="3" class="w-3/12">تاريخ الولادة</th>
+                        <th rowspan="2" class="w-1/12">الجنس</th>
+                        <th rowspan="2" class="w-1/12">الجنسية</th>
+                        <th rowspan="2" class="w-1/12">دولة التولد</th>
+                        <th rowspan="2" class="w-1/12">مسقط الرأس</th>
+                        <th rowspan="2" class="w-1/12">لغة الأم</th>
+                        <th rowspan="2" class="w-1/12">الحالة الاجتماعية</th>
+                        <th rowspan="2" class="w-1/12">فصيلة الدم</th>
+                        <th rowspan="2" class="w-2/12">الديانة</th>
+                    </tr>
+                    <tr>
+                        <th class="w-1/12">اليوم</th>
+                        <th class="w-1/12">الشهر</th>
+                        <th class="w-1/12">السنة</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    <tr>
+                        <td><input type="number" min="1" max="31"></td>
+                        <td><input type="number" min="1" max="12"></td>
+                        <td><input type="number" min="1930" max="2030"></td>
+                        <td>
+                            <select>
+                                <option value=""></option>
+                                <option value="ذكر">ذكر</option>
+                                <option value="أنثى">أنثى</option>
+                            </select>
+                        </td>
+                        <td><input type="text" value="عراقي"></td>
+                        <td><input type="text" value="العراق"></td>
+                        <td><input type="text"></td>
+                        <td><input type="text" value="العربية"></td>
+                        <td>
+                            <select>
+                                <option value=""></option>
+                                <option value="أعزب">أعزب/عزباء</option>
+                                <option value="متزوج">متزوج/ـة</option>
+                                <option value="مطلق">مطلق/ـة</option>
+                                <option value="أرمل">أرمل/ـة</option>
+                            </select>
+                        </td>
+                        <td>
+                            <select>
+                                <option value=""></option>
+                                <option value="A+">A+</option>
+                                <option value="A-">A-</option>
+                                <option value="B+">B+</option>
+                                <option value="B-">B-</option>
+                                <option value="O+">O+</option>
+                                <option value="O-">O-</option>
+                                <option value="AB+">AB+</option>
+                                <option value="AB-">AB-</option>
+                            </select>
+                        </td>
+                        <td><input type="text" value="مسلم"></td>
+                    </tr>
+                </tbody>
+            </table>
+
+            <!-- Phone Number -->
+            <div class="flex justify-end items-center gap-2 my-2">
+                <span class="text-xs font-bold">رقم الهاتف</span>
+                <div class="w-48 border border-black px-1">
+                    <input type="text" placeholder="...">
+                </div>
+            </div>
+
+            <!-- Qualification & Career Info -->
+            <table class="w-full">
+                <thead>
+                    <tr>
+                        <th class="w-2/12">الجهة الادارية</th>
+                        <th class="w-2/12">نوع الكيان الفرعي</th>
+                        <th class="w-2/12">تاريخ بدء مزاولة المهنة</th>
+                        <th class="w-1/12">التحصيل الدراسي</th>
+                        <th class="w-1/12">سنة التخرج</th>
+                        <th class="w-2/12">اسم الكلية أو المعهد</th>
+                        <th class="w-1/12">تصنيف الكلية أو المعهد</th>
+                        <th class="w-1/12">الاختصاص</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    <tr>
+                        <td><input type="text"></td>
+                        <td><input type="text"></td>
+                        <td><input type="text" placeholder="YYYY/MM/DD"></td>
+                        <td><input type="text"></td>
+                        <td><input type="text"></td>
+                        <td><input type="text"></td>
+                        <td><input type="text"></td>
+                        <td><input type="text"></td>
+                    </tr>
+                </tbody>
+            </table>
+
+            <!-- Address Section Header -->
+            <div class="border border-black bg-gray-100 text-center py-0.5 font-bold text-xs mt-2">
+                عــــنــــوان الــــســــكــــن
+            </div>
+            
+            <!-- Address Grid Details -->
+            <table class="w-full">
+                <thead>
+                    <tr>
+                        <th>الحي</th>
+                        <th>الناحية</th>
+                        <th>قطاع</th>
+                        <th>محلة</th>
+                        <th>زقاق</th>
+                        <th>دار</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    <tr>
+                        <td><input type="text"></td>
+                        <td><input type="text"></td>
+                        <td><input type="text"></td>
+                        <td><input type="text"></td>
+                        <td><input type="text"></td>
+                        <td><input type="text"></td>
+                    </tr>
+                </tbody>
+            </table>
+
+            <table class="w-full">
+                <thead>
+                    <tr>
+                        <th class="w-1/4">رقم الشقة</th>
+                        <th class="w-1/4">رقم البناية</th>
+                        <th class="w-1/4">العنوان الأول</th>
+                        <th class="w-1/4">العنوان الثاني</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    <tr>
+                        <td><input type="text"></td>
+                        <td><input type="text"></td>
+                        <td><input type="text"></td>
+                        <td><input type="text"></td>
+                    </tr>
+                </tbody>
+            </table>
+
+            <table class="w-full">
+                <tbody>
+                    <tr>
+                        <td class="w-1/4 bg-gray-50 font-bold">اقرب نقطة دالة</td>
+                        <td class="w-3/4"><input type="text"></td>
+                    </tr>
+                    <tr>
+                        <td class="w-1/4 bg-gray-50 font-bold">البريد الالكتروني</td>
+                        <td class="w-3/4"><input type="text" dir="ltr" class="text-left"></td>
+                    </tr>
+                </tbody>
+            </table>
+
+            <!-- Appointment Data Header -->
+            <div class="border border-black bg-gray-100 text-center py-0.5 font-bold text-xs mt-2">
+                معلومات خــــاصـــة بالـتـعيـيـن
+            </div>
+            
+            <table class="w-full">
+                <thead>
+                    <tr>
+                        <th>رقم الأمر الوزاري</th>
+                        <th>تاريخ الأمر الوزاري</th>
+                        <th>رقم الأمر الاداري</th>
+                        <th>تاريخ الأمر الاداري</th>
+                        <th>رقم أمر المباشرة</th>
+                        <th>تاريخ المباشرة</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    <tr>
+                        <td><input type="text"></td>
+                        <td><input type="text"></td>
+                        <td><input type="text"></td>
+                        <td><input type="text"></td>
+                        <td><input type="text"></td>
+                        <td><input type="text"></td>
+                    </tr>
+                </tbody>
+            </table>
+
+            <!-- Job Title -->
+            <div class="flex justify-end items-center gap-2 my-3">
+                <span class="text-xs font-bold">العنوان الوظيفي</span>
+                <div class="w-64 border border-black px-1">
+                    <input type="text" placeholder="...">
+                </div>
+            </div>
+        </div>
+
+        <!-- Footer / Credits -->
+        <div class="mt-4 pt-2 text-center text-xs font-bold border-t border-gray-300">
+            اعداد وتصميم / المشرف التربوي محمد خضير القره غولي
+        </div>
+    </div>
+
+    <!-- Notification Container -->
+    <div id="toast" class="fixed bottom-5 left-5 bg-gray-800 text-white px-4 py-2 rounded-lg shadow-lg text-sm hidden transition-opacity opacity-0 no-print">
+        تم الحفظ بنجاح
+    </div>
+
+    <script>
+        // Photo upload handler
+        function loadPhoto(event) {
+            const image = document.getElementById('photo-preview');
+            const placeholder = document.getElementById('photo-placeholder');
+            const file = event.target.files[0];
+            
+            if (file) {
+                const reader = new FileReader();
+                reader.onload = function(e) {
+                    image.src = e.target.result;
+                    image.classList.remove('hidden');
+                    placeholder.classList.add('hidden');
+                }
+                reader.readAsDataURL(file);
+            }
+        }
+
+        // Clear all inputs
+        function clearForm() {
+            if (confirm("هل أنت تأكد من إخلاء جميع الخانات؟")) {
+                const inputs = document.querySelectorAll('input');
+                const selects = document.querySelectorAll('select');
+                
+                inputs.forEach(input => {
+                    if (input.type !== 'file') input.value = '';
+                });
+                
+                selects.forEach(select => {
+                    select.selectedIndex = 0;
+                });
+
+                // Clear photo
+                document.getElementById('photo-preview').src = '';
+                document.getElementById('photo-preview').classList.add('hidden');
+                document.getElementById('photo-placeholder').classList.remove('hidden');
+                
+                showToast("تم تفريغ الاستمارة بنجاح");
+            }
+        }
+
+        // Save Form as Image
+        function saveAsImage() {
+            showToast("جاري إعداد الصورة، يرجى الانتظار...");
+            const formContainer = document.getElementById('form-sheet');
+            
+            // Temporary styling tweak for best rendering
+            html2canvas(formContainer, {
+                scale: 2, // High resolution
+                useCORS: true,
+                backgroundColor: "#ffffff"
+            }).then(canvas => {
+                const link = document.createElement('a');
+                link.download = 'استمارة_الموظفين_EMIS.png';
+                link.href = canvas.toDataURL('image/png');
+                link.click();
+                showToast("تم حفظ الاستمارة كصورة بنجاح!");
+            }).catch(err => {
+                alert("حدث خطأ أثناء حفظ الصورة.");
+                console.error(err);
+            });
+        }
+
+        // Helper Toast Notification
+        function showToast(message) {
+            const toast = document.getElementById('toast');
+            toast.innerText = message;
+            toast.classList.remove('hidden');
+            setTimeout(() => toast.classList.add('opacity-100'), 10);
+            
+            setTimeout(() => {
+                toast.classList.remove('opacity-100');
+                setTimeout(() => toast.classList.add('hidden'), 300);
+            }, 3000);
+        }
+    </script>
+</body>
+</html>
