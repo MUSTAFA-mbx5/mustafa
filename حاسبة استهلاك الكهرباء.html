@@ -1,0 +1,980 @@
+
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<meta name="theme-color" content="#080f20">
+<title>حاسبة الكهرباء الذكية</title>
+
+<link href="https://fonts.googleapis.com/css2?family=Cairo:wght@400;500;600;700;800;900&display=swap" rel="stylesheet">
+
+<style>
+:root {
+    --cyan: #58eaff;
+    --blue: #249bff;
+    --gold: #ffdc79;
+    --bg: #080f20;
+    --white: #f5faff;
+}
+
+* {
+    box-sizing: border-box;
+    margin: 0;
+    padding: 0;
+    font-family: 'Cairo', sans-serif;
+}
+
+body {
+    min-height: 100vh;
+    color: var(--white);
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    overflow-x: hidden;
+    padding: 20px 0 30px;
+
+    background:
+        radial-gradient(ellipse at 15% 20%, rgba(0,210,255,.14), transparent 45%),
+        radial-gradient(ellipse at 85% 75%, rgba(30,100,255,.14), transparent 45%),
+        linear-gradient(145deg,#080f20,#111c32 55%,#080f20);
+
+    background-attachment: fixed;
+}
+
+/* خلفية النجوم والضوء */
+
+body::before {
+    content: "";
+    position: fixed;
+    inset: 0;
+    pointer-events: none;
+    opacity: .35;
+    background-image:
+        radial-gradient(2px 2px at 20% 30%,white,transparent),
+        radial-gradient(2px 2px at 70% 60%,white,transparent),
+        radial-gradient(1px 1px at 45% 80%,white,transparent);
+    background-size: 180px 180px;
+}
+
+/* ================= شاشة البداية ================= */
+
+#preloader {
+    position: fixed;
+    inset: 0;
+    z-index: 99999;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    overflow: hidden;
+    background:
+        radial-gradient(circle at center,rgba(255,207,87,.10),transparent 28%),
+        #080f20;
+    transition: opacity .9s ease, filter .9s ease;
+}
+
+#preloader::before {
+    content: "";
+    position: absolute;
+    width: 250px;
+    height: 250px;
+    border-radius: 50%;
+    background: rgba(255,199,69,.08);
+    filter: blur(70px);
+    transition: all 1s;
+}
+
+.bulb-container {
+    position: relative;
+    width: 240px;
+    height: 330px;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: flex-start;
+}
+
+/* المصباح */
+
+.bulb {
+    position: relative;
+    z-index: 3;
+    width: 120px;
+    height: 165px;
+    margin-top: 35px;
+    transform-origin: center bottom;
+    filter: drop-shadow(0 0 8px rgba(255,205,95,.12));
+    transition: filter .8s;
+}
+
+.bulb svg {
+    width: 100%;
+    height: 100%;
+    overflow: visible;
+}
+
+.bulb .glass-light {
+    opacity: .15;
+    transition: opacity .8s;
+}
+
+.bulb .filament {
+    opacity: .3;
+    transition: opacity .8s;
+}
+
+.bulb.bulb-on {
+    filter:
+        drop-shadow(0 0 18px rgba(255,211,105,.7))
+        drop-shadow(0 0 55px rgba(255,188,60,.4));
+}
+
+.bulb.bulb-on .glass-light,
+.bulb.bulb-bright .glass-light {
+    opacity: 1;
+}
+
+.bulb.bulb-on .filament,
+.bulb.bulb-bright .filament {
+    opacity: 1;
+}
+
+.bulb.bulb-bright {
+    filter:
+        drop-shadow(0 0 25px #ffdf8a)
+        drop-shadow(0 0 70px rgba(255,183,40,.8))
+        drop-shadow(0 0 120px rgba(255,183,40,.5));
+}
+
+/* القاعدة المعدنية */
+
+.bulb-base {
+    position: relative;
+    z-index: 2;
+    width: 49px;
+    height: 43px;
+    margin-top: -4px;
+    border-radius: 5px 5px 13px 13px;
+    background: linear-gradient(90deg,#555d6c,#e1e8ed,#777f8a,#e5e9ef,#505966);
+    box-shadow: 0 8px 20px #0008;
+}
+
+.bulb-base::before,
+.bulb-base::after {
+    content: "";
+    position: absolute;
+    left: 0;
+    width: 100%;
+    height: 4px;
+    background: #9ba4ad;
+    border-radius: 5px;
+}
+
+.bulb-base::before { top: 11px; }
+.bulb-base::after { top: 23px; }
+
+.bulb-tip {
+    width: 25px;
+    height: 9px;
+    border-radius: 0 0 8px 8px;
+    background: linear-gradient(90deg,#454d58,#d4dce2,#555d68);
+}
+
+/* السلك الكهربائي */
+
+.wire-area {
+    position: absolute;
+    top: 190px;
+    left: 50%;
+    transform: translateX(-50%);
+    width: 220px;
+    height: 125px;
+    overflow: visible;
+    z-index: 1;
+}
+
+.wire-area svg {
+    width: 100%;
+    height: 100%;
+    overflow: visible;
+}
+
+.wire-line {
+    fill: none;
+    stroke: #687b91;
+    stroke-width: 4;
+    stroke-linecap: round;
+}
+
+.wire-glow {
+    fill: none;
+    stroke: #39dfff;
+    stroke-width: 3;
+    stroke-linecap: round;
+    stroke-dasharray: 12 250;
+    filter: drop-shadow(0 0 5px #29dfff);
+    opacity: 0;
+}
+
+.electric-active .wire-glow {
+    opacity: 1;
+    animation: electricity 1.1s linear infinite;
+}
+
+@keyframes electricity {
+    to { stroke-dashoffset: -262; }
+}
+
+.lightning {
+    position: absolute;
+    left: 50%;
+    top: 220px;
+    font-size: 22px;
+    color: var(--cyan);
+    opacity: 0;
+    text-shadow: 0 0 15px #00eaff;
+    transform: translateX(-50%);
+}
+
+.electric-active .lightning {
+    animation: lightningMove 1.3s infinite;
+}
+
+@keyframes lightningMove {
+    0% { top: 220px; opacity: 0; }
+    20% { opacity: 1; }
+    80% { opacity: 1; }
+    100% { top: 300px; opacity: 0; }
+}
+
+/* انفجار المصباح */
+
+.explode {
+    animation: bulbExplosion .75s ease forwards;
+}
+
+@keyframes bulbExplosion {
+    0% { transform: scale(1); opacity: 1; }
+    35% { transform: scale(1.5); opacity: 1; filter: brightness(4); }
+    65% { transform: scale(2.8); opacity: .8; }
+    100% { transform: scale(3.8); opacity: 0; filter: blur(20px); }
+}
+
+.flash-effect {
+    animation: screenFlash .8s ease forwards;
+}
+
+@keyframes screenFlash {
+    0% { background-color: #080f20; }
+    25% { background-color: #fff9df; }
+    100% { background-color: #080f20; }
+}
+
+.loading-title {
+    position: absolute;
+    bottom: -10px;
+    font-size: 15px;
+    color: #c5d7e9;
+    white-space: nowrap;
+    letter-spacing: 1px;
+    animation: titleGlow 2s infinite alternate;
+}
+
+@keyframes titleGlow {
+    to { color: white; text-shadow: 0 0 15px var(--gold); }
+}
+
+.loading-dots {
+    position: absolute;
+    bottom: -38px;
+    display: flex;
+    gap: 7px;
+}
+
+.loading-dots span {
+    width: 6px;
+    height: 6px;
+    border-radius: 50%;
+    background: var(--gold);
+    animation: dots 1s infinite alternate;
+}
+
+.loading-dots span:nth-child(2) { animation-delay: .2s; }
+.loading-dots span:nth-child(3) { animation-delay: .4s; }
+
+@keyframes dots {
+    to { opacity: .2; transform: translateY(-5px); }
+}
+
+/* ================= التطبيق ================= */
+
+.app-container {
+    width: 100%;
+    max-width: 510px;
+    padding: 15px;
+    opacity: 0;
+    transform: translateY(25px) scale(.97);
+    filter: blur(12px);
+    transition: all 1s cubic-bezier(.2,.8,.2,1);
+    position: relative;
+    z-index: 2;
+}
+
+.app-container.show {
+    opacity: 1;
+    transform: translateY(0) scale(1);
+    filter: blur(0);
+}
+
+/* الزجاج */
+
+.card {
+    position: relative;
+    overflow: hidden;
+    padding: 24px 20px;
+    border-radius: 30px;
+
+    background: linear-gradient(
+        135deg,
+        rgba(255,255,255,.13),
+        rgba(255,255,255,.035)
+    );
+
+    backdrop-filter: blur(28px) saturate(180%);
+    -webkit-backdrop-filter: blur(28px) saturate(180%);
+
+    border: 1px solid rgba(255,255,255,.18);
+
+    box-shadow:
+        0 25px 65px rgba(0,0,0,.4),
+        inset 0 1px 1px rgba(255,255,255,.25),
+        inset 0 -1px 1px rgba(255,255,255,.05);
+}
+
+.card::before {
+    content: "";
+    position: absolute;
+    top: -100px;
+    right: -100px;
+    width: 230px;
+    height: 230px;
+    background: rgba(0,220,255,.09);
+    filter: blur(60px);
+    pointer-events: none;
+}
+
+/* الرأس */
+
+.header {
+    position: relative;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 13px;
+    margin-bottom: 23px;
+    padding-bottom: 19px;
+    border-bottom: 1px solid rgba(255,255,255,.13);
+}
+
+.logo-svg {
+    width: 49px;
+    height: 49px;
+    flex-shrink: 0;
+    filter: drop-shadow(0 0 10px var(--cyan));
+}
+
+.header h1 {
+    font-size: 19px;
+    font-weight: 900;
+    line-height: 1.7;
+    background: linear-gradient(90deg,#fff,var(--cyan),#d8f5ff);
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+}
+
+/* اختيار النظام */
+
+.mode-selector {
+    display: flex;
+    gap: 9px;
+    padding: 6px;
+    margin-bottom: 20px;
+    border-radius: 16px;
+    background: rgba(0,0,0,.24);
+    border: 1px solid rgba(255,255,255,.08);
+}
+
+.mode-btn {
+    flex: 1;
+    padding: 11px 5px;
+    border: 1px solid transparent;
+    border-radius: 12px;
+    background: transparent;
+    color: #aab9cb;
+    font-size: 15px;
+    font-weight: 800;
+    cursor: pointer;
+    transition: .3s;
+}
+
+.mode-btn.active {
+    background: linear-gradient(120deg,#52e7ff,#249bff);
+    color: #071725;
+    box-shadow: 0 5px 20px rgba(0,210,255,.25);
+}
+
+/* العداد */
+
+.meter-display {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 10px;
+    padding: 17px;
+    margin-bottom: 22px;
+    border-radius: 18px;
+    border: 1px solid rgba(0,255,160,.2);
+    background: linear-gradient(145deg,#020b0b,#071716);
+    box-shadow: inset 0 0 25px rgba(0,255,150,.05);
+}
+
+.meter-info {
+    display: flex;
+    flex-direction: column;
+    gap: 4px;
+}
+
+.meter-label {
+    color: #79a69a;
+    font-size: 11px;
+}
+
+.meter-screen {
+    color: #51ffa4;
+    font-family: 'Courier New',monospace;
+    font-size: 30px;
+    font-weight: bold;
+    letter-spacing: 2px;
+    direction: ltr;
+    text-shadow: 0 0 12px #00ff77;
+}
+
+.meter-dial {
+    width: 51px;
+    height: 51px;
+    flex-shrink: 0;
+    border-radius: 50%;
+    border: 4px dashed #648779;
+    background: radial-gradient(circle,#173a30 40%,#020b08);
+    box-shadow: 0 0 15px #00ff7720;
+}
+
+.meter-dial.spin {
+    animation: spin 1s linear infinite;
+}
+
+@keyframes spin {
+    to { transform: rotate(360deg); }
+}
+
+/* المدخلات */
+
+.input-group {
+    margin-bottom: 16px;
+}
+
+.input-group label {
+    display: block;
+    margin-bottom: 7px;
+    color: #d6e4f3;
+    font-size: 13px;
+    font-weight: 700;
+}
+
+.input-group input {
+    width: 100%;
+    padding: 13px 15px;
+    border-radius: 13px;
+    outline: none;
+    border: 1px solid rgba(255,255,255,.13);
+    background: rgba(4,13,29,.55);
+    color: #fff;
+    font-size: 17px;
+    font-weight: 700;
+    direction: ltr;
+    text-align: left;
+    transition: .3s;
+}
+
+.input-group input:focus {
+    border-color: var(--cyan);
+    background: rgba(0,180,220,.08);
+    box-shadow: 0 0 18px rgba(0,220,255,.12);
+}
+
+.input-group input::placeholder {
+    color: #64748b;
+}
+
+/* زر الحساب */
+
+.calc-btn {
+    width: 100%;
+    padding: 15px;
+    margin-top: 6px;
+    border: none;
+    border-radius: 15px;
+    cursor: pointer;
+    color: #041421;
+    font-size: 17px;
+    font-weight: 900;
+
+    background: linear-gradient(110deg,#69efff,#28a9ff);
+    box-shadow:
+        0 8px 25px rgba(0,180,255,.2),
+        inset 0 1px 1px rgba(255,255,255,.7);
+
+    transition: .25s;
+}
+
+.calc-btn:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 12px 30px rgba(0,180,255,.35);
+}
+
+.calc-btn:active {
+    transform: scale(.97);
+}
+
+/* النتيجة */
+
+.result-box {
+    display: none;
+    margin-top: 21px;
+    padding: 21px 15px;
+    border-radius: 18px;
+    text-align: center;
+
+    background: linear-gradient(145deg,rgba(0,210,255,.12),rgba(0,100,255,.08));
+    border: 1px solid rgba(0,220,255,.35);
+    box-shadow: inset 0 0 25px rgba(0,210,255,.04);
+
+    animation: resultShow .6s cubic-bezier(.2,.8,.2,1);
+}
+
+@keyframes resultShow {
+    from { opacity: 0; transform: translateY(15px) scale(.95); }
+    to { opacity: 1; transform: translateY(0) scale(1); }
+}
+
+.result-box p {
+    font-size: 14px;
+    color: #d5e5f5;
+}
+
+.result-box .amount {
+    margin-top: 9px;
+    color: var(--gold);
+    font-size: 35px;
+    font-weight: 900;
+    text-shadow: 0 0 18px rgba(255,211,90,.3);
+}
+
+.currency {
+    color: #b5c7d9;
+    font-size: 13px;
+}
+
+/* الحقوق */
+
+.footer {
+    margin-top: 20px;
+    text-align: center;
+    color: #8799b0;
+    font-size: 12px;
+}
+
+.footer a {
+    display: inline-block;
+    color: var(--cyan);
+    font-weight: 900;
+    text-decoration: none;
+    transition: .3s;
+}
+
+.footer a:hover {
+    color: white;
+    text-shadow: 0 0 15px var(--cyan);
+}
+
+/* الهاتف */
+
+@media(max-width:380px) {
+    .card { padding: 20px 15px; }
+    .header h1 { font-size: 16px; }
+    .meter-screen { font-size: 25px; }
+}
+
+@media(prefers-reduced-motion:reduce) {
+    *,*::before,*::after {
+        animation-duration: .01ms !important;
+        animation-iteration-count: 1 !important;
+        transition-duration: .01ms !important;
+    }
+}
+</style>
+</head>
+
+<body>
+
+<!-- شاشة البداية -->
+<div id="preloader">
+
+    <div class="bulb-container">
+
+        <!-- المصباح الزجاجي -->
+        <div class="bulb" id="bulb">
+
+            <svg viewBox="0 0 120 165" xmlns="http://www.w3.org/2000/svg">
+
+                <defs>
+                    <linearGradient id="glass" x1="0" x2="1" y1="0" y2="1">
+                        <stop offset="0" stop-color="#fff" stop-opacity=".65"/>
+                        <stop offset=".35" stop-color="#ffe9a5" stop-opacity=".17"/>
+                        <stop offset=".75" stop-color="#ffc94c" stop-opacity=".12"/>
+                        <stop offset="1" stop-color="#fff" stop-opacity=".4"/>
+                    </linearGradient>
+
+                    <linearGradient id="metal" x1="0" x2="1">
+                        <stop stop-color="#707d8c"/>
+                        <stop offset=".3" stop-color="#f1f5f9"/>
+                        <stop offset=".6" stop-color="#818c9a"/>
+                        <stop offset="1" stop-color="#e2e8f0"/>
+                    </linearGradient>
+
+                    <radialGradient id="innerGlow">
+                        <stop stop-color="#fffde4"/>
+                        <stop offset=".35" stop-color="#ffedaa"/>
+                        <stop offset="1" stop-color="#ffba35" stop-opacity="0"/>
+                    </radialGradient>
+                </defs>
+
+                <!-- جسم الزجاج -->
+                <path d="M60 5 C25 5 9 30 15 59 C18 79 34 88 39 108 L81 108 C86 88 102 79 105 59 C111 30 95 5 60 5Z"
+                    fill="url(#glass)"
+                    stroke="#fff"
+                    stroke-opacity=".65"
+                    stroke-width="1.7"/>
+
+                <!-- الضوء الداخلي -->
+                <ellipse class="glass-light" cx="60" cy="65" rx="39" ry="44" fill="url(#innerGlow)"/>
+
+                <!-- انعكاس الزجاج -->
+                <path d="M27 31 Q31 15 46 12" fill="none" stroke="white" stroke-width="4" stroke-linecap="round" opacity=".65"/>
+                <path d="M23 48 Q22 64 31 74" fill="none" stroke="white" stroke-width="2" stroke-linecap="round" opacity=".3"/>
+                <path d="M88 18 Q102 34 96 52" fill="none" stroke="white" stroke-width="2" stroke-linecap="round" opacity=".35"/>
+
+                <!-- الفتيلة -->
+                <g class="filament" fill="none" stroke="#fff3b0" stroke-width="2.5" stroke-linecap="round">
+                    <path d="M42 92 L48 67 L72 67 L78 92"/>
+                    <path d="M48 67 Q60 54 72 67"/>
+                    <path d="M49 67 L49 45"/>
+                    <path d="M71 67 L71 45"/>
+                </g>
+
+                <!-- نقاط الاتصال -->
+                <path d="M48 108 L48 95 M72 108 L72 95" stroke="#d6c28c" stroke-width="3"/>
+
+                <!-- العنق -->
+                <path d="M39 105 L81 105 L77 118 L43 118Z"
+                    fill="url(#metal)" stroke="#fff" stroke-opacity=".4"/>
+
+            </svg>
+        </div>
+
+        <!-- القاعدة -->
+        <div class="bulb-base"></div>
+        <div class="bulb-tip"></div>
+
+        <!-- السلك -->
+        <div class="wire-area">
+            <svg viewBox="0 0 220 125">
+                <path class="wire-line" d="M110 0 L110 30 Q110 48 85 48 L85 75 Q85 105 110 105 L150 105 Q170 105 170 125"/>
+                <path class="wire-glow" d="M110 0 L110 30 Q110 48 85 48 L85 75 Q85 105 110 105 L150 105 Q170 105 170 125"/>
+            </svg>
+        </div>
+
+        <div class="lightning">ϟ</div>
+
+        <div class="loading-title">جاري تشغيل حاسبة الكهرباء الذكية</div>
+
+        <div class="loading-dots">
+            <span></span><span></span><span></span>
+        </div>
+
+    </div>
+</div>
+
+
+<!-- التطبيق -->
+<div class="app-container" id="app">
+
+    <div class="card">
+
+        <!-- الرأس -->
+        <div class="header">
+
+            <svg class="logo-svg" viewBox="0 0 24 24" fill="none">
+                <path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2Z"
+                    stroke="#58eaff" stroke-width="1.5"/>
+
+                <path d="M13 3L7 13H12L10.5 21L18 10H13L15 3Z"
+                    fill="#ffdc79" stroke="#ffdc79" stroke-linejoin="round"/>
+            </svg>
+
+            <h1>حاسبة استهلاك الكهرباء</h1>
+        </div>
+
+        <!-- اختيار النظام -->
+        <div class="mode-selector">
+            <button class="mode-btn active" id="btn-home" onclick="setMode('home')">🏠 منزلي</button>
+            <button class="mode-btn" id="btn-commercial" onclick="setMode('commercial')">🏢 تجاري</button>
+        </div>
+
+        <!-- العداد -->
+        <div class="meter-display">
+
+            <div class="meter-info">
+                <span class="meter-label">قراءة العداد الحالية</span>
+                <div class="meter-screen" id="meterScreen">00000.000</div>
+            </div>
+
+            <div class="meter-dial" id="meterDial"></div>
+
+        </div>
+
+        <!-- المدخلات -->
+        <div class="input-group">
+            <label>📌 القراءة السابقة (kWh)</label>
+            <input type="number" id="prevReading" placeholder="0.000" step="0.001" min="0" value="0">
+        </div>
+
+        <div class="input-group">
+            <label>⚡ القراءة الحالية (kWh)</label>
+            <input type="number" id="currentReading" placeholder="0.000" step="0.001" min="0" value="0.085">
+        </div>
+
+        <div class="input-group">
+            <label>💰 سعر الكيلو واط (دينار)</label>
+            <input type="number" id="pricePerKwh" value="50" min="0" step="1">
+        </div>
+
+        <button class="calc-btn" onclick="calculateBill()">
+            ⚡ احسب مبلغ الكهرباء
+        </button>
+
+        <!-- النتيجة -->
+        <div class="result-box" id="resultBox">
+
+            <p>إجمالي الاستهلاك</p>
+            <div class="amount" id="consumptionText">0.000</div>
+            <p>كيلو واط / ساعة</p>
+
+            <div style="margin:15px auto;border-top:1px solid #ffffff25;width:70%"></div>
+
+            <p>المبلغ المطلوب دفعه</p>
+            <div class="amount" id="totalAmount">0</div>
+            <div class="currency">دينار عراقي</div>
+
+        </div>
+
+    </div>
+
+    <!-- الحقوق -->
+    <div class="footer">
+        جميع الحقوق محفوظة © 2026
+        <br>
+        <a href="https://t.me/t_42777"
+           target="_blank"
+           rel="noopener noreferrer"
+           id="copyright">
+            تصميم وبرمجة مكتبة المصطفى ✦
+        </a>
+    </div>
+
+</div>
+
+
+<script>
+
+/* ================= شاشة البداية ================= */
+
+window.addEventListener('load', () => {
+
+    const bulb = document.getElementById('bulb');
+    const preloader = document.getElementById('preloader');
+    const app = document.getElementById('app');
+
+    const reducedMotion = window.matchMedia(
+        '(prefers-reduced-motion: reduce)'
+    ).matches;
+
+    if (reducedMotion) {
+        preloader.style.display = 'none';
+        app.classList.add('show');
+        return;
+    }
+
+    // تشغيل الكهرباء
+    setTimeout(() => {
+        bulb.classList.add('bulb-on');
+        preloader.classList.add('electric-active');
+    }, 300);
+
+    // زيادة شدة الإضاءة
+    setTimeout(() => {
+        bulb.classList.add('bulb-bright');
+    }, 1300);
+
+    // انفجار المصباح
+    setTimeout(() => {
+        bulb.classList.add('explode');
+        preloader.classList.add('flash-effect');
+    }, 2700);
+
+    // الانتقال إلى التطبيق
+    setTimeout(() => {
+        preloader.style.opacity = '0';
+        preloader.style.filter = 'blur(15px)';
+    }, 3150);
+
+    setTimeout(() => {
+        preloader.style.display = 'none';
+        app.classList.add('show');
+    }, 3900);
+
+});
+
+
+/* ================= تبديل الأوضاع ================= */
+
+function setMode(mode) {
+
+    const btnHome = document.getElementById('btn-home');
+    const btnCommercial = document.getElementById('btn-commercial');
+    const priceInput = document.getElementById('pricePerKwh');
+
+    if (mode === 'home') {
+
+        btnHome.classList.add('active');
+        btnCommercial.classList.remove('active');
+
+        priceInput.value = 50;
+
+    } else {
+
+        btnCommercial.classList.add('active');
+        btnHome.classList.remove('active');
+
+        priceInput.value = 60;
+
+    }
+
+}
+
+
+/* ================= حساب الكهرباء ================= */
+
+let meterInterval = null;
+let resultTimeout = null;
+
+function calculateBill() {
+
+    const prevInput = document.getElementById('prevReading');
+    const currentInput = document.getElementById('currentReading');
+    const priceInput = document.getElementById('pricePerKwh');
+
+    const prev = Number(prevInput.value);
+    const current = Number(currentInput.value);
+    const price = Number(priceInput.value);
+
+    const meterDial = document.getElementById('meterDial');
+    const meterScreen = document.getElementById('meterScreen');
+    const resultBox = document.getElementById('resultBox');
+
+    // التحقق من المدخلات
+    if (
+        prevInput.value.trim() === '' ||
+        currentInput.value.trim() === '' ||
+        priceInput.value.trim() === '' ||
+        !Number.isFinite(prev) ||
+        !Number.isFinite(current) ||
+        !Number.isFinite(price) ||
+        prev < 0 || current < 0 || price < 0
+    ) {
+        alert('يرجى إدخال قراءات وأسعار صحيحة.');
+        return;
+    }
+
+    if (current < prev) {
+        alert('خطأ: القراءة الحالية يجب أن تكون أكبر من أو تساوي القراءة السابقة!');
+        return;
+    }
+
+    const consumption = current - prev;
+    const total = consumption * price;
+
+    // إيقاف الأنيميشن السابق
+    clearInterval(meterInterval);
+    clearTimeout(resultTimeout);
+
+    resultBox.style.display = 'none';
+
+    // تشغيل العداد
+    meterDial.classList.add('spin');
+
+    let step = 0;
+    const steps = 25;
+
+    meterScreen.innerText = prev.toFixed(3);
+
+    meterInterval = setInterval(() => {
+
+        step++;
+
+        const progress = step / steps;
+
+        const displayValue = prev + (consumption * progress);
+
+        meterScreen.innerText = displayValue.toFixed(3);
+
+        if (step >= steps) {
+
+            clearInterval(meterInterval);
+            meterDial.classList.remove('spin');
+
+            meterScreen.innerText = current.toFixed(3);
+
+        }
+
+    }, 45);
+
+    // عرض النتيجة
+    resultTimeout = setTimeout(() => {
+
+        document.getElementById('consumptionText').innerText =
+            consumption.toFixed(3);
+
+        document.getElementById('totalAmount').innerText =
+            Math.round(total).toLocaleString('en-US');
+
+        resultBox.style.display = 'block';
+
+    }, steps * 45 + 150);
+
+}
+
+</script>
+
+</body>
+</html>
