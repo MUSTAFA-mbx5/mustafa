@@ -1,0 +1,740 @@
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>مصمم الأسئلة المطور | ألف باء للطباعة والقرطاسية</title>
+    <link href="https://fonts.googleapis.com/css2?family=Tajawal:wght@500;700;800&display=swap" rel="stylesheet">
+    <style>
+        * { box-sizing: border-box; font-family: 'Tajawal', sans-serif; }
+        body { background-color: #ebf0f5; margin: 0; padding-top: 65px; display: flex; flex-direction: column; align-items: center; }
+        
+        .controls-bar {
+            position: fixed; top: 0; left: 0; width: 100%;
+            background-color: #2c3e50; padding: 8px 15px;
+            display: flex; justify-content: center; align-items: center; gap: 6px; z-index: 2000;
+            box-shadow: 0 4px 10px rgba(0,0,0,0.3); flex-wrap: wrap;
+        }
+        
+        .brand-tag {
+            background: linear-gradient(135deg, #f39c12, #d35400);
+            color: white; font-weight: 800; font-size: 13px;
+            padding: 5px 12px; border-radius: 20px;
+            border: 1px solid #f1c40f; box-shadow: 0 2px 5px rgba(0,0,0,0.2);
+            display: flex; align-items: center; gap: 5px; margin-left: 6px;
+        }
+
+        .btn {
+            padding: 6px 12px; border: 1px solid rgba(255,255,255,0.4); 
+            border-radius: 6px; font-weight: bold; color: white; cursor: pointer;
+            background: transparent; font-size: 13px; text-align: center; transition: 0.2s;
+        }
+        .btn:hover { background: rgba(255,255,255,0.15); }
+        
+        .color-picker-label {
+            display: flex; align-items: center; gap: 5px; color: white; font-weight: bold; font-size: 13px; cursor: pointer;
+            border: 1px solid rgba(255,255,255,0.4); padding: 4px 8px; border-radius: 6px; background: transparent;
+        }
+        .color-picker-label input { cursor: pointer; border: none; background: transparent; width: 20px; height: 20px; }
+
+        .divider { width: 1px; height: 25px; background: rgba(255,255,255,0.3); margin: 0 4px; }
+
+        #workspace { display: flex; flex-direction: column; align-items: center; padding: 20px; gap: 20px; width: 100%; }
+        
+        /* ورقة A4 القياسية: عرض 21 سم × ارتفاع 29.7 سم، هوامش داخلية 5 ملم */
+        .a4-page {
+            width: 210mm;
+            min-height: 297mm;
+            height: 297mm;
+            background-color: white;
+            border: none; 
+            margin: 0 auto 20px auto;
+            padding: 5mm; 
+            box-shadow: 0 5px 15px rgba(0,0,0,0.3);
+            position: relative; 
+            display: flex; 
+            flex-direction: column; 
+            overflow: hidden;
+        }
+        
+        /* الهيدر: الأطراف 18px، والوسطي أكبر وأثخن (20px وبخط عريض 800) */
+        .header {
+            display: flex; justify-content: space-between; align-items: flex-start;
+            border-bottom: 2px solid #000; padding-bottom: 8px; margin-bottom: 5mm; 
+            font-size: 18px; font-weight: 700; line-height: 1.8; color: #000;
+        }
+        .header-right { width: 33%; text-align: right; }
+        .header-center { width: 34%; text-align: center; font-size: 20px; font-weight: 800; }
+        .header-left { width: 33%; text-align: right; }
+
+        .note-wrapper { 
+            position: relative; 
+            margin: 0 0 5mm 0; 
+            width: 100%; 
+            display: flex; 
+            align-items: center; 
+            gap: 5px; 
+        }
+        .note-bar {
+            color: white; text-align: center;
+            padding: 6px; border-radius: 20px; font-weight: bold; border: 2px solid #ffcc00; position: relative; font-size: 15px; flex-grow: 1; cursor: pointer;
+            -webkit-print-color-adjust: exact;
+            print-color-adjust: exact;
+        }
+        .note-bar::before, .note-bar::after { content: '⭐'; position: absolute; top: 50%; transform: translateY(-50%); }
+        .note-bar::before { right: 15px; } .note-bar::after { left: 15px; }
+        
+        .note-controls { display: none; align-items: center; gap: 4px; flex-shrink: 0; }
+        .note-wrapper.active .note-controls { display: flex; }
+
+        .del-note-btn {
+            background: #e74c3c; color: white; border: none; border-radius: 50%;
+            width: 22px; height: 22px; cursor: pointer; font-weight: bold; font-size: 11px;
+            display: flex; align-items: center; justify-content: center;
+        }
+        .color-change-btn {
+            background: #34495e; color: white; border: 1px solid #ccc; border-radius: 50%;
+            width: 22px; height: 22px; cursor: pointer; font-size: 10px;
+            display: flex; align-items: center; justify-content: center; position: relative;
+        }
+        .color-change-btn input { position: absolute; opacity: 0; width: 100%; height: 100%; cursor: pointer; }
+
+        .questions-area { flex-grow: 1; width: 100%; overflow: hidden; display: flex; flex-direction: column; gap: 15px; }
+
+        /* حاوية السؤال مع خط مستقيم رفيع فاصل */
+        .question-container {
+            border: none;
+            border-bottom: 1px solid #bdc3c7;
+            border-radius: 0;
+            padding: 8px 5px 15px 5px; 
+            margin-top: 5px; 
+            position: relative; 
+            background-color: transparent;
+            font-weight: 700; line-height: 1.6; 
+            width: 100%; cursor: pointer;
+        }
+        .question-container:last-child {
+            border-bottom: none;
+        }
+        
+        .q-header-row {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 6px;
+        }
+
+        .q-title {
+            font-size: 16px;
+            font-weight: 800;
+            display: flex; align-items: center; gap: 6px;
+            color: #2c3e50;
+            outline: none;
+        }
+
+        .q-mark {
+            font-size: 14px;
+            font-weight: 700;
+            color: #c0392b;
+            background: #fdf2f2;
+            padding: 2px 8px;
+            border-radius: 6px;
+            border: 1px dashed #e74c3c;
+            outline: none;
+            cursor: text;
+        }
+
+        .action-btns { position: absolute; top: -12px; left: 40%; display: none; gap: 4px; z-index: 10; background: #fff; padding: 2px; border-radius: 5px; box-shadow: 0 2px 5px rgba(0,0,0,0.2); }
+        .question-container.active .action-btns { display: flex; }
+        
+        .action-btns button {
+            background: #f1f2f6; border: 1px solid #ced6e0; border-radius: 5px; cursor: pointer;
+            padding: 3px 6px; transition: 0.2s; font-size: 11px; display: flex; align-items: center; justify-content: center; position: relative;
+        }
+        .action-btns button:hover { background: #dfe4ea; transform: scale(1.1); }
+
+        .q-content { outline: none; margin-top: 4px; font-size: 14px; }
+        .q-content:empty { display: none; }
+
+        .sub-branches { margin-top: 8px; display: flex; flex-direction: column; gap: 6px; }
+        
+        .branch-item { 
+            display: flex; 
+            justify-content: space-between; 
+            align-items: flex-start; 
+            gap: 10px; 
+            position: relative; 
+        }
+        .branch-text { flex-grow: 1; outline: none; font-size: 16px; }
+        
+        .del-branch-btn {
+            background: #ff4757; color: white; border: none; border-radius: 4px;
+            padding: 2px 5px; cursor: pointer; font-size: 10px; display: none; margin-top: 2px;
+        }
+        .question-container.active .del-branch-btn { display: inline-block; }
+
+        /* العناصر القابلة للسحب (الدعاء، التوقيع، الصور) */
+        .draggable-item {
+            position: absolute; z-index: 999; border: 2px dashed transparent; padding: 10px;
+            border-radius: 8px; background-color: transparent; display: inline-block;
+        }
+        .draggable-item.active { border-color: #3498db; background-color: rgba(255,255,255,0.95); }
+        
+        .draggable-item .drag-move-handle,
+        .draggable-item .img-controls,
+        .draggable-item .img-resize-handle { display: none !important; }
+        
+        .draggable-item.active .drag-move-handle,
+        .draggable-item.active .img-controls,
+        .draggable-item.active .img-resize-handle { display: flex !important; }
+
+        .drag-move-handle {
+            position: absolute; top: -18px; right: -18px; width: 32px; height: 32px;
+            background-color: #f39c12; color: white; border-radius: 50%;
+            text-align: center; cursor: move; font-size: 16px; z-index: 1000;
+            box-shadow: 0 3px 8px rgba(0,0,0,0.4);
+            display: flex; align-items: center; justify-content: center;
+        }
+        .img-controls { position: absolute; top: -18px; right: 20px; display: flex; gap: 4px; z-index: 1000; }
+        .img-btn {
+            background: white; border: 1px solid #ccc; border-radius: 50%; width: 28px; height: 28px;
+            cursor: pointer; font-size: 12px; display: flex; align-items: center; justify-content: center;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.2); position: relative;
+        }
+        .img-resize-handle {
+            position: absolute; bottom: -12px; left: -12px; width: 28px; height: 28px;
+            background-color: #2980b9; color: white; border-radius: 50%;
+            text-align: center; cursor: nwse-resize; font-size: 13px; z-index: 1000;
+            box-shadow: 0 2px 5px rgba(0,0,0,0.3);
+            display: flex; align-items: center; justify-content: center;
+        }
+
+        .banner-bar {
+            background: linear-gradient(to left, #1e3c72, #2a5298); color: white; text-align: center;
+            padding: 6px 12px; border-radius: 20px; font-weight: bold; border: 2px solid #ffcc00; font-size: 15px;
+            width: 100%; height: 100%; display: flex; align-items: center; justify-content: center;
+            -webkit-print-color-adjust: exact;
+            print-color-adjust: exact;
+        }
+        .teacher-sign {
+            text-align: center; line-height: 1.5; font-weight: bold; color: #333; font-size: 15px; width: 100%; height: 100%;
+        }
+        .teacher-sign div:first-child { border-bottom: 1px dashed #ccc; padding-bottom: 2px; margin-bottom: 2px; color: #1e3c72; }
+
+        .img-wrapper { width: 140px; height: 140px; }
+        .img-wrapper img { width: 100%; height: 100%; object-fit: contain; pointer-events: none; }
+
+        /* إعدادات الطباعة الدقيقة بابعاد 210مم × 297مم وهوامش 5 ملم */
+        @media print {
+            * {
+                -webkit-print-color-adjust: exact !important;
+                print-color-adjust: exact !important;
+            }
+            @page {
+                size: 210mm 297mm;
+                margin: 5mm;
+            }
+            body {
+                background-color: white;
+                padding-top: 0;
+            }
+            .controls-bar, .drag-move-handle, .img-controls, .img-resize-handle, .action-btns, .del-note-btn, .color-change-btn, .note-controls, .del-branch-btn {
+                display: none !important;
+            }
+            #workspace {
+                padding: 0;
+                gap: 0;
+            }
+            .a4-page {
+                box-shadow: none !important;
+                border: none !important;
+                margin: 0 !important;
+                width: 200mm !important;
+                height: 287mm !important;
+                max-height: 287mm !important;
+                padding: 0mm !important;
+                page-break-after: always;
+                page-break-inside: avoid;
+                overflow: hidden;
+            }
+            .draggable-item {
+                border: none !important;
+                background: transparent !important;
+            }
+        }
+    </style>
+</head>
+<body onclick="clearAllSelections(event)">
+
+    <input type="file" id="imageInput" accept="image/*" style="display: none;" onchange="handleAddImage(event)">
+
+    <div class="controls-bar" onclick="event.stopPropagation()">
+        <div class="brand-tag">✨ ألف باء للطباعة والقرطاسية</div>
+        <div class="divider"></div>
+
+        <button class="btn" onclick="document.getElementById('imageInput').click()">🖼️ صورة</button>
+        <button class="btn" onclick="addQuestion()">📝 سؤال</button>
+        <button class="btn" onclick="addNewPage()">➕ صفحة</button>
+        <button class="btn" onclick="addBanner()">🌟 دعاء</button>
+        <button class="btn" onclick="addSign()">✍️ توقيع</button>
+        
+        <div class="divider"></div>
+
+        <button class="btn" onclick="adjustFontSize(2)" title="تكبير الخط">🔍+ تكبير</button>
+        <button class="btn" onclick="adjustFontSize(-2)" title="تصغير الخط">🔍- تصغير</button>
+        
+        <button class="btn" onclick="adjustLineHeight(0.2)" title="زيادة تباعد الأسطر">📏+ مسافة</button>
+        <button class="btn" onclick="adjustLineHeight(-0.2)" title="تقليل تباعد الأسطر">📏- مسافة</button>
+
+        <button class="btn" onclick="document.execCommand('bold', false, null)" title="خط عريض"><b>B</b></button>
+        
+        <label class="color-picker-label" title="لون النص">
+            🎨 نص <input type="color" onchange="changeTextColor(this.value)">
+        </label>
+
+        <div class="divider"></div>
+
+        <button class="btn" onclick="undoAction()">↩️ تراجع</button>
+        <button class="btn" onclick="window.print()">🖨️ طباعة</button>
+    </div>
+
+    <div id="workspace">
+        <div class="a4-page" id="main-page">
+            <div class="header">
+                <div class="header-right" contenteditable="true">
+                    إدارة<br>
+                    اعدادية ألف باء<br>
+                    للبنين
+                </div>
+                <div class="header-center" contenteditable="true">
+                    امتحان /<br>
+                    الشهر /<br>
+                    ٢٠٢٦ - ٢٠٢٧
+                </div>
+                <div class="header-left" contenteditable="true">
+                    المادة:<br>
+                    الصف والشعبة:<br>
+                    الوقت:
+                </div>
+            </div>
+
+            <div class="note-wrapper" onclick="activateNote(event)">
+                <div class="note-bar" contenteditable="true" style="background: linear-gradient(to left, #1e3c72, #2a5298);">ملاحظة / الإجابة عن خمسة اسئلة فقط لكل سؤال ٢٠ درجة</div>
+                <div class="note-controls">
+                    <button class="color-change-btn" title="تغيير لون خلفية الملاحظة">🎨<input type="color" onchange="this.closest('.note-wrapper').querySelector('.note-bar').style.background = this.value"></button>
+                    <button class="del-note-btn" onclick="saveState(); this.closest('.note-wrapper').remove()" title="حذف الملاحظة">✖</button>
+                </div>
+            </div>
+
+            <div class="questions-area"></div>
+        </div>
+    </div>
+
+    <script>
+        let undoStack = [];
+        const arabicLetters = ['أ', 'ب', 'ج', 'د', 'هـ', 'و', 'ز', 'ح', 'ط', 'ي'];
+
+        // دالة تحويل الأرقام الإنجليزية إلى أرقام عربية شرقية تلقائياً
+        function convertToEasternArabicNumerals(str) {
+            const englishNumbers = [/0/g, /1/g, /2/g, /3/g, /4/g, /5/g, /6/g, /7/g, /8/g, /9/g];
+            const arabicNumbers = ['٠', '١', '٢', '٣', '٤', '٥', '٦', '٧', '٨', '٩'];
+            for (let i = 0; i < 10; i++) {
+                str = str.replace(englishNumbers[i], arabicNumbers[i]);
+            }
+            return str;
+        }
+
+        // مراقبة الكتابة في أي عنصر قابل للتعديل وتحويل الأرقام فوراً
+        document.addEventListener('input', function(e) {
+            if (e.target && e.target.getAttribute('contenteditable') === 'true') {
+                const selection = window.getSelection();
+                if (!selection.rangeCount) return;
+                
+                const range = selection.getRangeAt(0);
+                const node = range.startContainer;
+                
+                if (node.nodeType === Node.TEXT_NODE) {
+                    const originalText = node.nodeValue;
+                    const convertedText = convertToEasternArabicNumerals(originalText);
+                    if (originalText !== convertedText) {
+                        const offset = range.startOffset;
+                        node.nodeValue = convertedText;
+                        try {
+                            range.setStart(node, Math.min(offset, node.nodeValue.length));
+                            range.collapse(true);
+                            selection.removeAllRanges();
+                            selection.addRange(range);
+                        } catch(err) {}
+                    }
+                }
+            }
+        });
+
+        function saveState() {
+            const workspace = document.getElementById('workspace');
+            undoStack.push(workspace.innerHTML);
+            if (undoStack.length > 30) undoStack.shift();
+        }
+
+        function undoAction() {
+            if (undoStack.length > 0) {
+                const lastState = undoStack.pop();
+                document.getElementById('workspace').innerHTML = lastState;
+                rebindAllElements();
+            } else {
+                alert('لا توجد خطوات سابقة للرجوع إليها!');
+            }
+        }
+
+        function clearAllSelections(e) {
+            if (!e.target.closest('.draggable-item') && !e.target.closest('.question-container') && !e.target.closest('.note-wrapper')) {
+                document.querySelectorAll('.draggable-item').forEach(item => item.classList.remove('active'));
+                document.querySelectorAll('.question-container').forEach(q => q.classList.remove('active'));
+                document.querySelectorAll('.note-wrapper').forEach(n => n.classList.remove('active'));
+            }
+        }
+
+        function activateNote(e) {
+            e.stopPropagation();
+            document.querySelectorAll('.draggable-item').forEach(item => item.classList.remove('active'));
+            document.querySelectorAll('.question-container').forEach(q => q.classList.remove('active'));
+            document.querySelectorAll('.note-wrapper').forEach(n => n.classList.remove('active'));
+            e.currentTarget.classList.add('active');
+        }
+
+        function adjustFontSize(delta) {
+            saveState();
+            const selection = window.getSelection();
+            if (!selection.rangeCount || selection.isCollapsed) return;
+            
+            const range = selection.getRangeAt(0);
+            let container = range.commonAncestorContainer;
+            if (container.nodeType === 3) container = container.parentNode;
+
+            let targetSpan = container.closest('span') || container.querySelector('span');
+            
+            let currentSize = 14;
+            if (targetSpan && targetSpan.style.fontSize) {
+                currentSize = parseFloat(targetSpan.style.fontSize);
+            } else {
+                currentSize = parseFloat(window.getComputedStyle(container).fontSize) || 14;
+            }
+
+            let newSize = Math.max(8, currentSize + delta);
+
+            if (targetSpan && range.toString() === targetSpan.textContent) {
+                targetSpan.style.fontSize = newSize + 'px';
+            } else {
+                const span = document.createElement('span');
+                span.style.fontSize = newSize + 'px';
+                span.appendChild(range.extractContents());
+                range.insertNode(span);
+            }
+        }
+
+        function adjustLineHeight(delta) {
+            saveState();
+            const selection = window.getSelection();
+            let element = null;
+            if (selection.rangeCount && !selection.isCollapsed) {
+                let container = selection.getRangeAt(0).commonAncestorContainer;
+                element = container.nodeType === 3 ? container.parentNode : container;
+                element = element.closest('.question-container, .header, .note-bar, div');
+            } else {
+                element = document.querySelector('.question-container.active, .note-wrapper.active');
+            }
+
+            if (element) {
+                let currentLH = parseFloat(window.getComputedStyle(element).lineHeight);
+                let currentFontSize = parseFloat(window.getComputedStyle(element).fontSize) || 14;
+                let ratio = isNaN(currentLH) ? 1.6 : (currentLH / currentFontSize);
+                let newRatio = Math.max(1.0, ratio + delta);
+                element.style.lineHeight = newRatio;
+            }
+        }
+
+        function changeTextColor(color) {
+            saveState();
+            document.execCommand('foreColor', false, color);
+        }
+
+        function addQuestion() {
+            saveState();
+            const pages = document.querySelectorAll('.a4-page');
+            const lastPage = pages[pages.length - 1];
+            const questionsArea = lastPage.querySelector('.questions-area');
+
+            const qDiv = document.createElement('div');
+            qDiv.className = `question-container`;
+            
+            qDiv.onclick = function(e) {
+                e.stopPropagation();
+                document.querySelectorAll('.draggable-item').forEach(item => item.classList.remove('active'));
+                document.querySelectorAll('.question-container').forEach(q => q.classList.remove('active'));
+                document.querySelectorAll('.note-wrapper').forEach(n => n.classList.remove('active'));
+                qDiv.classList.add('active');
+            };
+
+            qDiv.innerHTML = `
+                <div class="action-btns">
+                    <button onclick="addBranch(event, this)" title="إضافة فرع لسؤال">➕ فرع</button>
+                    <button onclick="moveUp(event, this)" title="نقل للأعلى">⬆️</button>
+                    <button onclick="moveDown(event, this)" title="نقل لأسفل">⬇️</button>
+                    <button onclick="duplicateQ(event, this)" title="تكرار السؤال">📋</button>
+                    <button title="تغيير لون عنوان السؤال">🎨<input type="color" style="position:absolute; opacity:0; width:100%; height:100%; cursor:pointer;" onchange="updateQTitleColor(this)"></button>
+                    <button onclick="deleteQ(event, this)" title="حذف السؤال">🗑️</button>
+                </div>
+                <div class="q-header-row">
+                    <div class="q-title" contenteditable="true"><span>📖</span> س/ عنوان السؤال الجديد</div>
+                    <div class="q-mark" contenteditable="true">(٢٠ درجة)</div>
+                </div>
+                <div class="q-content" contenteditable="true" placeholder="اكتب تفاصيل السؤال هنا...">اكتب تفاصيل السؤال هنا...</div>
+                <div class="sub-branches"></div>
+            `;
+            questionsArea.appendChild(qDiv);
+            qDiv.click();
+        }
+
+        function updateQTitleColor(input) {
+            saveState();
+            const qTitle = input.closest('.question-container').querySelector('.q-title');
+            qTitle.style.color = input.value;
+        }
+
+        function addBranch(e, btn) {
+            e.stopPropagation();
+            saveState();
+            const qContainer = btn.closest('.question-container');
+            const qContent = qContainer.querySelector('.q-content');
+            
+            if (qContent.innerText.trim() === 'اكتب تفاصيل السؤال هنا...') {
+                qContent.innerText = '';
+            }
+
+            const branchesContainer = qContainer.querySelector('.sub-branches');
+            const currentCount = branchesContainer.children.length;
+            const letter = arabicLetters[currentCount % arabicLetters.length];
+
+            const branchDiv = document.createElement('div');
+            branchDiv.className = 'branch-item';
+            branchDiv.innerHTML = `
+                <div class="branch-text" contenteditable="true">${letter}/ اكتب نص الفرع هنا...</div>
+                <div class="q-mark" contenteditable="true">(٥ درجة)</div>
+                <button class="del-branch-btn" onclick="saveState(); this.parentElement.remove()" title="حذف الفرع">✖</button>
+            `;
+            branchesContainer.appendChild(branchDiv);
+        }
+
+        function deleteQ(e, btn) {
+            e.stopPropagation();
+            saveState();
+            btn.closest('.question-container').remove();
+        }
+
+        function moveUp(e, btn) {
+            e.stopPropagation();
+            saveState();
+            const current = btn.closest('.question-container');
+            const prev = current.previousElementSibling;
+            if (prev) {
+                current.parentNode.insertBefore(current, prev);
+            } else {
+                const currentPage = current.closest('.a4-page');
+                const prevPage = currentPage.previousElementSibling;
+                if (prevPage && prevPage.classList.contains('a4-page')) {
+                    prevPage.querySelector('.questions-area').appendChild(current);
+                }
+            }
+        }
+
+        function moveDown(e, btn) {
+            e.stopPropagation();
+            saveState();
+            const current = btn.closest('.question-container');
+            const next = current.nextElementSibling;
+            if (next) {
+                current.parentNode.insertBefore(next, current);
+            } else {
+                const currentPage = current.closest('.a4-page');
+                const nextPage = currentPage.nextElementSibling;
+                if (nextPage && nextPage.classList.contains('a4-page')) {
+                    const qArea = nextPage.querySelector('.questions-area');
+                    qArea.insertBefore(current, qArea.firstChild);
+                }
+            }
+        }
+
+        function duplicateQ(e, btn) {
+            e.stopPropagation();
+            saveState();
+            const current = btn.closest('.question-container');
+            const clone = current.cloneNode(true);
+            
+            clone.onclick = function(ev) {
+                ev.stopPropagation();
+                document.querySelectorAll('.draggable-item').forEach(item => item.classList.remove('active'));
+                document.querySelectorAll('.question-container').forEach(q => q.classList.remove('active'));
+                document.querySelectorAll('.note-wrapper').forEach(n => n.classList.remove('active'));
+                clone.classList.add('active');
+            };
+            
+            current.parentNode.insertBefore(clone, current.nextElementSibling);
+        }
+
+        function addNewPage() {
+            saveState();
+            const workspace = document.getElementById('workspace');
+            const newPage = document.createElement('div');
+            newPage.className = 'a4-page';
+            newPage.innerHTML = `
+                <div class="questions-area"></div>
+            `;
+            workspace.appendChild(newPage);
+        }
+
+        function createDraggableElement(type, src = '') {
+            saveState();
+            const wrapper = document.createElement('div');
+            wrapper.className = 'draggable-item active';
+            wrapper.style.left = '100px'; wrapper.style.top = '150px';
+            wrapper.style.width = type === 'banner' ? '300px' : (type === 'sign' ? '160px' : '140px');
+            wrapper.style.height = type === 'banner' ? '45px' : (type === 'sign' ? '65px' : '140px');
+
+            wrapper.addEventListener('click', (e) => {
+                e.stopPropagation();
+                document.querySelectorAll('.draggable-item').forEach(item => item.classList.remove('active'));
+                document.querySelectorAll('.question-container').forEach(q => q.classList.remove('active'));
+                document.querySelectorAll('.note-wrapper').forEach(n => n.classList.remove('active'));
+                wrapper.classList.add('active');
+            });
+
+            const moveHandle = document.createElement('div');
+            moveHandle.className = 'drag-move-handle'; moveHandle.innerHTML = '✥';
+            wrapper.appendChild(moveHandle);
+
+            const controls = document.createElement('div');
+            controls.className = 'img-controls';
+            
+            if (type === 'banner') {
+                const colorBtn = document.createElement('button');
+                colorBtn.className = 'img-btn'; colorBtn.innerHTML = '🎨';
+                colorBtn.title = 'تغيير لون خلفية الدعاء';
+                const colorInput = document.createElement('input');
+                colorInput.type = 'color'; colorInput.style.cssText = 'position:absolute; opacity:0; width:100%; height:100%; cursor:pointer;';
+                colorInput.onchange = (e) => { wrapper.querySelector('.banner-bar').style.background = e.target.value; };
+                colorBtn.appendChild(colorInput);
+                controls.appendChild(colorBtn);
+            }
+
+            const delBtn = document.createElement('button');
+            delBtn.className = 'img-btn'; delBtn.innerHTML = '❌';
+            delBtn.title = 'حذف العنصر';
+            delBtn.onclick = () => { saveState(); wrapper.remove(); };
+            controls.appendChild(delBtn);
+
+            const resizeHandle = document.createElement('div');
+            resizeHandle.className = 'img-resize-handle'; resizeHandle.innerHTML = '↘️';
+
+            if (type === 'image') {
+                wrapper.classList.add('img-wrapper');
+                const img = document.createElement('img'); img.src = src;
+                wrapper.appendChild(img);
+            } else if (type === 'banner') {
+                const bannerDiv = document.createElement('div');
+                bannerDiv.className = 'banner-bar'; bannerDiv.contentEditable = true;
+                bannerDiv.innerHTML = '⭐ دعائي لكم بالنجاح الدائم ⭐';
+                wrapper.appendChild(bannerDiv);
+            } else if (type === 'sign') {
+                const signDiv = document.createElement('div');
+                signDiv.className = 'teacher-sign'; signDiv.contentEditable = true;
+                signDiv.innerHTML = '<div>معلم المادة</div><div>ألف باء للطباعة</div>';
+                wrapper.appendChild(signDiv);
+            }
+
+            wrapper.appendChild(controls);
+            wrapper.appendChild(resizeHandle);
+
+            const pages = document.querySelectorAll('.a4-page');
+            pages[pages.length - 1].appendChild(wrapper);
+
+            setupDragAndResize(wrapper, moveHandle, resizeHandle);
+        }
+
+        function handleAddImage(event) {
+            const file = event.target.files[0];
+            if (!file) return;
+            const reader = new FileReader();
+            reader.onload = function(e) { createDraggableElement('image', e.target.result); };
+            reader.readAsDataURL(file);
+            event.target.value = '';
+        }
+
+        function addBanner() { createDraggableElement('banner'); }
+        function addSign() { createDraggableElement('sign'); }
+
+        function setupDragAndResize(wrapper, moveHandle, resizeHandle) {
+            let isDragging = false, isResizing = false;
+            let startX, startY, startLeft, startTop, startWidth, startHeight;
+
+            moveHandle.addEventListener('mousedown', (e) => {
+                e.preventDefault(); e.stopPropagation(); isDragging = true;
+                startX = e.clientX; startY = e.clientY;
+                startLeft = wrapper.offsetLeft; startTop = wrapper.offsetTop;
+                document.addEventListener('mousemove', onMove);
+                document.addEventListener('mouseup', onEnd);
+            });
+
+            function onMove(e) {
+                if (isDragging) {
+                    wrapper.style.left = (startLeft + e.clientX - startX) + 'px';
+                    wrapper.style.top = (startTop + e.clientY - startY) + 'px';
+                } else if (isResizing) {
+                    wrapper.style.width = Math.max(70, startWidth + e.clientX - startX) + 'px';
+                    wrapper.style.height = Math.max(25, startHeight + e.clientY - startY) + 'px';
+                }
+            }
+
+            function onEnd() {
+                isDragging = false; isResizing = false;
+                document.removeEventListener('mousemove', onMove);
+                document.removeEventListener('mouseup', onEnd);
+            }
+
+            resizeHandle.addEventListener('mousedown', (e) => {
+                e.preventDefault(); e.stopPropagation(); isResizing = true;
+                startX = e.clientX; startY = e.clientY;
+                startWidth = wrapper.offsetWidth; startHeight = wrapper.offsetHeight;
+                document.addEventListener('mousemove', onMove);
+                document.addEventListener('mouseup', onEnd);
+            });
+        }
+
+        function rebindAllElements() {
+            document.querySelectorAll('.draggable-item').forEach(wrapper => {
+                wrapper.addEventListener('click', (e) => {
+                    e.stopPropagation();
+                    document.querySelectorAll('.draggable-item').forEach(item => item.classList.remove('active'));
+                    document.querySelectorAll('.question-container').forEach(q => q.classList.remove('active'));
+                    document.querySelectorAll('.note-wrapper').format(n => n.classList.remove('active'));
+                    wrapper.classList.add('active');
+                });
+                const moveHandle = wrapper.querySelector('.drag-move-handle');
+                const resizeHandle = wrapper.querySelector('.img-resize-handle');
+                const delBtn = wrapper.querySelector('.img-btn:last-child');
+                if (delBtn) delBtn.onclick = () => { saveState(); wrapper.remove(); };
+                setupDragAndResize(wrapper, moveHandle, resizeHandle);
+            });
+
+            document.querySelectorAll('.question-container').forEach(qDiv => {
+                qDiv.onclick = function(e) {
+                    e.stopPropagation();
+                    document.querySelectorAll('.draggable-item').forEach(item => item.classList.remove('active'));
+                    document.querySelectorAll('.question-container').forEach(q => q.classList.remove('active'));
+                    document.querySelectorAll('.note-wrapper').forEach(n => n.classList.remove('active'));
+                    qDiv.classList.add('active');
+                };
+            });
+        }
+    </script>
+</body>
+</html>

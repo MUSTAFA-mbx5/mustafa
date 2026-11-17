@@ -1,0 +1,1838 @@
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>برنامج ترتيب المستمسكات</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Cairo:wght@400;500;600;700;800;900&display=swap" rel="stylesheet">
+<style>
+  :root{
+    --ink:#1C2438; --ink-soft:#586178; --ink-faint:#8892A6;
+    --paper:#ECE8DD; --card:#FFFFFF; --card-2:#F7F5EF;
+    --line:#DCD5C2; --line-soft:#E9E4D6;
+    --seal:#8C2F39; --seal-dark:#6E2028; --seal-ink:#FFFFFF;
+    --teal:#2F6F62; --teal-dark:#215048; --teal-ink:#FFFFFF;
+    --amber:#B5772B; --amber-bg:#F6E9D6;
+    --shadow: 0 10px 28px -14px rgba(28,36,56,.35);
+    --shadow-lg: 0 18px 46px -18px rgba(28,36,56,.4);
+    --radius:10px; --radius-sm:6px;
+    --font:'Cairo','Tahoma','Segoe UI',sans-serif;
+  }
+  @media (prefers-color-scheme: dark){
+    :root:not([data-theme="light"]){
+      --ink:#ECEAE3; --ink-soft:#B3AFA0; --ink-faint:#7D7A6E;
+      --paper:#15161A; --card:#1E2025; --card-2:#25272D;
+      --line:#33353C; --line-soft:#2A2C32;
+      --seal:#DE8A92; --seal-dark:#BC6871; --seal-ink:#241014;
+      --teal:#6FC0AE; --teal-dark:#4E9585; --teal-ink:#0F1D19;
+      --amber:#E2A75C; --amber-bg:#332A18;
+      --shadow: 0 10px 28px -14px rgba(0,0,0,.6);
+      --shadow-lg: 0 18px 46px -18px rgba(0,0,0,.65);
+    }
+  }
+  :root[data-theme="dark"]{
+    --ink:#ECEAE3; --ink-soft:#B3AFA0; --ink-faint:#7D7A6E;
+    --paper:#15161A; --card:#1E2025; --card-2:#25272D;
+    --line:#33353C; --line-soft:#2A2C32;
+    --seal:#DE8A92; --seal-dark:#BC6871; --seal-ink:#241014;
+    --teal:#6FC0AE; --teal-dark:#4E9585; --teal-ink:#0F1D19;
+    --amber:#E2A75C; --amber-bg:#332A18;
+  }
+  *{box-sizing:border-box;}
+  html,body{margin:0;padding:0;}
+  body{
+    font-family:var(--font); background:var(--paper); color:var(--ink);
+    -webkit-font-smoothing:antialiased; line-height:1.55;
+  }
+  button, input, select{font-family:inherit; color:inherit;}
+  button{cursor:pointer;}
+  :focus-visible{outline:2.5px solid var(--seal); outline-offset:2px;}
+  @media (prefers-reduced-motion: reduce){ *{transition:none !important; animation:none !important;} }
+
+  h1,h2,h3{margin:0; font-weight:800;}
+  p{margin:0;}
+
+  /* ---------- Topbar ---------- */
+  .topbar{
+    background:linear-gradient(115deg,#12172a 0%,#1C2438 50%,#4a1f2c 100%); color:#F4F2EA;
+    padding:14px 18px; display:flex; align-items:center; justify-content:space-between;
+    gap:14px; flex-wrap:wrap; position:sticky; top:0; z-index:30;
+    box-shadow:var(--shadow);
+  }
+  .brand{display:flex; align-items:center; gap:12px;}
+  .brand .seal-badge{
+    width:42px; height:42px; border-radius:50%; flex:none;
+    background:radial-gradient(circle at 32% 28%, var(--seal) 0%, var(--seal-dark) 70%);
+    display:flex; align-items:center; justify-content:center;
+    box-shadow:inset 0 0 0 2px rgba(255,255,255,.25), var(--shadow);
+  }
+  .brand .seal-badge svg{width:24px;height:24px;}
+  .brand-text h1{font-size:16.5px; letter-spacing:.2px;}
+  .brand-text p{font-size:11.5px; color:#C7C3B4; margin-top:2px;}
+  .topbarActions{display:flex; align-items:center; gap:10px; flex-wrap:wrap;}
+  .paperNote{font-size:11px; color:#C7C3B4; max-width:260px; text-align:start;}
+  .qualityLabel{display:flex; align-items:center; gap:6px; font-size:11.5px; color:#C7C3B4; font-weight:700;}
+  .qualitySelect{
+    background:rgba(255,255,255,.08); color:#F4F2EA; border:1.5px solid rgba(255,255,255,.28);
+    border-radius:8px; padding:6px 8px; font-size:11.5px; font-family:inherit;
+  }
+  .qualitySelect option{color:#1C2438;}
+
+  .btn{
+    border:1.5px solid transparent; border-radius:999px; padding:9px 18px;
+    font-size:13.5px; font-weight:700; display:inline-flex; align-items:center; gap:7px;
+    background:var(--card); color:var(--ink); border-color:var(--line);
+  }
+  .btn:hover{filter:brightness(0.97);}
+  .btn-primary{background:var(--seal); color:var(--seal-ink); border-color:var(--seal-dark);}
+  .btn-primary:hover{background:var(--seal-dark);}
+  .btn-teal{background:var(--teal); color:var(--teal-ink); border-color:var(--teal-dark);}
+  .btn-teal:hover{background:var(--teal-dark);}
+  .btn-ghost{background:transparent; border-color:rgba(255,255,255,.28); color:#F4F2EA;}
+  .btn-ghost:hover{background:rgba(255,255,255,.08);}
+  .btn-outline{background:var(--card); border-color:var(--line); color:var(--ink);}
+  .btn-danger{background:transparent; color:var(--seal); border-color:var(--line);}
+  .btn-danger:hover{background:var(--amber-bg);}
+  .btn-sm{padding:6px 12px; font-size:12.5px;}
+  .btn-icon{padding:8px; border-radius:8px;}
+  .btn:disabled{opacity:.45; cursor:not-allowed;}
+
+  /* ---------- Help bar ---------- */
+  .helpBar{
+    background:var(--card-2); border-bottom:1px solid var(--line);
+    padding:10px 18px; font-size:12.5px; color:var(--ink-soft);
+    display:flex; gap:10px; align-items:flex-start; justify-content:space-between;
+  }
+  .helpBar ol{margin:4px 0 0; padding-inline-start:20px; display:flex; flex-wrap:wrap; gap:4px 20px; list-style:decimal;}
+  .helpBar li{white-space:nowrap;}
+  .helpBar button{background:none; border:none; color:var(--ink-faint); font-size:16px; line-height:1; padding:2px 4px; flex:none;}
+
+  /* ---------- Layout ---------- */
+  .layout{max-width:1400px; margin:0 auto; padding:16px;}
+  .tabsRow{display:flex; align-items:center; gap:8px; overflow-x:auto; padding-bottom:10px; margin-bottom:14px; border-bottom:1px solid var(--line);}
+  .tab{
+    flex:none; display:flex; align-items:center; gap:8px;
+    background:var(--card); border:1.5px solid var(--line); border-radius:999px;
+    padding:7px 8px 7px 16px; font-size:13px; font-weight:700; color:var(--ink-soft);
+  }
+  .tab.active{border-color:var(--seal); color:var(--ink); background:var(--card);}
+  .tab .dot{width:7px;height:7px;border-radius:50%; background:var(--line);}
+  .tab.active .dot{background:var(--seal);}
+  .tab input.tabName{
+    border:none; background:transparent; font:inherit; font-weight:700; color:inherit;
+    width:auto; min-width:40px; max-width:130px; padding:2px 0;
+  }
+  .tab .tabClose{
+    width:20px;height:20px;border-radius:50%; border:none; background:var(--line-soft);
+    color:var(--ink-soft); font-size:12px; display:flex; align-items:center; justify-content:center;
+  }
+  .addTabBtn{flex:none;}
+
+  .workspace{display:grid; grid-template-columns:380px 1fr; gap:18px; align-items:start;}
+  @media (max-width:920px){ .workspace{grid-template-columns:1fr;} }
+
+  /* ---------- Preview ---------- */
+  .previewPane{
+    background:var(--card-2); border:1px solid var(--line); border-radius:var(--radius);
+    padding:18px; min-height:300px; overflow-x:auto;
+  }
+  .sheetPreview{margin-bottom:26px;}
+  .sheetPreview:last-child{margin-bottom:0;}
+  .sheetPreviewLabel{font-size:12px; font-weight:700; color:var(--ink-soft); margin-bottom:8px; display:flex; gap:8px; align-items:center;}
+  .sheetPreviewLabel .pageKind{background:var(--line-soft); color:var(--ink-soft); border-radius:999px; padding:2px 9px; font-size:10.5px;}
+  .pagesRow{display:flex; gap:20px; flex-wrap:wrap; align-items:flex-start; justify-content:center;}
+  .zoomWrap{position:relative; overflow:hidden; flex:none;}
+  .page{
+    position:relative; background:#fff; box-shadow:var(--shadow-lg);
+    transform-origin:top right; direction:ltr;
+  }
+  .slot{position:absolute; border-radius:var(--rad,0mm); transition:transform .15s, filter .15s;}
+  .slot.filled{box-shadow:0 0 0 var(--bw,0mm) var(--bc,#666); cursor:pointer;}
+  .slot.filled:hover{filter:brightness(1.05); transform:scale(1.012); z-index:3;}
+  .slot.dragover{outline:0.6mm dashed var(--seal);}
+  .slot img{width:100%; height:100%; object-fit:cover; display:block; border-radius:inherit;}
+  .slot.empty{
+    display:flex; align-items:center; justify-content:center; flex-direction:column; gap:1mm;
+    outline:0.3mm dashed #B9B2A0; background:rgba(0,0,0,.02); cursor:pointer; color:#9C9584;
+  }
+  .slot.empty .plus{font-size:6mm; line-height:1;}
+  .slot.empty .lbl{font-size:2.6mm; font-family:var(--font);}
+  .slot.backHint{outline-style:dotted;}
+  .mark{position:absolute; width:2.4mm; height:2.4mm; pointer-events:none;
+    background-repeat:no-repeat; background-image:linear-gradient(#8a8372,#8a8372),linear-gradient(#8a8372,#8a8372);}
+  .mark-tl{left:-2.4mm; top:-2.4mm; background-position:0 100%,100% 0; background-size:1.8mm .2mm,.2mm 1.8mm;}
+  .mark-tr{right:-2.4mm; top:-2.4mm; background-position:100% 100%,0 0; background-size:1.8mm .2mm,.2mm 1.8mm;}
+  .mark-bl{left:-2.4mm; bottom:-2.4mm; background-position:0 0,100% 100%; background-size:1.8mm .2mm,.2mm 1.8mm;}
+  .mark-br{right:-2.4mm; bottom:-2.4mm; background-position:100% 0,0 100%; background-size:1.8mm .2mm,.2mm 1.8mm;}
+
+  .capacityBanner{
+    display:flex; align-items:center; gap:8px; background:var(--card); border:1px solid var(--line);
+    border-radius:var(--radius-sm); padding:8px 12px; font-size:12.5px; color:var(--ink-soft); margin-bottom:12px;
+  }
+  .capacityBanner b{color:var(--ink); font-weight:800;}
+  .capacityBanner.warn{border-color:var(--amber); background:var(--amber-bg); color:var(--ink);}
+
+  /* ---------- Panel ---------- */
+  .panel{display:flex; flex-direction:column; gap:14px;}
+  .panelSection{
+    background:var(--card); border:1px solid var(--line); border-radius:var(--radius);
+    padding:14px 14px 16px;
+  }
+  .panelSection h3{font-size:13px; margin-bottom:10px; display:flex; align-items:center; gap:7px;}
+  .panelSection h3 .num{
+    width:19px;height:19px;border-radius:50%; background:var(--seal); color:var(--seal-ink);
+    font-size:10.5px; display:flex; align-items:center; justify-content:center; flex:none;
+  }
+  .field{display:flex; flex-direction:column; gap:5px; margin-bottom:10px;}
+  .field:last-child{margin-bottom:0;}
+  .field label{font-size:11.5px; color:var(--ink-soft); font-weight:700;}
+  .field select, .field input[type=text], .field input[type=number]{
+    border:1.5px solid var(--line); border-radius:var(--radius-sm); background:var(--card);
+    padding:8px 10px; font-size:13px; width:100%;
+  }
+  .row2{display:grid; grid-template-columns:1fr 1fr; gap:8px;}
+  .segGroup{display:flex; gap:6px; flex-wrap:wrap;}
+  .segGroup label{
+    flex:1; text-align:center; font-size:12px; font-weight:700; padding:8px 6px;
+    border:1.5px solid var(--line); border-radius:var(--radius-sm); background:var(--card); color:var(--ink-soft);
+    display:flex; flex-direction:column; align-items:center; gap:2px;
+  }
+  .segGroup input{position:absolute; opacity:0; pointer-events:none;}
+  .segGroup input:checked + span, .segGroup label:has(input:checked){
+    border-color:var(--seal); color:var(--seal); background:var(--amber-bg);
+  }
+  .segGroup small{font-size:9.5px; color:var(--ink-faint); font-weight:500;}
+  .segGroup label:has(input:checked) small{color:var(--seal);}
+
+  .swapRow{display:flex; gap:8px; margin-top:8px;}
+  .miniToggle{
+    flex:1; font-size:11.5px; padding:7px 8px; border-radius:var(--radius-sm); border:1.5px solid var(--line);
+    background:var(--card); color:var(--ink-soft); font-weight:700; display:flex; align-items:center; justify-content:center; gap:5px;
+  }
+  .miniToggle.on{border-color:var(--teal); color:var(--teal); background:rgba(47,111,98,.08);}
+
+  .customBox{border-top:1px dashed var(--line); margin-top:10px; padding-top:10px;}
+  .savedTplList{display:flex; flex-direction:column; gap:6px; margin-top:8px; max-height:120px; overflow-y:auto;}
+  .savedTplRow{
+    display:flex; align-items:center; justify-content:space-between; gap:6px;
+    background:var(--card-2); border:1px solid var(--line-soft); border-radius:6px; padding:6px 9px; font-size:11.5px;
+  }
+  .savedTplRow .del{background:none; border:none; color:var(--ink-faint); font-size:14px;}
+
+  details.advDetails{border:1px dashed var(--line); border-radius:var(--radius-sm); padding:8px 10px;}
+  details.advDetails summary{font-size:12px; font-weight:700; color:var(--ink-soft); cursor:pointer;}
+  details.advDetails .row2{margin-top:10px;}
+
+  .docsList{display:flex; flex-direction:column; gap:10px;}
+  .docCard{
+    display:flex; flex-direction:column; gap:6px; background:var(--card-2);
+    border:1px solid var(--line-soft); border-radius:var(--radius-sm); padding:8px;
+  }
+  .docCardTop{display:flex; align-items:center; gap:8px;}
+  .docIndex{font-size:11px; font-weight:800; color:var(--ink-faint); width:16px; text-align:center; flex:none;}
+  .docTplSelect{
+    flex:1; min-width:0; border:1.5px solid var(--line); border-radius:6px; background:var(--card);
+    padding:5px 7px; font-size:11.5px;
+  }
+  .docThumbs{display:flex; gap:6px;}
+  .thumbBtn{
+    flex:1; height:52px; border-radius:6px; border:1.5px dashed var(--line);
+    background:var(--card); display:flex; flex-direction:column; align-items:center; justify-content:center;
+    overflow:hidden; position:relative; font-size:9.5px; color:var(--ink-faint); gap:2px;
+  }
+  .thumbBtn img{width:100%; height:100%; object-fit:cover; position:absolute; inset:0;}
+  .thumbBtn span.tag{
+    position:absolute; bottom:0; inset-inline:0; background:rgba(28,36,56,.65); color:#fff;
+    font-size:8.5px; padding:1px 0; text-align:center;
+  }
+  .docDel{background:none; border:none; color:var(--ink-faint); font-size:16px; flex:none; padding:2px 4px;}
+  .docDel:hover{color:var(--seal);}
+  .emptyDocs{font-size:12px; color:var(--ink-faint); text-align:center; padding:10px 0;}
+
+  .sheetActionsRow{display:flex; gap:8px;}
+  .sheetActionsRow .btn{flex:1; justify-content:center;}
+
+  /* ---------- Modal ---------- */
+  .modal-backdrop{
+    position:fixed; inset:0; background:rgba(20,22,28,.55); display:none;
+    align-items:center; justify-content:center; z-index:100; padding:16px;
+  }
+  .modal-backdrop.open{display:flex;}
+  .modal{
+    background:var(--card); border-radius:14px; width:min(430px,100%); max-height:92vh;
+    overflow-y:auto; box-shadow:var(--shadow-lg);
+  }
+  .modalHead{
+    display:flex; align-items:center; justify-content:space-between; padding:14px 16px;
+    border-bottom:1px solid var(--line); position:sticky; top:0; background:var(--card); z-index:2;
+  }
+  .modalHead h3{font-size:14.5px;}
+  .modalClose{background:none; border:none; font-size:18px; color:var(--ink-faint);}
+  .modalBody{padding:14px 16px;}
+  .cropPreviewWrap{
+    position:relative; overflow:hidden; border-radius:8px; background:#111;
+    aspect-ratio:4/3; margin-bottom:14px; border:1px solid var(--line);
+  }
+  .cropPreviewWrap img{width:100%; height:100%; object-fit:contain; display:block;}
+  .cropMask{position:absolute; background:rgba(0,0,0,.62); pointer-events:none;}
+  .cropMask-t{top:0; inset-inline:0; height:0%;}
+  .cropMask-b{bottom:0; inset-inline:0; height:0%;}
+  .cropMask-l{top:0; bottom:0; inset-inline-start:0; width:0%;}
+  .cropMask-r{top:0; bottom:0; inset-inline-end:0; width:0%;}
+  .noImgMsg{
+    position:absolute; inset:0; display:flex; align-items:center; justify-content:center;
+    color:#ddd; font-size:12.5px; text-align:center; padding:14px;
+  }
+  .sliderGroup{margin-bottom:14px;}
+  .sliderGroup h4{font-size:11.5px; color:var(--ink-soft); font-weight:700; margin-bottom:8px;}
+  .sliderRow{display:flex; align-items:center; gap:8px; margin-bottom:6px;}
+  .sliderRow label{font-size:11px; color:var(--ink-soft); width:52px; flex:none;}
+  .sliderRow input[type=range]{flex:1; accent-color:var(--seal);}
+  .sliderRow output{font-size:11px; color:var(--ink-faint); width:34px; text-align:left; flex:none; font-variant-numeric:tabular-nums;}
+  .aiRow{display:flex; gap:8px; margin-bottom:8px;}
+  .aiRow .btn{flex:1; justify-content:center; font-size:12px; padding:8px 6px;}
+  .aiStatus{font-size:11.5px; color:var(--ink-soft); min-height:16px; margin-bottom:10px;}
+  .aiStatus.err{color:var(--seal);}
+  .modalFoot{
+    display:flex; gap:8px; padding:12px 16px 16px; border-top:1px solid var(--line);
+    position:sticky; bottom:0; background:var(--card); flex-wrap:wrap;
+  }
+  .modalFoot .btn{flex:1; justify-content:center;}
+  .rotateRemoveRow{display:flex; gap:8px; width:100%; margin-bottom:2px;}
+
+
+  /* ===== تحسينات الواجهة ===== */
+  body{background:radial-gradient(1200px 500px at 85% -10%,rgba(140,47,57,.10),transparent 60%),radial-gradient(900px 500px at 0% 20%,rgba(47,111,98,.10),transparent 60%),var(--paper); background-attachment:fixed;}
+  .btn{transition:transform .12s, box-shadow .15s, filter .15s, background .15s;}
+  .btn:hover{transform:translateY(-1px); box-shadow:0 6px 14px -8px rgba(0,0,0,.45);}
+  .btn:active{transform:scale(.96);}
+  .btn-gold{background:linear-gradient(135deg,#F8DD83,#E0AE2C 52%,#B8860B); color:#3a2a00; border-color:#8a6508; position:relative; overflow:hidden;}
+  .btn-gold::after{content:""; position:absolute; top:0; left:-60%; width:40%; height:100%; background:linear-gradient(100deg,transparent,rgba(255,255,255,.65),transparent); animation:shine 3.2s infinite;}
+  @keyframes shine{0%{left:-60%}60%,100%{left:130%}}
+  .panelSection{transition:box-shadow .2s, transform .2s;}
+  .panelSection:hover{box-shadow:var(--shadow);}
+  .tab{transition:transform .15s, border-color .15s, box-shadow .15s;} .tab:hover{transform:translateY(-1px);}
+  .tab.active{box-shadow:0 6px 16px -10px var(--seal);}
+  .page{animation:fadeIn .3s ease;} @keyframes fadeIn{from{opacity:0}to{opacity:1}}
+  .segGroup label{position:relative; cursor:pointer; transition:transform .12s, border-color .15s;} .segGroup label:hover{transform:translateY(-1px);}
+  .chk{display:flex; align-items:center; gap:8px; font-size:12px; font-weight:700; color:var(--ink-soft); margin:8px 0; cursor:pointer;}
+  .chk input{accent-color:var(--seal); width:16px; height:16px;}
+  .field input[type=range]{width:100%; accent-color:var(--seal);}
+  .previewHead{display:flex; align-items:center; justify-content:space-between; gap:10px; flex-wrap:wrap; margin-bottom:12px;}
+  .stats{display:flex; gap:8px; flex-wrap:wrap;}
+  .stats span{background:var(--card); border:1px solid var(--line); border-radius:999px; padding:3px 11px; font-size:11.5px; font-weight:700; color:var(--ink-soft);}
+  .zoomCtl{display:flex; align-items:center; gap:6px; font-size:13px;} .zoomCtl input{width:120px; accent-color:var(--seal);}
+  .dropHint{margin-top:14px; text-align:center; font-size:11.5px; color:var(--ink-faint); border:1.5px dashed var(--line); border-radius:var(--radius-sm); padding:8px;}
+  .previewPane.dragover{outline:2.5px dashed var(--seal); outline-offset:-6px; background:var(--amber-bg);}
+  .toast{position:fixed; bottom:22px; left:50%; transform:translate(-50%,30px); background:var(--ink); color:var(--paper); padding:10px 20px; border-radius:999px; font-size:13px; font-weight:700; opacity:0; pointer-events:none; transition:all .25s; z-index:300; box-shadow:var(--shadow-lg);}
+  .toast.show{opacity:1; transform:translate(-50%,0);}
+  .busy{position:fixed; inset:0; background:rgba(20,22,28,.6); display:none; align-items:center; justify-content:center; flex-direction:column; gap:14px; z-index:250; color:#fff; font-weight:700;}
+  .busy.open{display:flex;}
+  .spin{width:42px; height:42px; border:4px solid rgba(255,255,255,.25); border-top-color:#F8DD83; border-radius:50%; animation:spin .8s linear infinite;}
+  @keyframes spin{to{transform:rotate(360deg)}}
+  .exportBar{max-width:1400px; margin:8px auto 40px; padding:0 16px;}
+  .exportInner{background:var(--card); border:1px solid var(--line); border-radius:14px; padding:20px; box-shadow:var(--shadow);}
+  .exportInner h2{font-size:16px; margin-bottom:4px;} .exportInner p{font-size:12px; color:var(--ink-soft); margin-bottom:14px;}
+  .exportGrid{display:grid; grid-template-columns:repeat(auto-fit,minmax(150px,1fr)); gap:10px;}
+  .exportCard{display:flex; flex-direction:column; align-items:center; gap:2px; padding:14px 8px; border:1.5px solid var(--line); border-radius:12px; background:var(--card-2); transition:transform .15s, box-shadow .15s, border-color .15s;}
+  .exportCard:hover{transform:translateY(-3px); box-shadow:var(--shadow); border-color:var(--seal);}
+  .exportCard b{font-size:20px; color:var(--seal);} .exportCard span{font-size:11px; color:var(--ink-soft); font-weight:700;} .exportCard em{font-style:normal; font-size:12px; font-weight:800; color:var(--teal);}
+  .aboutBody{padding:18px 20px; text-align:center; line-height:1.9; font-size:14px;}
+  .aboutBody .crest{font-size:34px;}
+  .aboutRow{display:flex; align-items:center; justify-content:center; gap:8px; flex-wrap:wrap; margin-top:10px; font-size:13px;}
+  .aboutRow a{color:var(--seal); font-weight:800; text-decoration:none; direction:ltr;}
+
+
+  /* ===== ترتيب وتجميل ===== */
+  .topbar{border-bottom:3px solid transparent; border-image:linear-gradient(90deg,#F8DD83,#B8860B,#8C2F39,#2F6F62) 1;}
+  .topbarActions{gap:8px;}
+  .brand-text h1{font-size:19px; font-weight:900;}
+  .seal-badge{animation:glow 3s ease-in-out infinite;}
+  @keyframes glow{50%{box-shadow:inset 0 0 0 2px rgba(255,255,255,.25),0 0 22px rgba(248,221,131,.55);}}
+  .btn-add{background:linear-gradient(135deg,#3b9b86,#2F6F62); color:#fff; border-color:#215048; box-shadow:0 6px 16px -8px #2F6F62;}
+  .btn-add:hover{filter:brightness(1.1);}
+  .btn-outline-dark{background:rgba(255,255,255,.08); color:#F4F2EA; border-color:rgba(255,255,255,.3);}
+  .btn-outline-dark:hover{background:rgba(255,255,255,.16);}
+  .menuWrap{position:relative;}
+  .menu{position:absolute; top:calc(100% + 8px); left:0; min-width:230px; background:var(--card); color:var(--ink); border:1px solid var(--line); border-radius:12px; box-shadow:var(--shadow-lg); padding:6px; display:none; z-index:60;}
+  .menu.open{display:block; animation:fadeIn .15s;}
+  .menu button{display:flex; justify-content:space-between; gap:12px; width:100%; background:none; border:none; padding:9px 12px; border-radius:8px; font-size:13px; font-weight:700; color:var(--ink); text-align:start;}
+  .menu button:hover{background:var(--amber-bg);}
+  .menu button em{font-style:normal; color:var(--teal); font-size:11.5px; direction:ltr;}
+  .helpBar{background:linear-gradient(90deg,var(--card-2),var(--card));}
+  .helpBar ol{list-style:none; counter-reset:st; padding:0; gap:8px 18px;}
+  .helpBar li{counter-increment:st; display:flex; align-items:center; gap:7px;}
+  .helpBar li::before{content:counter(st); width:20px; height:20px; border-radius:50%; background:var(--seal); color:var(--seal-ink); font-size:11px; font-weight:800; display:flex; align-items:center; justify-content:center; flex:none;}
+  .previewPane{background:radial-gradient(circle,rgba(140,132,110,.30) 1px,transparent 1.3px) 0 0/18px 18px, var(--card-2);}
+  .paperNote2{font-size:11.5px; color:var(--ink-soft); margin:-2px 0 14px; padding:6px 10px; background:var(--card); border:1px dashed var(--line); border-radius:8px;}
+  .paperNote2:empty{display:none;}
+  .tab.active{background:linear-gradient(135deg,var(--card),var(--amber-bg));}
+  .panelAcc{padding:0;}
+  .panelAcc summary{list-style:none; cursor:pointer; display:flex; align-items:center; gap:9px; padding:12px 14px; font-weight:800; font-size:13px; border-radius:var(--radius);}
+  .panelAcc summary::-webkit-details-marker{display:none;}
+  .panelAcc summary::after{content:"‹"; margin-inline-start:auto; font-size:20px; line-height:1; color:var(--ink-faint); transition:transform .2s;}
+  .panelAcc[open] summary::after{transform:rotate(-90deg);}
+  .panelAcc summary:hover{background:var(--card-2);}
+  .panelAcc .accBody{padding:14px 14px 16px; border-top:1px dashed var(--line);}
+  .panelSection h3 .num, .panelAcc summary .num{width:28px; height:28px; border-radius:9px; background:var(--amber-bg); color:inherit; font-size:14px; display:flex; align-items:center; justify-content:center; flex:none;}
+  .panelSection.docsSection{border-top:4px solid var(--teal);}
+  .addRow{display:grid; grid-template-columns:1fr auto; gap:8px; margin-bottom:12px;}
+  .addRow .btn{justify-content:center;}
+  .emptyDocs{padding:18px 10px; line-height:1.8;}
+  .emptyDocs svg{width:70px; display:block; margin:0 auto 8px; opacity:.85;}
+  .docCard:hover{transform:translateY(-2px); box-shadow:var(--shadow); border-color:var(--teal);}
+  .docCard{transition:transform .15s, box-shadow .15s, border-color .15s;}
+  .thumbBtn{transition:border-color .15s, transform .15s;} .thumbBtn:hover{border-color:var(--seal); transform:scale(1.03);}
+  ::-webkit-scrollbar{width:10px; height:10px;} ::-webkit-scrollbar-thumb{background:var(--line); border-radius:10px; border:2px solid var(--paper);}
+  /* نافذة من نحن الزجاجية */
+  #aboutModal{background:rgba(12,14,26,.55); backdrop-filter:blur(8px); -webkit-backdrop-filter:blur(8px); overflow:hidden;}
+  .aboutBlob{position:absolute; border-radius:50%; filter:blur(60px); opacity:.85; pointer-events:none;}
+  .aboutBlob.b1{width:300px; height:300px; background:#E0AE2C; top:12%; right:18%;}
+  .aboutBlob.b2{width:340px; height:340px; background:#8C2F39; bottom:8%; left:16%;}
+  .aboutBlob.b3{width:260px; height:260px; background:#2F6F62; top:40%; left:42%;}
+  .glassCard{position:relative; width:min(560px,94vw); padding:38px 26px 30px; border-radius:28px; text-align:center; color:#fff;
+    background:linear-gradient(135deg,rgba(255,255,255,.30),rgba(255,255,255,.08));
+    backdrop-filter:blur(26px) saturate(170%); -webkit-backdrop-filter:blur(26px) saturate(170%);
+    border:1.5px solid rgba(255,255,255,.5);
+    box-shadow:0 30px 80px -20px rgba(0,0,0,.65), inset 0 1.5px 0 rgba(255,255,255,.7), inset 0 -1px 0 rgba(255,255,255,.15);
+    animation:popIn .35s cubic-bezier(.2,.9,.3,1.2);}
+  @keyframes popIn{from{opacity:0; transform:scale(.88) translateY(14px);} to{opacity:1; transform:none;}}
+  .gClose{position:absolute; top:14px; inset-inline-start:14px; width:34px; height:34px; border-radius:50%; border:1px solid rgba(255,255,255,.5); background:rgba(255,255,255,.18); color:#fff; font-size:15px;}
+  .gClose:hover{background:rgba(255,255,255,.32);}
+  .glassCard .crest{width:74px; height:74px; margin:0 auto 10px; border-radius:50%; background:linear-gradient(135deg,#F8DD83,#B8860B); display:flex; align-items:center; justify-content:center; font-size:36px; box-shadow:0 8px 24px -6px rgba(248,221,131,.8), inset 0 2px 0 rgba(255,255,255,.7);}
+  .glassCard h2{font-size:30px; font-weight:900; margin-bottom:12px; text-shadow:0 2px 12px rgba(0,0,0,.35);}
+  .gText{font-size:19px; font-weight:700; line-height:2; text-shadow:0 1px 8px rgba(0,0,0,.4);}
+  .gText b{color:#FFE9A0; font-size:24px;}
+  .glassCard hr{border:none; height:1px; background:linear-gradient(90deg,transparent,rgba(255,255,255,.75),transparent); margin:18px 0;}
+  .gRow{display:flex; align-items:center; justify-content:center; gap:8px; flex-wrap:wrap; margin-top:12px; font-size:14px; font-weight:700; text-shadow:0 1px 6px rgba(0,0,0,.35);}
+  .gLink{display:inline-flex; gap:6px; padding:7px 14px; border-radius:999px; background:rgba(255,255,255,.2); border:1px solid rgba(255,255,255,.45); color:#fff; text-decoration:none; font-weight:800; direction:ltr; transition:background .15s, transform .15s;}
+  .gLink:hover{background:rgba(255,255,255,.35); transform:translateY(-1px);}
+  .gCopy{border:1px solid rgba(255,255,255,.45); background:rgba(255,255,255,.12); color:#fff; border-radius:999px; padding:6px 12px; font-size:12px; font-weight:700;}
+  .gCopy:hover{background:rgba(255,255,255,.28);}
+
+  @media print{
+    html,body{background:#fff !important; height:auto !important; margin:0 !important;}
+    .topbar,.helpBar,.tabsRow,.panel,.previewHead,.paperNote2,.menu,.dropHint,.exportBar,.toast,.busy,.modal-backdrop,.sheetPreviewLabel{display:none !important;}
+    .layout{padding:0 !important; max-width:none !important; margin:0 !important;}
+    .workspace{display:block !important;}
+    .previewPane{border:0 !important; padding:0 !important; margin:0 !important; background:none !important; overflow:visible !important; min-height:0 !important; border-radius:0 !important;}
+    .sheetPreview{margin:0 !important;}
+    .pagesRow{display:block !important;}
+    .zoomWrap{transform:none !important; width:auto !important; height:auto !important; overflow:visible !important; display:block !important;}
+    .page{transform:none !important; box-shadow:none !important; margin:0 !important; animation:none !important; overflow:hidden !important;
+      height:calc(var(--ph) - 0.6mm) !important; break-after:page; page-break-after:always;
+      -webkit-print-color-adjust:exact; print-color-adjust:exact;}
+    .page.lastPrint{break-after:auto !important; page-break-after:auto !important;}
+    .slot.empty,.phantomOnlyPage{display:none !important;}
+    .slot{transition:none !important; transform:none !important;}
+  }
+</style>
+</head>
+<body>
+<div id="app">
+
+  <header class="topbar">
+    <div class="brand">
+      <div class="seal-badge">
+        <svg viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+          <path d="M12 2 L20 6 V12 C20 17 16.5 20.5 12 22 C7.5 20.5 4 17 4 12 V6 Z" fill="rgba(255,255,255,.9)"/>
+          <path d="M8.5 12.3 L10.8 14.6 L15.7 9.4" stroke="#6E2028" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"/>
+        </svg>
+      </div>
+      <div class="brand-text">
+        <h1>برنامج ترتيب المستمسكات</h1>
+        <p>تجهيز صور الهويات والوثائق الرسمية وترتيبها على الورق جاهزة للطباعة والقص</p>
+      </div>
+    </div>
+    <div class="topbarActions">
+      <button class="btn btn-add" id="topAddBtn">＋ إضافة مستمسك</button>
+      <div class="menuWrap">
+        <button class="btn btn-outline-dark" id="exportMenuBtn">📤 تصدير ▾</button>
+        <div class="menu" id="exportMenu">
+          <button data-export="pdf1200">PDF <em>1200 DPI</em></button>
+          <button data-export="pdf600">PDF <em>600 DPI</em></button>
+          <button data-export="pdf300">PDF <em>300 DPI</em></button>
+          <button data-export="pnghigh">PNG HIGH QUALITY <em>600 DPI</em></button>
+          <button data-export="pngnormal">PNG NORMAL SIZE <em>150 DPI</em></button>
+          <button data-export="jpg">JPG <em>300 DPI</em></button>
+        </div>
+      </div>
+      <button class="btn btn-primary" id="printBtn"><span>🖨️</span> طباعة</button>
+      <button class="btn btn-gold" id="aboutBtn">✦ من نحن</button>
+    </div>
+  </header>
+
+  <div class="helpBar" id="helpBar">
+    <div>
+      <strong>طريقة الاستخدام:</strong>
+      <ol>
+        <li>اختر حجم الورق والقالب</li>
+        <li>اضغط «إضافة مستمسك» أو على مربع فارغ في المعاينة</li>
+        <li>ارفع الصورة ثم عدّلها (قص / إضاءة)</li>
+        <li>كرر حتى تمتلئ الورقة، أو أضف ورقة جديدة</li>
+        <li>اضغط طباعة</li>
+      </ol>
+    </div>
+    <button id="closeHelp" title="إخفاء">✕</button>
+  </div>
+
+  <div class="layout">
+    <div class="tabsRow" id="tabsRow"></div>
+
+    <div class="workspace">
+      <aside class="panel" id="panel"></aside>
+
+      <section class="previewPane">
+        <div class="previewHead"><div class="stats" id="previewStats"></div>
+          <label class="zoomCtl">🔍 <input type="range" id="zoomRange" min="60" max="220" value="100" title="تكبير المعاينة"></label></div>
+        <div class="paperNote2" id="paperSummary"></div>
+        <div id="previewRoot"></div>
+        <div class="dropHint">💡 اسحب الصور وأفلتها هنا (أو على أي مربع) لإضافتها مباشرة</div>
+      </section>
+    </div>
+  </div>
+  <footer class="exportBar"><div class="exportInner">
+    <h2>📤 تصدير الملف</h2>
+    <p>صدّر كل الأوراق جاهزة للطباعة أو المشاركة. الدقة الفعلية تعتمد أيضاً على دقة الصور الأصلية التي رفعتها.</p>
+    <div class="exportGrid">
+      <button class="exportCard" data-export="pdf1200"><b>PDF</b><span>دقة فائقة</span><em>1200 DPI</em></button>
+      <button class="exportCard" data-export="pdf600"><b>PDF</b><span>دقة عالية</span><em>600 DPI</em></button>
+      <button class="exportCard" data-export="pdf300"><b>PDF</b><span>دقة قياسية</span><em>300 DPI</em></button>
+      <button class="exportCard" data-export="pnghigh"><b>PNG</b><span>HIGH QUALITY</span><em>600 DPI</em></button>
+      <button class="exportCard" data-export="pngnormal"><b>PNG</b><span>NORMAL SIZE</span><em>150 DPI</em></button>
+      <button class="exportCard" data-export="jpg"><b>JPG</b><span>صورة مضغوطة</span><em>300 DPI</em></button>
+    </div>
+  </div></footer>
+</div>
+
+<div class="busy" id="busy"><div class="spin"></div><div id="busyMsg">جارٍ التجهيز…</div></div>
+
+<!-- About -->
+<div class="modal-backdrop" id="aboutModal">
+  <div class="aboutBlob b1"></div><div class="aboutBlob b2"></div><div class="aboutBlob b3"></div>
+  <div class="glassCard">
+    <button class="gClose" id="aboutClose" aria-label="إغلاق">✕</button>
+    <div class="crest">🏅</div>
+    <h2>من نحن</h2>
+    <p class="gText">تم تطوير وعمل هذا التطبيق بواسطة<br><b>ياسر جابر</b><br>و باستخدام ادوات الذكاء الاصطناعي</p>
+    <hr>
+    <div class="gRow">للتواصل عبر الايميل :
+      <a class="gLink" href="mailto:yassirgabeerh@gmail.com" target="_blank" rel="noopener">✉️ yassirgabeerh@gmail.com</a>
+      <button class="gCopy" data-copy="yassirgabeerh@gmail.com">نسخ</button></div>
+    <div class="gRow">او الانستغرام :
+      <a class="gLink" href="https://instagram.com/4assir" target="_blank" rel="noopener">📷 4assir</a>
+      <button class="gCopy" data-copy="4assir">نسخ</button></div>
+  </div>
+</div>
+
+<!-- ================= Editor Modal ================= -->
+<div class="modal-backdrop" id="editorModal">
+  <div class="modal">
+    <div class="modalHead">
+      <h3 id="editorTitle">تعديل الصورة</h3>
+      <button class="modalClose" id="editorCloseBtn">✕</button>
+    </div>
+    <div class="modalBody">
+      <div class="cropPreviewWrap" id="cropPreviewWrap">
+        <img id="editorImg" alt="">
+        <div class="cropMask cropMask-t" id="maskT"></div>
+        <div class="cropMask cropMask-b" id="maskB"></div>
+        <div class="cropMask cropMask-l" id="maskL"></div>
+        <div class="cropMask cropMask-r" id="maskR"></div>
+        <div class="noImgMsg" id="noImgMsg">لا توجد صورة بعد — اضغط «رفع صورة» بالأسفل</div>
+      </div>
+
+      <div class="sliderGroup">
+        <h4>قص الصورة من الحواف</h4>
+        <div class="sliderRow"><label>أعلى</label><input type="range" id="sTop" min="0" max="45" value="0"><output id="oTop">0%</output></div>
+        <div class="sliderRow"><label>أسفل</label><input type="range" id="sBottom" min="0" max="45" value="0"><output id="oBottom">0%</output></div>
+        <div class="sliderRow"><label>يمين</label><input type="range" id="sRight" min="0" max="45" value="0"><output id="oRight">0%</output></div>
+        <div class="sliderRow"><label>يسار</label><input type="range" id="sLeft" min="0" max="45" value="0"><output id="oLeft">0%</output></div>
+      </div>
+
+      <div class="sliderGroup">
+        <h4>الإضاءة والتباين واللون</h4>
+        <div class="sliderRow"><label>الإضاءة</label><input type="range" id="sBright" min="-50" max="50" value="0"><output id="oBright">0</output></div>
+        <div class="sliderRow"><label>التباين</label><input type="range" id="sContrast" min="-50" max="50" value="0"><output id="oContrast">0</output></div>
+        <div class="sliderRow"><label>التشبع</label><input type="range" id="sSat" min="-50" max="50" value="0"><output id="oSat">0</output></div>
+      </div>
+
+      <div class="aiRow">
+        <button class="btn btn-outline btn-sm" id="autoEnhanceBtn">✨ تحسين تلقائي (خوارزمي)</button>
+        <button class="btn btn-outline btn-sm" id="aiSuggestBtn">🤖 اقتراح بالذكاء الاصطناعي</button>
+      </div>
+      <div class="aiStatus" id="aiStatus"></div>
+    </div>
+    <div class="modalFoot">
+      <div class="rotateRemoveRow">
+        <button class="btn btn-outline btn-sm" id="rotateBtn">↻ تدوير 90°</button>
+        <button class="btn btn-outline btn-sm" id="replaceBtn">🖼️ استبدال الصورة</button>
+        <button class="btn btn-danger btn-sm" id="removeImgBtn">حذف الصورة</button>
+      </div>
+      <button class="btn btn-outline" id="editorCancelBtn">إلغاء</button>
+      <button class="btn btn-primary" id="editorSaveBtn">حفظ</button>
+    </div>
+  </div>
+</div>
+
+<script>
+'use strict';
+
+/* ======================= بيانات ثابتة ======================= */
+const TEMPLATES = [
+  {id:'national_id',     cat:'بطاقات شخصية', name:'البطاقة الوطنية الموحدة', w:85,  h:55,  main:true},
+  {id:'voter_card',       cat:'بطاقات شخصية', name:'بطاقة الناخب',            w:85,  h:55},
+  {id:'civil_status',     cat:'بطاقات شخصية', name:'هوية الأحوال المدنية',    w:85,  h:105},
+  {id:'nationality_cert', cat:'بطاقات شخصية', name:'شهادة الجنسية العراقية',  w:165, h:200},
+  {id:'residence_card',   cat:'وثائق رسمية',  name:'بطاقة السكن',             w:90,  h:60},
+  {id:'ration_card',      cat:'وثائق رسمية',  name:'البطاقة التموينية',       w:90,  h:60},
+  {id:'passport',         cat:'وثائق رسمية',  name:'جواز السفر العراقي',      w:88,  h:125},
+  {id:'birth_cert',       cat:'وثائق A4',     name:'شهادة الولادة',           w:297, h:210},
+  {id:'marriage_cert',    cat:'وثائق A4',     name:'عقد الزواج',              w:297, h:210},
+  {id:'death_cert',       cat:'وثائق A4',     name:'شهادة الوفاة',            w:297, h:210},
+];
+const DEFAULT_TEMPLATE_ID = 'national_id';
+
+const PAPERS = [
+  {id:'A3', name:'A3 (297×420)', w:297, h:420},
+  {id:'A4', name:'A4 (210×297)', w:210, h:297},
+  {id:'A5', name:'A5 (148×210)', w:148, h:210},
+  {id:'A6', name:'A6 (105×148)', w:105, h:148},
+  {id:'B4', name:'B4 (250×353)', w:250, h:353},
+  {id:'B5', name:'B5 (176×250)', w:176, h:250},
+  {id:'B6', name:'B6 (125×176)', w:125, h:176},
+  {id:'Letter', name:'Letter (215.9×279.4)', w:215.9, h:279.4},
+  {id:'Legal',  name:'Legal (215.9×355.6)',  w:215.9, h:355.6},
+  {id:'custom', name:'حجم مخصص…', w:null, h:null},
+];
+const DEFAULT_PAPER_ID = 'A4';
+
+const PX_PER_MM = 96/25.4;
+const QUALITY_DPI = {high:300, medium:200, low:120};
+const BAKE_DIM_CAP = 4200;
+const BAKE_DIM_FLOOR = 300;
+const LS_KEY_TEMPLATES = 'wilaya_mostamsakat_custom_templates_v1';
+const LS_KEY_QUALITY = 'wilaya_mostamsakat_print_quality_v1';
+
+function bakeDimFor(tpl){
+  const dpi = QUALITY_DPI[printQuality] || 300;
+  const longer = Math.max(tpl.w, tpl.h);
+  return Math.min(BAKE_DIM_CAP, Math.max(BAKE_DIM_FLOOR, Math.round(longer/25.4*dpi)));
+}
+function loadQuality(){
+  try{
+    const v = localStorage.getItem(LS_KEY_QUALITY);
+    return (v==='high'||v==='medium'||v==='low') ? v : 'high';
+  }catch(e){ return 'high'; }
+}
+function saveQuality(){
+  try{ localStorage.setItem(LS_KEY_QUALITY, printQuality); }catch(e){ /* تجاهل */ }
+}
+
+/* ======================= حالة التطبيق ======================= */
+let customTemplates = loadCustomTemplates();
+let printQuality = 'high';
+let previewZoom = 100;
+const openSections = {};
+let sheets = [];
+let sheetSeq = 0;
+let activeSheetId = null;
+let editingCtx = null; // {sheetId, docId, side, original}
+let helpDismissed = false;
+
+function loadCustomTemplates(){
+  try{
+    const raw = localStorage.getItem(LS_KEY_TEMPLATES);
+    if(!raw) return [];
+    const arr = JSON.parse(raw);
+    if(!Array.isArray(arr)) return [];
+    return arr.filter(t=>t && t.id && t.w>0 && t.h>0);
+  }catch(e){ return []; }
+}
+function saveCustomTemplates(){
+  try{ localStorage.setItem(LS_KEY_TEMPLATES, JSON.stringify(customTemplates)); }catch(e){ /* تجاهل */ }
+}
+
+function uid(prefix){ return prefix + '_' + Math.random().toString(36).slice(2,9); }
+
+function blankImageObj(){
+  return {
+    src:null, _el:null, output:null,
+    cropTop:0, cropRight:0, cropBottom:0, cropLeft:0,
+    brightness:0, contrast:0, saturation:0,
+  };
+}
+function newDoc(templateId){
+  return {id:uid('doc'), templateId: templateId || DEFAULT_TEMPLATE_ID, front:blankImageObj(), back:blankImageObj()};
+}
+
+function createSheet(){
+  sheetSeq++;
+  return {
+    id:uid('sheet'),
+    name:'ورقة '+sheetSeq,
+    paperId:DEFAULT_PAPER_ID,
+    customPaperW:210, customPaperH:297,
+    orientation:'portrait',
+    templateId:DEFAULT_TEMPLATE_ID,
+    layoutMode:'side-by-side', // side-by-side | stacked | duplex
+    swapSides:false,
+    swapTop:false,
+    mirrorBack:true,
+    marginMM:5,
+    gapMM:3,
+    radius:3, borderOn:true, borderColor:'#6b6b6b', borderW:0.25, marks:true,
+    docs:[],
+  };
+}
+
+function getSheet(id){ return sheets.find(s=>s.id===id); }
+function getActiveSheet(){ return getSheet(activeSheetId); }
+function getTemplate(id){
+  return TEMPLATES.find(t=>t.id===id) || customTemplates.find(t=>t.id===id) || TEMPLATES[0];
+}
+
+/* ======================= هندسة الصفحة ======================= */
+function getPaperDims(sheet){
+  let w,h;
+  if(sheet.paperId==='custom'){
+    w = Math.max(20, Number(sheet.customPaperW)||210);
+    h = Math.max(20, Number(sheet.customPaperH)||297);
+  } else {
+    const p = PAPERS.find(pp=>pp.id===sheet.paperId) || PAPERS[1];
+    w = p.w; h = p.h;
+  }
+  if(sheet.orientation==='landscape'){ if(w<h){ const t=w; w=h; h=t; } }
+  else { if(w>h){ const t=w; w=h; h=t; } }
+  return {w,h};
+}
+
+function computeLayout(sheet){
+  const paper = getPaperDims(sheet);
+  const margin = Math.max(0, Number(sheet.marginMM)||0);
+  const gap = Math.max(0, Number(sheet.gapMM)||0);
+  const printableW = Math.max(0, paper.w - margin*2);
+  const printableH = Math.max(0, paper.h - margin*2);
+  return {paper, margin, gap, printableW, printableH, mode: sheet.layoutMode};
+}
+
+/* يوزّع عناصر بأحجام مختلفة (كل مستمسك بقياسه الخاص) على صفحة واحدة أو أكثر
+   بطريقة "الأرفف": يضع العناصر جنباً لجنب حتى تمتلئ الصف ثم ينتقل لصف جديد،
+   وإذا امتلأت الورقة بالكامل يبدأ صفحة جديدة تلقائياً. */
+function packShelves(items, printableW, printableH, gap){
+  const pages = [];
+  let queue = items.slice();
+  let guard = 0;
+  while(queue.length && guard<300){
+    guard++;
+    let x=0, y=0, shelfH=0;
+    const placed=[]; const next=[];
+    queue.forEach(function(item){
+      if(x>0 && x+item.w>printableW){ x=0; y+=shelfH+gap; shelfH=0; }
+      if(y+item.h>printableH){ next.push(item); return; }
+      placed.push(Object.assign({}, item, {x:x, y:y}));
+      x += item.w+gap; shelfH = Math.max(shelfH, item.h);
+    });
+    if(placed.length===0) break;
+    pages.push(placed);
+    queue = next;
+  }
+  return pages;
+}
+
+function unitSize(mode, tpl, gap){
+  if(mode==='side-by-side') return {w:tpl.w*2+gap, h:tpl.h};
+  if(mode==='stacked') return {w:tpl.w, h:tpl.h*2+gap};
+  return {w:tpl.w, h:tpl.h};
+}
+
+function placeItemSlots(mode, it, L, gap, sheet, sink){
+  if(it.isPhantom){
+    sink.push({x:L.margin+it.x, y:L.margin+it.y, w:it.w, h:it.h, doc:null, side:'new'});
+    return;
+  }
+  const tpl = it.tpl;
+  if(mode==='side-by-side'){
+    const x0=it.x, x1=it.x+tpl.w+gap;
+    const frontX = sheet.swapSides ? x0 : x1;
+    const backX  = sheet.swapSides ? x1 : x0;
+    sink.push({x:L.margin+frontX, y:L.margin+it.y, w:tpl.w, h:tpl.h, doc:it.doc, side:'front'});
+    sink.push({x:L.margin+backX,  y:L.margin+it.y, w:tpl.w, h:tpl.h, doc:it.doc, side:'back'});
+  } else {
+    const y0=it.y, y1=it.y+tpl.h+gap;
+    const frontY = sheet.swapTop ? y1 : y0;
+    const backY  = sheet.swapTop ? y0 : y1;
+    sink.push({x:L.margin+it.x, y:L.margin+frontY, w:tpl.w, h:tpl.h, doc:it.doc, side:'front'});
+    sink.push({x:L.margin+it.x, y:L.margin+backY,  w:tpl.w, h:tpl.h, doc:it.doc, side:'back'});
+  }
+}
+
+function buildPages(sheet){
+  const L = computeLayout(sheet);
+  const gap = L.gap;
+
+  const realItems = sheet.docs.map(function(doc){
+    const tpl = getTemplate(doc.templateId);
+    const u = unitSize(L.mode, tpl, gap);
+    return {doc:doc, tpl:tpl, w:u.w, h:u.h};
+  });
+
+  const defaultTpl = getTemplate(sheet.templateId);
+  const pu = unitSize(L.mode, defaultTpl, gap);
+  const phantomItem = {doc:null, tpl:defaultTpl, w:pu.w, h:pu.h, isPhantom:true};
+  const phantomFits = pu.w<=L.printableW && pu.h<=L.printableH;
+
+  const tooBig = realItems.filter(function(it){ return it.w>L.printableW || it.h>L.printableH; });
+  const fitting = realItems.filter(function(it){ return !(it.w>L.printableW || it.h>L.printableH); });
+  const packInput = fitting.concat(phantomFits ? [phantomItem] : []);
+
+  const packedShelfPages = packShelves(packInput, L.printableW, L.printableH, gap);
+
+  const pages = [];
+  packedShelfPages.forEach(function(pageItems){
+    const allPhantom = pageItems.every(function(it){ return it.isPhantom; });
+    if(L.mode==='duplex'){
+      const frontSlots = pageItems.map(function(it){
+        if(it.isPhantom){ return {x:L.margin+it.x, y:L.margin+it.y, w:it.w, h:it.h, doc:null, side:'new'}; }
+        return {x:L.margin+it.x, y:L.margin+it.y, w:it.tpl.w, h:it.tpl.h, doc:it.doc, side:'front'};
+      });
+      pages.push({kind:'front', w:L.paper.w, h:L.paper.h, slots:frontSlots, allPhantom:allPhantom});
+      const withBack = pageItems.filter(function(it){ return !it.isPhantom && it.doc && it.doc.back && it.doc.back.output; });
+      if(withBack.length){
+        const backSlots = withBack.map(function(it){
+          const mirroredLocalX = sheet.mirrorBack ? (L.printableW - (it.x+it.w)) : it.x;
+          return {x:L.margin+mirroredLocalX, y:L.margin+it.y, w:it.tpl.w, h:it.tpl.h, doc:it.doc, side:'back'};
+        });
+        pages.push({kind:'back', w:L.paper.w, h:L.paper.h, slots:backSlots, allPhantom:false});
+      }
+    } else {
+      const slots = [];
+      pageItems.forEach(function(it){ placeItemSlots(L.mode, it, L, gap, sheet, slots); });
+      pages.push({kind:'single', w:L.paper.w, h:L.paper.h, slots, allPhantom:allPhantom});
+    }
+  });
+
+  if(pages.length===0){
+    pages.push({kind: L.mode==='duplex'?'front':'single', w:L.paper.w, h:L.paper.h, slots:[], allPhantom:true});
+  }
+
+  return {L:L, pages:pages, pageCount:packedShelfPages.length, tooBig:tooBig};
+}
+
+/* ======================= لصق/قص/تحسين الصور ======================= */
+function bakeCanvas(obj, dim){
+  if(!obj || !obj._el) return null;
+  const el = obj._el;
+  const iw = el.naturalWidth, ih = el.naturalHeight;
+  const l = Math.min(0.9, obj.cropLeft/100), r = Math.min(0.9-l, obj.cropRight/100);
+  const t = Math.min(0.9, obj.cropTop/100), b = Math.min(0.9-t, obj.cropBottom/100);
+  const sx = iw*l, sy = ih*t;
+  const sw = Math.max(1, iw*(1-l-r)), sh = Math.max(1, ih*(1-t-b));
+  const scale = Math.min(1, dim/Math.max(sw,sh));
+  const dw = Math.max(1, Math.round(sw*scale)), dh = Math.max(1, Math.round(sh*scale));
+  const canvas = document.createElement('canvas');
+  canvas.width = dw; canvas.height = dh;
+  const ctx = canvas.getContext('2d');
+  if('filter' in ctx){
+    ctx.filter = 'brightness('+(100+obj.brightness)+'%) contrast('+(100+obj.contrast)+'%) saturate('+(100+obj.saturation)+'%)';
+    ctx.drawImage(el, sx, sy, sw, sh, 0, 0, dw, dh);
+  } else { /* سفاري القديم: معالجة البكسلات يدوياً */
+    ctx.drawImage(el, sx, sy, sw, sh, 0, 0, dw, dh);
+    const id = ctx.getImageData(0,0,dw,dh), d = id.data;
+    const bF = 1+obj.brightness/100, cF = 1+obj.contrast/100, sF = 1+obj.saturation/100;
+    const cl = function(v){ return v<0?0:(v>255?255:v); };
+    for(let i=0;i<d.length;i+=4){
+      let R=d[i]*bF, G=d[i+1]*bF, B=d[i+2]*bF;
+      R=(R-128)*cF+128; G=(G-128)*cF+128; B=(B-128)*cF+128;
+      const L=0.299*R+0.587*G+0.114*B;
+      d[i]=cl(L+(R-L)*sF); d[i+1]=cl(L+(G-L)*sF); d[i+2]=cl(L+(B-L)*sF);
+    }
+    ctx.putImageData(id,0,0);
+  }
+  return canvas;
+}
+function bakeImage(obj, dim){
+  const c = bakeCanvas(obj, dim);
+  if(c) obj.output = c.toDataURL('image/jpeg', 0.92);
+}
+
+function computeAutoLevels(el){
+  const sw = 120, sh = Math.max(1, Math.round(120*el.naturalHeight/el.naturalWidth));
+  const c = document.createElement('canvas'); c.width=sw; c.height=sh;
+  const cx = c.getContext('2d'); cx.drawImage(el,0,0,sw,sh);
+  const data = cx.getImageData(0,0,sw,sh).data;
+  let min=255, max=0, sum=0; const count = sw*sh;
+  for(let i=0;i<data.length;i+=4){
+    const lum = 0.299*data[i] + 0.587*data[i+1] + 0.114*data[i+2];
+    if(lum<min) min=lum; if(lum>max) max=lum; sum+=lum;
+  }
+  const avg = sum/count;
+  const range = Math.max(max-min, 1);
+  const contrast = Math.max(-25, Math.min(55, Math.round((255-range)/255*65)));
+  const brightness = Math.max(-35, Math.min(35, Math.round((128-avg)/128*35)));
+  return {brightness, contrast, saturation:6};
+}
+
+/* ======================= رفع صورة ======================= */
+function loadFileInto(sheetId, docId, side, file){
+  if(!file || (file.type && !/^image\//.test(file.type))){ toast('الملف ليس صورة'); return; }
+  const reader = new FileReader();
+  reader.onload = function(ev){
+    const img = new Image();
+    img.onerror = function(){ toast('تعذّر قراءة هذه الصورة'); };
+    img.onload = function(){
+      const sheet = getSheet(sheetId);
+      const doc = sheet && sheet.docs.find(function(d){ return d.id===docId; });
+      if(!doc) return;
+      const obj = blankImageObj();
+      obj.src = ev.target.result; obj._el = img;
+      doc[side] = obj;
+      bakeImage(obj, bakeDimFor(getTemplate(doc.templateId)));
+      if(editingCtx && editingCtx.sheetId===sheetId && editingCtx.docId===docId && editingCtx.side===side){
+        editingCtx.original = {cropTop:0,cropRight:0,cropBottom:0,cropLeft:0,brightness:0,contrast:0,saturation:0};
+        fillEditorFromObj(obj);
+      }
+      renderAll();
+    };
+    img.src = ev.target.result;
+  };
+  reader.readAsDataURL(file);
+}
+function pickImage(sheetId, docId, side){
+  const input = document.createElement('input');
+  input.type = 'file'; input.accept = 'image/*';
+  input.onchange = function(e){ loadFileInto(sheetId, docId, side, e.target.files && e.target.files[0]); };
+  input.click();
+}
+function pickMany(sheetId){
+  const input = document.createElement('input');
+  input.type = 'file'; input.accept = 'image/*'; input.multiple = true;
+  input.onchange = function(e){ Array.from(e.target.files||[]).forEach(function(f){ addDocWithFile(sheetId, f); }); };
+  input.click();
+}
+
+function addDocAndPickFront(sheetId){
+  const sheet = getSheet(sheetId);
+  const doc = newDoc(sheet.templateId);
+  sheet.docs.push(doc);
+  renderAll();
+  pickImage(sheetId, doc.id, 'front', false);
+}
+
+/* ======================= أوراق (Sheets) ======================= */
+function addSheet(){
+  const s = createSheet();
+  sheets.push(s);
+  activeSheetId = s.id;
+  renderAll();
+}
+function removeSheet(id){
+  if(sheets.length<=1) return;
+  const idx = sheets.findIndex(s=>s.id===id);
+  if(idx<0) return;
+  if(!confirm('هل تريد حذف هذه الورقة وكل محتواها؟')) return;
+  sheets.splice(idx,1);
+  if(activeSheetId===id){ activeSheetId = sheets[Math.max(0,idx-1)].id; }
+  renderAll();
+}
+function autoOrientForTemplate(sheet){
+  const tpl = getTemplate(sheet.templateId);
+  sheet.orientation = tpl.w>tpl.h ? 'landscape' : 'portrait';
+}
+
+/* ======================= بناء الواجهة ======================= */
+const previewRoot = document.getElementById('previewRoot');
+const tabsRow = document.getElementById('tabsRow');
+const panelEl = document.getElementById('panel');
+const paperSummaryEl = document.getElementById('paperSummary');
+
+function fmtMM(n){ return (Math.round(n*10)/10).toString().replace('.0',''); }
+
+function renderAll(){
+  renderTabs();
+  renderPanel();
+  renderPreview();
+  renderPaperSummary();
+}
+
+function renderTabs(){
+  tabsRow.innerHTML = '';
+  sheets.forEach(function(sheet){
+    const tab = document.createElement('div');
+    tab.className = 'tab' + (sheet.id===activeSheetId ? ' active' : '');
+    const dot = document.createElement('span'); dot.className='dot';
+    tab.appendChild(dot);
+
+    const nameInput = document.createElement('input');
+    nameInput.className = 'tabName'; nameInput.type='text'; nameInput.value = sheet.name;
+    nameInput.addEventListener('change', function(){ sheet.name = nameInput.value || sheet.name; renderPaperSummary(); renderPreview(); });
+    nameInput.addEventListener('click', function(e){ e.stopPropagation(); if(activeSheetId!==sheet.id){ activeSheetId = sheet.id; renderAll(); } });
+    tab.appendChild(nameInput);
+
+    if(sheets.length>1){
+      const closeBtn = document.createElement('button');
+      closeBtn.className='tabClose'; closeBtn.textContent='✕'; closeBtn.title='حذف الورقة';
+      closeBtn.addEventListener('click', function(e){ e.stopPropagation(); removeSheet(sheet.id); });
+      tab.appendChild(closeBtn);
+    }
+    tab.addEventListener('click', function(){ activeSheetId = sheet.id; renderAll(); });
+    tabsRow.appendChild(tab);
+  });
+  const addBtn = document.createElement('button');
+  addBtn.className='btn btn-outline btn-sm addTabBtn';
+  addBtn.innerHTML = '+ إضافة ورقة';
+  addBtn.addEventListener('click', addSheet);
+  tabsRow.appendChild(addBtn);
+}
+
+function paperOptionsHTML(sheet){
+  return PAPERS.map(function(p){
+    return '<option value="'+p.id+'"'+(sheet.paperId===p.id?' selected':'')+'>'+p.name+'</option>';
+  }).join('');
+}
+function templateOptionsHTML(selectedId){
+  const cats = {};
+  TEMPLATES.forEach(function(t){ (cats[t.cat] = cats[t.cat]||[]).push(t); });
+  let html = '';
+  Object.keys(cats).forEach(function(cat){
+    html += '<optgroup label="'+cat+'">';
+    cats[cat].forEach(function(t){
+      html += '<option value="'+t.id+'"'+(selectedId===t.id?' selected':'')+'>'+t.name+' — '+t.w+'×'+t.h+' ملم'+(t.main?' (رئيسي)':'')+'</option>';
+    });
+    html += '</optgroup>';
+  });
+  if(customTemplates.length){
+    html += '<optgroup label="قوالب مخصصة محفوظة">';
+    customTemplates.forEach(function(t){
+      html += '<option value="'+t.id+'"'+(selectedId===t.id?' selected':'')+'>'+t.name+' — '+t.w+'×'+t.h+' ملم</option>';
+    });
+    html += '</optgroup>';
+  }
+  return html;
+}
+
+function makeAccordion(sec, key, defOpen){
+  const h3 = sec.querySelector('h3'); if(!h3) return sec;
+  const det = document.createElement('details'); det.className = 'panelSection panelAcc';
+  det.open = (key in openSections) ? openSections[key] : defOpen;
+  const sum = document.createElement('summary'); sum.innerHTML = h3.innerHTML; det.appendChild(sum);
+  const body = document.createElement('div'); body.className = 'accBody';
+  Array.from(sec.childNodes).forEach(function(n){ if(n!==h3) body.appendChild(n); });
+  det.appendChild(body);
+  det.addEventListener('toggle', function(){ openSections[key] = det.open; });
+  return det;
+}
+
+function renderPanel(){
+  const sheet = getActiveSheet();
+  panelEl.innerHTML = '';
+  if(!sheet) return;
+  const built = buildPages(sheet);
+  const L = built.L;
+
+  /* --- 1: حجم الورق --- */
+  const secPaper = document.createElement('div'); secPaper.className='panelSection';
+  secPaper.innerHTML =
+    '<h3><span class="num">📐</span> حجم الورق واتجاهه</h3>'+
+    '<div class="field"><label>القياس</label><select id="paperSelect">'+paperOptionsHTML(sheet)+'</select></div>'+
+    (sheet.paperId==='custom' ?
+      '<div class="row2"><div class="field"><label>العرض (ملم)</label><input type="number" id="paperW" value="'+sheet.customPaperW+'" min="20" max="1000"></div>'+
+      '<div class="field"><label>الارتفاع (ملم)</label><input type="number" id="paperH" value="'+sheet.customPaperH+'" min="20" max="1000"></div></div>' : '')+
+    '<div class="field"><label>الاتجاه</label>'+
+    '<div class="segGroup">'+
+      '<label><input type="radio" name="orient" value="portrait"'+(sheet.orientation==='portrait'?' checked':'')+'><span>⬜ عمودي</span></label>'+
+      '<label><input type="radio" name="orient" value="landscape"'+(sheet.orientation==='landscape'?' checked':'')+'><span>▭ أفقي</span></label>'+
+    '</div></div>';
+  panelEl.appendChild(secPaper);
+
+  /* --- 2: القالب --- */
+  const secTpl = document.createElement('div'); secTpl.className='panelSection';
+  secTpl.innerHTML =
+    '<h3><span class="num">🪪</span> القالب الافتراضي</h3>'+
+    '<p style="font-size:11px; color:var(--ink-faint); margin:-4px 0 10px;">كل مستمسك يحتفظ بقياسه الخاص بعد إضافته — غيّره لاحقاً من قائمة كل مستمسك بالأسفل.</p>'+
+    '<div class="field"><label>القالب</label><select id="tplSelect">'+templateOptionsHTML(sheet.templateId)+'</select></div>'+
+    '<div class="customBox">'+
+      '<div class="field"><label>إضافة قالب مخصص</label></div>'+
+      '<div class="row2">'+
+        '<input type="number" id="ctW" placeholder="العرض ملم" min="5" max="500">'+
+        '<input type="number" id="ctH" placeholder="الارتفاع ملم" min="5" max="500">'+
+      '</div>'+
+      '<div class="field" style="margin-top:6px;"><input type="text" id="ctName" placeholder="اسم القالب (مثال: بطاقة عمل)"></div>'+
+      '<button class="btn btn-outline btn-sm" id="ctSaveBtn" style="width:100%;">💾 حفظ كقالب ثابت</button>'+
+      (customTemplates.length ? '<div class="savedTplList" id="savedTplList"></div>' : '')+
+    '</div>';
+  panelEl.appendChild(secTpl);
+  if(customTemplates.length){
+    const listEl = secTpl.querySelector('#savedTplList');
+    customTemplates.forEach(function(t){
+      const row = document.createElement('div'); row.className='savedTplRow';
+      const span = document.createElement('span'); span.textContent = t.name+' ('+t.w+'×'+t.h+')';
+      const del = document.createElement('button'); del.className='del'; del.textContent='✕'; del.title='حذف القالب المحفوظ';
+      del.addEventListener('click', function(){
+        if(!confirm('حذف القالب المحفوظ «'+t.name+'»؟')) return;
+        customTemplates = customTemplates.filter(function(x){ return x.id!==t.id; });
+        saveCustomTemplates();
+        sheets.forEach(function(sh){
+          if(sh.templateId===t.id) sh.templateId = DEFAULT_TEMPLATE_ID;
+          sh.docs.forEach(function(d){ if(d.templateId===t.id) d.templateId = DEFAULT_TEMPLATE_ID; });
+        });
+        renderAll();
+      });
+      row.appendChild(span); row.appendChild(del);
+      listEl.appendChild(row);
+    });
+  }
+
+  /* --- 3: نمط التوزيع --- */
+  const secLayout = document.createElement('div'); secLayout.className='panelSection';
+  secLayout.innerHTML =
+    '<h3><span class="num">🧩</span> توزيع الوجه والظهر</h3>'+
+    '<div class="segGroup">'+
+      '<label><input type="radio" name="layoutMode" value="side-by-side"'+(sheet.layoutMode==='side-by-side'?' checked':'')+'><span>↔ صورة جنب صورة<br><small>وجه ثم ظهر بجانبه</small></span></label>'+
+      '<label><input type="radio" name="layoutMode" value="stacked"'+(sheet.layoutMode==='stacked'?' checked':'')+'><span>↕ صورة أسفل صورة<br><small>وجه فوق الظهر</small></span></label>'+
+      '<label><input type="radio" name="layoutMode" value="duplex"'+(sheet.layoutMode==='duplex'?' checked':'')+'><span>⇄ وجه/ظهر الورقة<br><small>صفحتان للطباعة على الوجهين</small></span></label>'+
+    '</div>'+
+    (sheet.layoutMode==='side-by-side' ? '<div class="swapRow"><button class="miniToggle'+(sheet.swapSides?' on':'')+'" id="swapSidesBtn">⇄ تبديل يمين/يسار</button></div>' : '')+
+    (sheet.layoutMode==='stacked' ? '<div class="swapRow"><button class="miniToggle'+(sheet.swapTop?' on':'')+'" id="swapTopBtn">⇅ تبديل أعلى/أسفل</button></div>' : '')+
+    (sheet.layoutMode==='duplex' ? '<div class="swapRow"><button class="miniToggle'+(sheet.mirrorBack?' on':'')+'" id="mirrorBackBtn">🪞 عكس صفحة الظهر أفقياً (لمحاذاة القص بعد الطباعة على الوجهين)</button></div>' : '');
+  panelEl.appendChild(secLayout);
+
+  const secLook = document.createElement('div'); secLook.className='panelSection';
+  secLook.innerHTML =
+    '<h3><span class="num">🎨</span> مظهر المستمسك</h3>'+
+    '<div class="field"><label>تقوس الحواف: <b id="radVal">'+sheet.radius+'</b> ملم</label><input type="range" id="radRange" min="0" max="10" step="0.5" value="'+sheet.radius+'"></div>'+
+    '<label class="chk"><input type="checkbox" id="borderOn"'+(sheet.borderOn?' checked':'')+'> إطار رفيع حول المستمسك</label>'+
+    '<div class="row2"><div class="field"><label>لون الإطار</label><select id="borderColor"><option value="#6b6b6b"'+(sheet.borderColor==='#6b6b6b'?' selected':'')+'>رمادي</option><option value="#000000"'+(sheet.borderColor==='#000000'?' selected':'')+'>أسود</option></select></div>'+
+    '<div class="field"><label>السمك: <b id="bwVal">'+sheet.borderW+'</b> ملم</label><input type="range" id="bwRange" min="0.1" max="0.8" step="0.05" value="'+sheet.borderW+'"></div></div>'+
+    '<label class="chk"><input type="checkbox" id="marksOn"'+(sheet.marks?' checked':'')+'> علامات القص عند الزوايا</label>';
+  panelEl.appendChild(secLook);
+
+  /* --- 4: إعدادات متقدمة --- */
+  const secAdv = document.createElement('div'); secAdv.className='panelSection';
+  secAdv.innerHTML =
+    '<details class="advDetails"><summary>⚙️ إعدادات متقدمة (الهوامش والفراغات)</summary>'+
+    '<div class="row2">'+
+      '<div class="field"><label>هامش الورقة (ملم)</label><input type="number" id="marginInput" value="'+sheet.marginMM+'" min="0" max="30"></div>'+
+      '<div class="field"><label>الفراغ بين القوالب (ملم)</label><input type="number" id="gapInput" value="'+sheet.gapMM+'" min="0" max="20"></div>'+
+    '</div></details>';
+  panelEl.appendChild(secAdv);
+
+  /* --- 5: المستمسكات --- */
+  const secDocs = document.createElement('div'); secDocs.className='panelSection docsSection';
+  const pageWord = built.pageCount<=1 ? 'صفحة واحدة' : built.pageCount+' صفحات';
+  const capText = sheet.docs.length===0
+    ? 'أضف أول مستمسك — كل مستمسك يمكن أن يكون بقياس مختلف عن غيره.'
+    : (L.mode==='duplex'
+        ? 'ستُستخدم <b>'+pageWord+'</b> لكل وجه (فرع الظهر يُطبع على صفحات مقابلة).'
+        : 'ستُستخدم <b>'+pageWord+'</b> لهذه المجموعة.');
+  const tooBigNames = built.tooBig.map(function(it){ return it.tpl.name; });
+  secDocs.innerHTML =
+    '<h3><span class="num">📑</span> المستمسكات</h3>'+
+    '<div class="addRow"><button class="btn btn-add" id="addDocBtn">＋ إضافة مستمسك</button><button class="btn btn-outline" id="addManyBtn" title="رفع عدة صور دفعة واحدة">📁 عدة صور</button></div>'+
+    '<div class="capacityBanner">'+capText+'</div>'+
+    (tooBigNames.length ? '<div class="capacityBanner warn">⚠️ لا تتسع هذه القوالب في القياس المختار: '+tooBigNames.join('، ')+' — اختر ورقاً أكبر لها.</div>' : '')+
+    '<div class="docsList" id="docsList"></div>';
+  panelEl.appendChild(secDocs);
+
+  const docsListEl = secDocs.querySelector('#docsList');
+  if(sheet.docs.length===0){
+    docsListEl.innerHTML = '<div class="emptyDocs"><svg viewBox="0 0 64 44" fill="none"><rect x="2" y="2" width="60" height="40" rx="7" stroke="currentColor" stroke-width="2.5" stroke-dasharray="5 4"/><circle cx="20" cy="17" r="6" stroke="currentColor" stroke-width="2.5"/><path d="M10 35c2-6 18-6 20 0M38 15h16M38 23h12" stroke="currentColor" stroke-width="2.5" stroke-linecap="round"/></svg>لا توجد مستمسكات بعد<br>اضغط «إضافة مستمسك» للبدء، أو اسحب الصور إلى هنا</div>';
+  } else {
+    sheet.docs.forEach(function(doc, idx){
+      const isTooBig = built.tooBig.some(function(it){ return it.doc && it.doc.id===doc.id; });
+      const row = document.createElement('div'); row.className='docCard';
+      const top = document.createElement('div'); top.className='docCardTop';
+      const num = document.createElement('div'); num.className='docIndex'; num.textContent = (idx+1);
+      top.appendChild(num);
+      const tplSel = document.createElement('select'); tplSel.className='docTplSelect';
+      tplSel.innerHTML = templateOptionsHTML(doc.templateId);
+      tplSel.addEventListener('change', function(){
+        doc.templateId = tplSel.value;
+        const tpl = getTemplate(doc.templateId);
+        ['front','back'].forEach(function(side){
+          const o = doc[side];
+          if(o && o._el){ bakeImage(o, bakeDimFor(tpl)); }
+        });
+        renderAll();
+      });
+      top.appendChild(tplSel);
+      const del = document.createElement('button'); del.className='docDel'; del.textContent='🗑️'; del.title='حذف هذا المستمسك';
+      del.addEventListener('click', function(){
+        sheet.docs = sheet.docs.filter(function(d){ return d.id!==doc.id; });
+        renderAll();
+      });
+      top.appendChild(del);
+      row.appendChild(top);
+      if(isTooBig){
+        const warn = document.createElement('div'); warn.style.cssText='font-size:10.5px;color:var(--seal);margin:-2px 0 4px;';
+        warn.textContent = '⚠️ لا يتسع بهذا القياس في هذه الورقة';
+        row.appendChild(warn);
+      }
+      const thumbs = document.createElement('div'); thumbs.className='docThumbs';
+      thumbs.appendChild(makeThumb(sheet.id, doc, 'front', 'وجه'));
+      thumbs.appendChild(makeThumb(sheet.id, doc, 'back', 'ظهر'));
+      row.appendChild(thumbs);
+      docsListEl.appendChild(row);
+    });
+  }
+
+  /* --- 6: إجراءات الورقة --- */
+  [['paper',secPaper,true],['tpl',secTpl,false],['layout',secLayout,true],['look',secLook,false]].forEach(function(a){
+    panelEl.replaceChild(makeAccordion(a[1],a[0],a[2]), a[1]);
+  });
+  panelEl.insertBefore(secDocs, panelEl.firstChild);
+
+  wirePanelEvents(sheet);
+}
+
+function makeThumb(sheetId, doc, side, label){
+  const btn = document.createElement('button'); btn.className='thumbBtn'; btn.type='button';
+  const obj = doc[side];
+  if(obj && obj.output){
+    const img = document.createElement('img'); img.src = obj.output; btn.appendChild(img);
+    const tag = document.createElement('span'); tag.className='tag'; tag.textContent = label+' ✎'; btn.appendChild(tag);
+    btn.addEventListener('click', function(){ openEditor(sheetId, doc.id, side); });
+  } else {
+    btn.textContent = '+ '+label;
+    btn.addEventListener('click', function(){ pickImage(sheetId, doc.id, side, false); });
+  }
+  return btn;
+}
+
+function wirePanelEvents(sheet){
+  const rr = document.getElementById('radRange');
+  rr.addEventListener('input', function(){ sheet.radius = Number(rr.value); document.getElementById('radVal').textContent = sheet.radius; renderPreview(); });
+  const bwr = document.getElementById('bwRange');
+  bwr.addEventListener('input', function(){ sheet.borderW = Number(bwr.value); document.getElementById('bwVal').textContent = sheet.borderW; renderPreview(); });
+  document.getElementById('borderOn').addEventListener('change', function(e){ sheet.borderOn = e.target.checked; renderPreview(); });
+  document.getElementById('borderColor').addEventListener('change', function(e){ sheet.borderColor = e.target.value; renderPreview(); });
+  document.getElementById('marksOn').addEventListener('change', function(e){ sheet.marks = e.target.checked; renderPreview(); });
+  const addMany = document.getElementById('addManyBtn');
+  if(addMany) addMany.addEventListener('click', function(){ pickMany(sheet.id); });
+  const paperSelect = document.getElementById('paperSelect');
+  if(paperSelect) paperSelect.addEventListener('change', function(){ sheet.paperId = paperSelect.value; renderAll(); });
+  const paperW = document.getElementById('paperW');
+  if(paperW) paperW.addEventListener('change', function(){ sheet.customPaperW = Number(paperW.value)||210; renderAll(); });
+  const paperH = document.getElementById('paperH');
+  if(paperH) paperH.addEventListener('change', function(){ sheet.customPaperH = Number(paperH.value)||297; renderAll(); });
+
+  document.querySelectorAll('input[name=orient]').forEach(function(r){
+    r.addEventListener('change', function(){ if(r.checked) { sheet.orientation = r.value; renderAll(); } });
+  });
+
+  const tplSelect = document.getElementById('tplSelect');
+  if(tplSelect) tplSelect.addEventListener('change', function(){
+    sheet.templateId = tplSelect.value;
+    autoOrientForTemplate(sheet);
+    renderAll();
+  });
+
+  const ctSaveBtn = document.getElementById('ctSaveBtn');
+  if(ctSaveBtn) ctSaveBtn.addEventListener('click', function(){
+    const w = Number(document.getElementById('ctW').value);
+    const h = Number(document.getElementById('ctH').value);
+    const name = (document.getElementById('ctName').value||'').trim();
+    if(!w || !h || w<=0 || h<=0){ alert('الرجاء إدخال عرض وارتفاع صحيحين بالملم'); return; }
+    if(!name){ alert('الرجاء إدخال اسم للقالب'); return; }
+    const t = {id:uid('ctpl'), name:name, w:w, h:h};
+    customTemplates.push(t);
+    saveCustomTemplates();
+    sheet.templateId = t.id;
+    autoOrientForTemplate(sheet);
+    renderAll();
+  });
+
+  document.querySelectorAll('input[name=layoutMode]').forEach(function(r){
+    r.addEventListener('change', function(){ if(r.checked){ sheet.layoutMode = r.value; renderAll(); } });
+  });
+  const swapSidesBtn = document.getElementById('swapSidesBtn');
+  if(swapSidesBtn) swapSidesBtn.addEventListener('click', function(){ sheet.swapSides = !sheet.swapSides; renderAll(); });
+  const swapTopBtn = document.getElementById('swapTopBtn');
+  if(swapTopBtn) swapTopBtn.addEventListener('click', function(){ sheet.swapTop = !sheet.swapTop; renderAll(); });
+  const mirrorBackBtn = document.getElementById('mirrorBackBtn');
+  if(mirrorBackBtn) mirrorBackBtn.addEventListener('click', function(){ sheet.mirrorBack = !sheet.mirrorBack; renderAll(); });
+
+  const marginInput = document.getElementById('marginInput');
+  if(marginInput) marginInput.addEventListener('change', function(){ sheet.marginMM = Math.max(0, Number(marginInput.value)||0); renderAll(); });
+  const gapInput = document.getElementById('gapInput');
+  if(gapInput) gapInput.addEventListener('change', function(){ sheet.gapMM = Math.max(0, Number(gapInput.value)||0); renderAll(); });
+
+  const addDocBtn = document.getElementById('addDocBtn');
+  if(addDocBtn) addDocBtn.addEventListener('click', function(){
+    sheet.docs.push(newDoc(sheet.templateId));
+    renderAll();
+  });
+}
+
+/* ======================= المعاينة/الطباعة ======================= */
+function renderPreview(){
+  previewRoot.innerHTML = '';
+  sheets.forEach(function(sheet){
+    const built = buildPages(sheet);
+    const wrapSheet = document.createElement('div'); wrapSheet.className='sheetPreview';
+    const label = document.createElement('div'); label.className='sheetPreviewLabel';
+    label.innerHTML = '<span>📄 '+escapeHTML(sheet.name)+'</span><span class="pageKind">'+fmtMM(built.L.paper.w)+'×'+fmtMM(built.L.paper.h)+' ملم</span>';
+    wrapSheet.appendChild(label);
+
+    const pagesRow = document.createElement('div'); pagesRow.className='pagesRow';
+    built.pages.forEach(function(page, pIdx){
+      const zoomWrap = document.createElement('div'); zoomWrap.className='zoomWrap';
+      const pageEl = document.createElement('div'); pageEl.className='page'+((page.allPhantom||!pageHasContent(page))?' phantomOnlyPage':'');
+      pageEl.style.width = page.w+'mm';
+      pageEl.style.height = page.h+'mm';
+      pageEl.style.setProperty('--ph', page.h+'mm');
+      pageEl.style.setProperty('--rad', sheet.radius+'mm');
+      pageEl.style.setProperty('--bw', (sheet.borderOn?sheet.borderW:0)+'mm');
+      pageEl.style.setProperty('--bc', sheet.borderColor);
+
+      page.slots.forEach(function(slot){
+        const slotEl = document.createElement('div'); slotEl.className='slot';
+        slotEl.style.left = slot.x+'mm'; slotEl.style.top = slot.y+'mm';
+        slotEl.style.width = slot.w+'mm'; slotEl.style.height = slot.h+'mm';
+        attachDrop(slotEl, sheet.id, slot);
+        if(slot.side==='new'){
+          slotEl.className += ' empty';
+          const plus = document.createElement('div'); plus.className='plus'; plus.textContent='+';
+          const lbl = document.createElement('div'); lbl.className='lbl'; lbl.textContent='إضافة مستمسك';
+          slotEl.appendChild(plus); slotEl.appendChild(lbl);
+          slotEl.addEventListener('click', function(){ addDocAndPickFront(sheet.id); });
+          pageEl.appendChild(slotEl);
+          return;
+        }
+        const doc = slot.doc;
+        const obj = doc ? doc[slot.side] : null;
+        if(obj && obj.output){
+          const img = document.createElement('img'); img.src = obj.output;
+          slotEl.className += ' filled';
+          slotEl.appendChild(img);
+          if(sheet.marks){ ['tl','tr','bl','br'].forEach(function(c){ slotEl.appendChild(markEl(c)); }); }
+          slotEl.addEventListener('click', function(){ openEditor(sheet.id, doc.id, slot.side); });
+        } else {
+          slotEl.className += ' empty';
+          const plus = document.createElement('div'); plus.className='plus'; plus.textContent='+';
+          const lbl = document.createElement('div'); lbl.className='lbl'; lbl.textContent = slot.side==='front' ? 'وجه' : 'ظهر';
+          slotEl.appendChild(plus); slotEl.appendChild(lbl);
+          slotEl.addEventListener('click', function(){ pickImage(sheet.id, doc.id, slot.side, false); });
+        }
+        pageEl.appendChild(slotEl);
+      });
+
+      zoomWrap.appendChild(pageEl);
+      pagesRow.appendChild(zoomWrap);
+    });
+    wrapSheet.appendChild(pagesRow);
+    previewRoot.appendChild(wrapSheet);
+  });
+
+  const nDocs = sheets.reduce(function(a,sh){ return a+sh.docs.length; },0);
+  const nPages = document.querySelectorAll('.page:not(.phantomOnlyPage)').length;
+  const st = document.getElementById('previewStats');
+  if(st) st.innerHTML = '<span>📄 '+sheets.length+' ورقة</span><span>🪪 '+nDocs+' مستمسك</span><span>🖨️ '+nPages+' صفحة للطباعة</span>';
+  requestAnimationFrame(fitPagesToContainer);
+}
+
+function fitPagesToContainer(){
+  const maxWidthAvailable = Math.max(220, (document.querySelector('.previewPane').clientWidth - 40));
+  document.querySelectorAll('.zoomWrap').forEach(function(wrap){
+    const pageEl = wrap.querySelector('.page');
+    if(!pageEl) return;
+    const mmW = parseFloat(pageEl.style.width);
+    const mmH = parseFloat(pageEl.style.height);
+    const naturalPxW = mmW*PX_PER_MM, naturalPxH = mmH*PX_PER_MM;
+    const cap = 340*previewZoom/100;
+    const k = Math.min(1.6, cap/naturalPxW);
+    pageEl.style.transform = 'scale('+k+')';
+    wrap.style.width = (naturalPxW*k)+'px';
+    wrap.style.height = (naturalPxH*k)+'px';
+  });
+}
+window.addEventListener('resize', function(){ requestAnimationFrame(fitPagesToContainer); });
+
+function markEl(pos){
+  const d = document.createElement('div'); d.className = 'mark mark-'+pos; return d;
+}
+function escapeHTML(s){
+  return String(s).replace(/[&<>"']/g, function(c){
+    return {'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c];
+  });
+}
+
+function renderPaperSummary(){
+  const seen = {};
+  const parts = [];
+  sheets.forEach(function(sheet){
+    const d = getPaperDims(sheet);
+    const key = fmtMM(d.w)+'×'+fmtMM(d.h)+(sheet.orientation==='landscape'?' أفقي':' عمودي');
+    if(!seen[key]){ seen[key]=true; parts.push(key); }
+  });
+  paperSummaryEl.textContent = 'قياس الورق المطلوب للطباعة: '+parts.join('، ')+' — تأكد من مطابقته في نافذة الطباعة.';
+}
+
+/* ======================= تجهيز الطباعة ======================= */
+function preparePrint(){
+  let styleEl = document.getElementById('dynamicPageStyle');
+  if(!styleEl){ styleEl = document.createElement('style'); styleEl.id='dynamicPageStyle'; document.head.appendChild(styleEl); }
+  document.querySelectorAll('.page').forEach(function(p){ p.classList.remove('lastPrint'); p.style.removeProperty('page'); });
+  const pages = Array.prototype.slice.call(document.querySelectorAll('.page:not(.phantomOnlyPage)'));
+  if(pages.length) pages[pages.length-1].classList.add('lastPrint');
+  const sizes = {};
+  pages.forEach(function(p){ sizes[parseFloat(p.style.width)+'x'+parseFloat(p.style.height)] = 1; });
+  const keys = Object.keys(sizes); let css = '';
+  if(keys.length===1){
+    const wh = keys[0].split('x');
+    css = '@page { size: '+wh[0]+'mm '+wh[1]+'mm; margin:0; }';
+  } else if(keys.length>1){
+    css = '@page { margin:0; }\n';
+    keys.forEach(function(k, i){ const wh=k.split('x'); css += '@page pg'+i+' { size: '+wh[0]+'mm '+wh[1]+'mm; margin:0; }\n'; });
+    pages.forEach(function(p){ p.style.setProperty('page','pg'+keys.indexOf(parseFloat(p.style.width)+'x'+parseFloat(p.style.height))); });
+  }
+  styleEl.textContent = css;
+}
+window.addEventListener('beforeprint', preparePrint);
+document.getElementById('printBtn').addEventListener('click', function(){
+  if(!document.querySelector('.page:not(.phantomOnlyPage)')){ toast('أضف صوراً أولاً قبل الطباعة'); return; }
+  window.print();
+});
+
+/* ======================= شريط المساعدة ======================= */
+document.getElementById('closeHelp').addEventListener('click', function(){
+  document.getElementById('helpBar').style.display = 'none';
+});
+
+/* ======================= نافذة تعديل الصورة ======================= */
+const editorModal = document.getElementById('editorModal');
+const editorImg = document.getElementById('editorImg');
+const noImgMsg = document.getElementById('noImgMsg');
+const aiStatusEl = document.getElementById('aiStatus');
+const sliderIds = {
+  cropTop:'sTop', cropBottom:'sBottom', cropRight:'sRight', cropLeft:'sLeft',
+  brightness:'sBright', contrast:'sContrast', saturation:'sSat'
+};
+const outputIds = {
+  cropTop:'oTop', cropBottom:'oBottom', cropRight:'oRight', cropLeft:'oLeft',
+  brightness:'oBright', contrast:'oContrast', saturation:'oSat'
+};
+
+function currentEditObj(){
+  if(!editingCtx) return null;
+  const sheet = getSheet(editingCtx.sheetId);
+  if(!sheet) return null;
+  const doc = sheet.docs.find(function(d){ return d.id===editingCtx.docId; });
+  if(!doc) return null;
+  return doc[editingCtx.side];
+}
+
+function openEditor(sheetId, docId, side){
+  editingCtx = {sheetId:sheetId, docId:docId, side:side, original:null};
+  const obj = currentEditObj();
+  if(!obj) return;
+  editingCtx.original = {
+    cropTop:obj.cropTop, cropBottom:obj.cropBottom, cropRight:obj.cropRight, cropLeft:obj.cropLeft,
+    brightness:obj.brightness, contrast:obj.contrast, saturation:obj.saturation,
+    src:obj.src, _el:obj._el
+  };
+  document.getElementById('editorTitle').textContent = 'تعديل صورة ال' + (side==='front' ? 'وجه' : 'ظهر');
+  fillEditorFromObj(obj);
+  aiStatusEl.textContent = ''; aiStatusEl.className='aiStatus';
+  editorModal.classList.add('open');
+}
+function closeEditor(){
+  editorModal.classList.remove('open');
+  editingCtx = null;
+}
+function fillEditorFromObj(obj){
+  if(obj.src){
+    editorImg.src = obj.src; noImgMsg.style.display='none';
+  } else {
+    editorImg.removeAttribute('src'); noImgMsg.style.display='flex';
+  }
+  Object.keys(sliderIds).forEach(function(key){
+    const el = document.getElementById(sliderIds[key]);
+    el.value = obj[key];
+    document.getElementById(outputIds[key]).textContent = obj[key] + (key.indexOf('crop')===0 ? '%' : '');
+  });
+  updateMasks(obj);
+  editorImg.style.filter = filterStringFor(obj);
+}
+function filterStringFor(obj){
+  return 'brightness('+(100+obj.brightness)+'%) contrast('+(100+obj.contrast)+'%) saturate('+(100+obj.saturation)+'%)';
+}
+function updateMasks(obj){
+  document.getElementById('maskT').style.height = obj.cropTop+'%';
+  document.getElementById('maskB').style.height = obj.cropBottom+'%';
+  document.getElementById('maskL').style.width = obj.cropLeft+'%';
+  document.getElementById('maskR').style.width = obj.cropRight+'%';
+}
+
+Object.keys(sliderIds).forEach(function(key){
+  const el = document.getElementById(sliderIds[key]);
+  el.addEventListener('input', function(){
+    const obj = currentEditObj();
+    if(!obj) return;
+    obj[key] = Number(el.value);
+    document.getElementById(outputIds[key]).textContent = obj[key] + (key.indexOf('crop')===0 ? '%' : '');
+    if(key.indexOf('crop')===0){ updateMasks(obj); }
+    else { editorImg.style.filter = filterStringFor(obj); }
+  });
+});
+
+document.getElementById('editorCloseBtn').addEventListener('click', function(){ cancelEdit(); });
+document.getElementById('editorCancelBtn').addEventListener('click', function(){ cancelEdit(); });
+document.getElementById('editorSaveBtn').addEventListener('click', function(){
+  const obj = currentEditObj();
+  if(obj && obj._el && editingCtx){
+    const sheet = getSheet(editingCtx.sheetId);
+    const doc = sheet && sheet.docs.find(function(d){ return d.id===editingCtx.docId; });
+    if(doc){ bakeImage(obj, bakeDimFor(getTemplate(doc.templateId))); }
+  }
+  closeEditor();
+  renderAll();
+});
+function cancelEdit(){
+  const obj = currentEditObj();
+  if(obj && editingCtx && editingCtx.original){ Object.assign(obj, editingCtx.original); }
+  closeEditor();
+  renderAll();
+}
+editorModal.addEventListener('click', function(e){ if(e.target===editorModal) cancelEdit(); });
+
+document.getElementById('replaceBtn').addEventListener('click', function(){
+  if(!editingCtx) return;
+  pickImage(editingCtx.sheetId, editingCtx.docId, editingCtx.side, true);
+});
+document.getElementById('removeImgBtn').addEventListener('click', function(){
+  const sheet = getSheet(editingCtx.sheetId);
+  const doc = sheet.docs.find(function(d){ return d.id===editingCtx.docId; });
+  doc[editingCtx.side] = blankImageObj();
+  closeEditor();
+  renderAll();
+});
+document.getElementById('rotateBtn').addEventListener('click', function(){
+  const obj = currentEditObj();
+  if(!obj || !obj._el) return;
+  const el = obj._el;
+  const c = document.createElement('canvas');
+  c.width = el.naturalHeight; c.height = el.naturalWidth;
+  const cx = c.getContext('2d');
+  cx.translate(c.width/2, c.height/2);
+  cx.rotate(Math.PI/2);
+  cx.drawImage(el, -el.naturalWidth/2, -el.naturalHeight/2);
+  const newSrc = c.toDataURL('image/jpeg', 0.95);
+  const newImg = new Image();
+  newImg.onload = function(){
+    obj._el = newImg; obj.src = newSrc;
+    editorImg.src = newSrc;
+  };
+  newImg.src = newSrc;
+});
+
+document.getElementById('autoEnhanceBtn').addEventListener('click', function(){
+  const obj = currentEditObj();
+  if(!obj || !obj._el){ aiStatusEl.textContent='ارفع صورة أولاً.'; aiStatusEl.className='aiStatus err'; return; }
+  const sug = computeAutoLevels(obj._el);
+  obj.brightness = sug.brightness; obj.contrast = sug.contrast; obj.saturation = sug.saturation;
+  fillEditorFromObj(obj);
+  aiStatusEl.textContent = 'تم تطبيق تحسين تلقائي (خوارزمية تحليل إضاءة داخل المتصفح).';
+  aiStatusEl.className = 'aiStatus';
+});
+
+document.getElementById('aiSuggestBtn').addEventListener('click', async function(){
+  const obj = currentEditObj();
+  if(!obj || !obj._el){ aiStatusEl.textContent='ارفع صورة أولاً.'; aiStatusEl.className='aiStatus err'; return; }
+  const btn = document.getElementById('aiSuggestBtn');
+  btn.disabled = true;
+  aiStatusEl.textContent = 'جارٍ تحليل الصورة بالذكاء الاصطناعي…';
+  aiStatusEl.className = 'aiStatus';
+  try{
+    if(!window.claude || !window.claude.use){
+      throw {code:'not_declared'};
+    }
+    const sample = await window.claude.use('sample');
+    if(!sample){ throw {code:'not_declared'}; }
+    const limits = await sample.limits().catch(function(){ return null; });
+    if(!limits || !limits.images){ throw {code:'images_unavailable'}; }
+
+    const c = document.createElement('canvas');
+    const maxDim = 900;
+    const scale = Math.min(1, maxDim/Math.max(obj._el.naturalWidth, obj._el.naturalHeight));
+    c.width = Math.round(obj._el.naturalWidth*scale); c.height = Math.round(obj._el.naturalHeight*scale);
+    c.getContext('2d').drawImage(obj._el, 0, 0, c.width, c.height);
+    const blob = await new Promise(function(res){ c.toBlob(res, 'image/jpeg', 0.88); });
+
+    const prompt = 'هذه صورة ممسوحة لوثيقة أو بطاقة هوية رسمية ستُطبع على طابعة عادية. '+
+      'حلّل إضاءة الصورة وتباينها وتشبعها اللوني، واقترح قيم تصحيح تجعلها أوضح للطباعة والقراءة. '+
+      'أجب فقط بكائن JSON بهذا الشكل بالضبط ولا شيء غيره: '+
+      '{"brightness": رقم صحيح بين -50 و50, "contrast": رقم صحيح بين -50 و50, "saturation": رقم صحيح بين -50 و50, "note": "جملة قصيرة جداً بالعربية توضّح ماذا عدّلت ولماذا"}';
+
+    const data = await sample.json(prompt, {images: blob, modelTier:'quick'});
+    const clamp = function(n){ n=Number(n); if(isNaN(n)) n=0; return Math.max(-50, Math.min(50, Math.round(n))); };
+    obj.brightness = clamp(data.brightness);
+    obj.contrast = clamp(data.contrast);
+    obj.saturation = clamp(data.saturation);
+    fillEditorFromObj(obj);
+    aiStatusEl.textContent = '✅ ' + (data.note ? String(data.note).slice(0,140) : 'تم تطبيق اقتراح الذكاء الاصطناعي.');
+    aiStatusEl.className = 'aiStatus';
+  }catch(err){
+    const code = err && err.code;
+    let msg = 'تعذّر الوصول لميزة الذكاء الاصطناعي في هذه البيئة. جرّب «تحسين تلقائي» بدلاً من ذلك.';
+    if(code==='not_granted') msg = 'تم رفض إذن استخدام الذكاء الاصطناعي لهذه الصفحة.';
+    else if(code==='rate_limited') msg = 'الكثير من الطلبات، حاول لاحقاً.';
+    else if(code==='image_rejected') msg = 'تعذّر قراءة هذه الصورة، جرّب صورة أخرى.';
+    aiStatusEl.textContent = msg;
+    aiStatusEl.className = 'aiStatus err';
+  }finally{
+    btn.disabled = false;
+  }
+});
+
+/* ======================= إشعارات ======================= */
+function toast(msg){
+  let t = document.getElementById('toast');
+  if(!t){ t = document.createElement('div'); t.id='toast'; t.className='toast'; document.body.appendChild(t); }
+  t.textContent = msg; t.classList.add('show');
+  clearTimeout(toast._t); toast._t = setTimeout(function(){ t.classList.remove('show'); }, 2800);
+}
+function showBusy(msg){ document.getElementById('busyMsg').textContent = msg; document.getElementById('busy').classList.add('open'); }
+function hideBusy(){ document.getElementById('busy').classList.remove('open'); }
+
+/* ======================= سحب وإفلات ======================= */
+function addDocWithFile(sheetId, file){
+  const sheet = getSheet(sheetId); if(!sheet) return;
+  const doc = newDoc(sheet.templateId); sheet.docs.push(doc);
+  loadFileInto(sheetId, doc.id, 'front', file);
+}
+function attachDrop(el, sheetId, slot){
+  el.addEventListener('dragover', function(e){ e.preventDefault(); el.classList.add('dragover'); });
+  el.addEventListener('dragleave', function(){ el.classList.remove('dragover'); });
+  el.addEventListener('drop', function(e){
+    e.preventDefault(); e.stopPropagation(); el.classList.remove('dragover');
+    const f = e.dataTransfer && e.dataTransfer.files && e.dataTransfer.files[0];
+    if(!f) return;
+    if(slot.side==='new') addDocWithFile(sheetId, f);
+    else loadFileInto(sheetId, slot.doc.id, slot.side, f);
+  });
+}
+(function(){
+  const pane = document.querySelector('.previewPane');
+  pane.addEventListener('dragover', function(e){ e.preventDefault(); pane.classList.add('dragover'); });
+  pane.addEventListener('dragleave', function(e){ if(e.target===pane) pane.classList.remove('dragover'); });
+  pane.addEventListener('drop', function(e){
+    e.preventDefault(); pane.classList.remove('dragover');
+    Array.from((e.dataTransfer && e.dataTransfer.files) || []).forEach(function(f){ addDocWithFile(activeSheetId, f); });
+  });
+  document.getElementById('zoomRange').addEventListener('input', function(e){ previewZoom = Number(e.target.value); fitPagesToContainer(); });
+})();
+
+/* ======================= التصدير ======================= */
+function pageHasContent(page){
+  return page.slots.some(function(s){ return s.doc && s.doc[s.side] && s.doc[s.side].output; });
+}
+function filledSlots(page){
+  return page.slots.filter(function(s){ return s.doc && s.doc[s.side] && s.doc[s.side].output; });
+}
+function collectPages(){
+  const out = [];
+  sheets.forEach(function(sheet){
+    buildPages(sheet).pages.forEach(function(p){ if(!p.allPhantom && pageHasContent(p)) out.push({sheet:sheet, page:p}); });
+  });
+  return out;
+}
+function rrect(ctx, x, y, w, h, r){
+  r = Math.max(0, Math.min(r, w/2, h/2)); ctx.beginPath();
+  if(r<=0){ ctx.rect(x,y,w,h); return; }
+  ctx.moveTo(x+r,y); ctx.arcTo(x+w,y,x+w,y+h,r); ctx.arcTo(x+w,y+h,x,y+h,r);
+  ctx.arcTo(x,y+h,x,y,r); ctx.arcTo(x,y,x+w,y,r); ctx.closePath();
+}
+function drawMarksCanvas(ctx, x, y, w, h, pxmm){
+  ctx.save(); ctx.strokeStyle='#8a8372'; ctx.lineWidth = Math.max(1, 0.2*pxmm); ctx.beginPath();
+  [[x,y,-1,-1],[x+w,y,1,-1],[x,y+h,-1,1],[x+w,y+h,1,1]].forEach(function(c){
+    ctx.moveTo(c[0]+c[2]*0.6*pxmm, c[1]); ctx.lineTo(c[0]+c[2]*2.4*pxmm, c[1]);
+    ctx.moveTo(c[0], c[1]+c[3]*0.6*pxmm); ctx.lineTo(c[0], c[1]+c[3]*2.4*pxmm);
+  });
+  ctx.stroke(); ctx.restore();
+}
+function renderPageCanvas(entry, dpi){
+  const sheet = entry.sheet, page = entry.page;
+  while((page.w*dpi/25.4)*(page.h*dpi/25.4) > 180e6) dpi *= 0.9;
+  const pxmm = dpi/25.4;
+  const c = document.createElement('canvas');
+  c.width = Math.round(page.w*pxmm); c.height = Math.round(page.h*pxmm);
+  const ctx = c.getContext('2d');
+  if(!ctx) throw new Error('canvas');
+  ctx.fillStyle = '#fff'; ctx.fillRect(0,0,c.width,c.height);
+  const bw = sheet.borderOn ? sheet.borderW*pxmm : 0, rad = sheet.radius*pxmm;
+  filledSlots(page).forEach(function(s){
+    const x=s.x*pxmm, y=s.y*pxmm, w=s.w*pxmm, h=s.h*pxmm;
+    const bc = bakeCanvas(s.doc[s.side], Math.ceil(Math.max(w,h)));
+    ctx.save(); rrect(ctx,x,y,w,h,rad); ctx.clip();
+    const k = Math.max(w/bc.width, h/bc.height), dw = bc.width*k, dh = bc.height*k;
+    ctx.drawImage(bc, x+(w-dw)/2, y+(h-dh)/2, dw, dh); ctx.restore();
+    if(bw>0){ ctx.save(); ctx.strokeStyle = sheet.borderColor; ctx.lineWidth = bw; rrect(ctx,x-bw/2,y-bw/2,w+bw,h+bw,rad+bw/2); ctx.stroke(); ctx.restore(); }
+    if(sheet.marks) drawMarksCanvas(ctx,x,y,w,h,pxmm);
+  });
+  return c;
+}
+function canvasBlob(c, type, q){
+  return new Promise(function(res, rej){ c.toBlob(function(b){ b ? res(b) : rej(new Error('blob')); }, type, q); });
+}
+
+/* ---- مولّد PDF يدوي (صور JPEG + إطار وقص متجهي) ---- */
+function pdfNum(n){ return (Math.round(n*1000)/1000).toString(); }
+function pdfRR(x,y,w,h,r){
+  r = Math.max(0, Math.min(r, w/2, h/2)); const f = pdfNum;
+  if(r<=0) return f(x)+' '+f(y)+' '+f(w)+' '+f(h)+' re';
+  const k = r*0.5523;
+  return f(x+r)+' '+f(y)+' m '+f(x+w-r)+' '+f(y)+' l '+
+    f(x+w-r+k)+' '+f(y)+' '+f(x+w)+' '+f(y+r-k)+' '+f(x+w)+' '+f(y+r)+' c '+
+    f(x+w)+' '+f(y+h-r)+' l '+
+    f(x+w)+' '+f(y+h-r+k)+' '+f(x+w-r+k)+' '+f(y+h)+' '+f(x+w-r)+' '+f(y+h)+' c '+
+    f(x+r)+' '+f(y+h)+' l '+
+    f(x+r-k)+' '+f(y+h)+' '+f(x)+' '+f(y+h-r+k)+' '+f(x)+' '+f(y+h-r)+' c '+
+    f(x)+' '+f(y+r)+' l '+
+    f(x)+' '+f(y+r-k)+' '+f(x+r-k)+' '+f(y)+' '+f(x+r)+' '+f(y)+' c h';
+}
+function hexRGB(h){
+  const n = parseInt(h.slice(1),16);
+  return pdfNum(((n>>16)&255)/255)+' '+pdfNum(((n>>8)&255)/255)+' '+pdfNum((n&255)/255);
+}
+async function buildPDF(entries, dpi){
+  const enc = new TextEncoder(), MM = 72/25.4, f = pdfNum;
+  const objs = []; let nextId = 3; const pageIds = [];
+  function alloc(){ return nextId++; }
+  for(let pi=0; pi<entries.length; pi++){
+    const sheet = entries[pi].sheet, pg = entries[pi].page, H = pg.h*MM;
+    const bw = sheet.borderOn ? sheet.borderW*MM : 0, rad = sheet.radius*MM;
+    let ops = ''; const xo = [];
+    const slots = filledSlots(pg);
+    for(let i=0; i<slots.length; i++){
+      const s = slots[i];
+      const bc = bakeCanvas(s.doc[s.side], Math.ceil(Math.max(s.w, s.h)/25.4*dpi));
+      const bytes = new Uint8Array(await (await canvasBlob(bc,'image/jpeg',0.95)).arrayBuffer());
+      const id = alloc(); xo.push('/Im'+i+' '+id+' 0 R');
+      objs[id] = ['<< /Type /XObject /Subtype /Image /Width '+bc.width+' /Height '+bc.height+' /ColorSpace /DeviceRGB /BitsPerComponent 8 /Filter /DCTDecode /Length '+bytes.length+' >>\nstream\n', bytes, '\nendstream'];
+      const bx = s.x*MM, bwid = s.w*MM, bh = s.h*MM, by = H-(s.y+s.h)*MM;
+      const k = Math.max(bwid/bc.width, bh/bc.height), dw = bc.width*k, dh = bc.height*k;
+      ops += 'q '+pdfRR(bx,by,bwid,bh,rad)+' W n '+f(dw)+' 0 0 '+f(dh)+' '+f(bx+(bwid-dw)/2)+' '+f(by+(bh-dh)/2)+' cm /Im'+i+' Do Q\n';
+      if(bw>0) ops += 'q '+hexRGB(sheet.borderColor)+' RG '+f(bw)+' w '+pdfRR(bx-bw/2,by-bw/2,bwid+bw,bh+bw,rad+bw/2)+' S Q\n';
+      if(sheet.marks){
+        ops += 'q 0.54 0.51 0.45 RG 0.57 w ';
+        [[bx,by+bh,-1,1],[bx+bwid,by+bh,1,1],[bx,by,-1,-1],[bx+bwid,by,1,-1]].forEach(function(c){
+          ops += f(c[0]+c[2]*0.6*MM)+' '+f(c[1])+' m '+f(c[0]+c[2]*2.4*MM)+' '+f(c[1])+' l S ';
+          ops += f(c[0])+' '+f(c[1]+c[3]*0.6*MM)+' m '+f(c[0])+' '+f(c[1]+c[3]*2.4*MM)+' l S ';
+        });
+        ops += 'Q\n';
+      }
+    }
+    const cid = alloc(), pid = alloc(); pageIds.push(pid);
+    objs[cid] = ['<< /Length '+enc.encode(ops).length+' >>\nstream\n', ops, '\nendstream'];
+    objs[pid] = ['<< /Type /Page /Parent 2 0 R /MediaBox [0 0 '+f(pg.w*MM)+' '+f(H)+'] /Contents '+cid+' 0 R /Resources << /XObject << '+xo.join(' ')+' >> >> >>'];
+  }
+  objs[1] = ['<< /Type /Catalog /Pages 2 0 R >>'];
+  objs[2] = ['<< /Type /Pages /Kids ['+pageIds.map(function(i){ return i+' 0 R'; }).join(' ')+'] /Count '+pageIds.length+' >>'];
+  const chunks = []; let off = 0; const offs = [];
+  function push(x){ const b = typeof x==='string' ? enc.encode(x) : x; chunks.push(b); off += b.length; }
+  push('%PDF-1.4\n%\u00e2\u00e3\u00cf\u00d3\n');
+  for(let id=1; id<nextId; id++){ offs[id] = off; push(id+' 0 obj\n'); objs[id].forEach(push); push('\nendobj\n'); }
+  const xr = off;
+  push('xref\n0 '+nextId+'\n0000000000 65535 f \n');
+  for(let id=1; id<nextId; id++) push(String(offs[id]).padStart(10,'0')+' 00000 n \n');
+  push('trailer\n<< /Size '+nextId+' /Root 1 0 R >>\nstartxref\n'+xr+'\n%%EOF');
+  return new Blob(chunks, {type:'application/pdf'});
+}
+
+async function saveFile(blob, name){
+  let d = null;
+  try{ d = (window.claude && window.claude.use) ? await window.claude.use('downloads') : null; }catch(e){ d = null; }
+  if(d){ await d.save({filename:name, data:blob}); return; }
+  const a = document.createElement('a');
+  a.href = URL.createObjectURL(blob); a.download = name;
+  document.body.appendChild(a); a.click(); a.remove();
+  setTimeout(function(){ URL.revokeObjectURL(a.href); }, 5000);
+}
+
+async function doExport(kind){
+  const entries = collectPages();
+  if(!entries.length){ toast('أضف صوراً أولاً قبل التصدير'); return; }
+  const stamp = new Date().toISOString().slice(0,10);
+  try{
+    if(kind.indexOf('pdf')===0){
+      const dpi = Number(kind.slice(3));
+      showBusy('جارٍ إنشاء PDF بدقة '+dpi+' DPI… قد يستغرق ذلك قليلاً');
+      const blob = await buildPDF(entries, dpi);
+      hideBusy();
+      await saveFile(blob, 'mostamsakat-'+dpi+'dpi-'+stamp+'.pdf');
+    } else {
+      const cfg = {pnghigh:{dpi:600,type:'image/png',ext:'png',q:undefined}, pngnormal:{dpi:150,type:'image/png',ext:'png',q:undefined}, jpg:{dpi:300,type:'image/jpeg',ext:'jpg',q:0.93}}[kind];
+      for(let i=0; i<entries.length; i++){
+        showBusy('جارٍ تجهيز الصفحة '+(i+1)+' من '+entries.length+'…');
+        await new Promise(function(r){ setTimeout(r, 30); });
+        const blob = await canvasBlob(renderPageCanvas(entries[i], cfg.dpi), cfg.type, cfg.q);
+        hideBusy();
+        await saveFile(blob, 'mostamsakat-page'+(i+1)+'-'+stamp+'.'+cfg.ext);
+      }
+    }
+    toast('تم التصدير ✅');
+  }catch(err){
+    hideBusy();
+    const code = err && err.code;
+    if(code==='declined') toast('تم إلغاء الحفظ');
+    else if(code==='too_large') toast('الملف كبير جداً، جرّب دقة أقل');
+    else toast('تعذّر التصدير — جرّب دقة أقل أو عدد صفحات أقل');
+  }
+}
+document.querySelectorAll('[data-export]').forEach(function(b){
+  b.addEventListener('click', function(){ doExport(b.getAttribute('data-export')); });
+});
+
+/* ======================= من نحن + مفاتيح ======================= */
+const aboutModal = document.getElementById('aboutModal');
+document.getElementById('aboutBtn').addEventListener('click', function(){ aboutModal.classList.add('open'); });
+document.getElementById('aboutClose').addEventListener('click', function(){ aboutModal.classList.remove('open'); });
+aboutModal.addEventListener('click', function(e){ if(e.target===aboutModal) aboutModal.classList.remove('open'); });
+document.querySelectorAll('[data-copy]').forEach(function(b){
+  b.addEventListener('click', function(){
+    const v = b.getAttribute('data-copy');
+    const done = function(){ toast('تم النسخ ✅'); };
+    try{ navigator.clipboard.writeText(v).then(done, function(){ toast(v); }); }catch(e){ toast(v); }
+  });
+});
+document.addEventListener('keydown', function(e){
+  if(e.key==='Escape'){
+    if(aboutModal.classList.contains('open')) aboutModal.classList.remove('open');
+    else if(editorModal.classList.contains('open')) cancelEdit();
+  }
+});
+
+(function(){
+  const btn = document.getElementById('exportMenuBtn'), menu = document.getElementById('exportMenu');
+  btn.addEventListener('click', function(e){ e.stopPropagation(); menu.classList.toggle('open'); });
+  menu.addEventListener('click', function(){ menu.classList.remove('open'); });
+  document.addEventListener('click', function(){ menu.classList.remove('open'); });
+  document.getElementById('topAddBtn').addEventListener('click', function(){ addDocAndPickFront(activeSheetId); });
+})();
+
+function rebakeAll(){
+  sheets.forEach(function(sheet){
+    sheet.docs.forEach(function(doc){
+      const tpl = getTemplate(doc.templateId);
+      ['front','back'].forEach(function(side){
+        const o = doc[side];
+        if(o && o._el){ bakeImage(o, bakeDimFor(tpl)); }
+      });
+    });
+  });
+  renderAll();
+}
+
+/* ======================= بدء التشغيل ======================= */
+(function init(){
+  const s = createSheet();
+  sheets.push(s);
+  activeSheetId = s.id;
+  renderAll();
+})();
+</script>
+</body>
+</html>

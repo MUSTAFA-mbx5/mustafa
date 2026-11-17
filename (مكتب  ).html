@@ -1,0 +1,1286 @@
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>إدارة العقود الاحترافية</title>
+    <style>
+        /* --- Neumorphic App UI (Non-Printable) --- */
+        :root {
+            --app-bg: #e0e5ec;
+            --shadow-light: #ffffff;
+            --shadow-dark: #a3b1c6;
+            --primary: #0f35a9;
+            --accent: #f2a900;
+            --text-dark: #4a5568;
+            --text-muted: #718096;
+        }
+
+        * { box-sizing: border-box; margin: 0; padding: 0; font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; -webkit-tap-highlight-color: transparent; }
+        
+        body { background-color: var(--app-bg); color: var(--text-dark); min-height: 100vh; display: flex; flex-direction: column; overflow-x: hidden; }
+
+        .neu-flat { background: var(--app-bg); box-shadow: 6px 6px 12px var(--shadow-dark), -6px -6px 12px var(--shadow-light); border-radius: 15px; }
+        .neu-btn { background: var(--app-bg); box-shadow: 5px 5px 10px var(--shadow-dark), -5px -5px 10px var(--shadow-light); border-radius: 15px; border: none; cursor: pointer; transition: all 0.2s ease; font-weight: bold;}
+        .neu-btn:active { box-shadow: inset 4px 4px 8px var(--shadow-dark), inset -4px -4px 8px var(--shadow-light); transform: scale(0.98);}
+        .neu-input { background: var(--app-bg); box-shadow: inset 4px 4px 8px var(--shadow-dark), inset -4px -4px 8px var(--shadow-light); border: none; outline: none; border-radius: 10px; color: var(--primary); font-weight: bold; padding: 12px; width: 100%;}
+        .neu-select { background: var(--app-bg); box-shadow: inset 2px 2px 5px var(--shadow-dark), inset -2px -2px 5px var(--shadow-light); border: none; outline: none; border-radius: 5px; color: var(--primary); font-weight: bold; padding: 2px 5px; margin: 0 5px; font-family: inherit;}
+
+        /* --- Home Screen Restyling (Responsive) --- */
+        #home-screen { flex: 1; display: flex; flex-direction: column; align-items: center; justify-content: flex-start; padding: 20px; animation: fadeIn 0.4s ease; min-height: 100vh; }
+        
+        .home-header { display: flex; flex-direction: column; align-items: center; width: 100%; max-width: 800px; margin-bottom: 25px; gap: 15px; }
+        
+        .datetime-container { display: flex; flex-direction: column; align-items: center; padding: 15px 30px; border-radius: 15px; margin-bottom: 10px; width: 100%; max-width: 350px;}
+        .time-display { font-size: clamp(2.5rem, 8vw, 4rem); font-weight: 900; color: var(--primary); letter-spacing: 2px; display: flex; align-items: center; justify-content: center; line-height: 1; direction: ltr; width: 100%;}
+        .time-display .blink { animation: blinker 1s step-start infinite; margin: 0 3px; position: relative; top: -4px; }
+        .date-display { font-size: clamp(1rem, 3.5vw, 1.3rem); font-weight: bold; color: var(--text-dark); margin-top: 5px; text-align: center;}
+
+        @keyframes blinker { 50% { opacity: 0; } }
+
+        /* Tools Panel */
+        .tools-panel { display: flex; gap: 12px; flex-wrap: wrap; justify-content: center; margin-bottom: 20px; width: 100%; max-width: 800px;}
+        .tools-panel button { padding: 12px 24px; font-size: clamp(0.9rem, 3vw, 1.1rem); display: flex; align-items: center; gap: 8px; flex: 1; min-width: 150px; justify-content: center;}
+
+        .app-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(140px, 1fr)); gap: 20px; width: 100%; max-width: 800px; margin-bottom: 20px;}
+        .app-icon { display: flex; flex-direction: column; align-items: center; justify-content: center; width: 100%; height: 140px; color: var(--primary); font-size: clamp(1rem, 4vw, 1.3rem); font-weight: bold; border-radius: 20px; text-decoration: none; }
+        .app-icon .icon-emoji { font-size: clamp(2.5rem, 8vw, 3.5rem); text-shadow: 2px 2px 4px rgba(0,0,0,0.1); margin-bottom: 10px; }
+        
+        .archive-btn-wrapper { grid-column: 1 / -1; }
+        .archive-btn-wrapper .app-icon { height: 100px; flex-direction: row; gap: 15px; font-size: clamp(1.2rem, 5vw, 1.8rem); color: #10b981;}
+        .archive-btn-wrapper .app-icon .icon-emoji { margin-bottom: 0; font-size: clamp(2.5rem, 8vw, 3.5rem); }
+
+        .developer-footer { margin-top: auto; padding-top: 20px; font-size: 12px; color: var(--text-muted); text-align: center; opacity: 0.8; font-weight: bold; width: 100%; padding-bottom: 20px;}
+
+        /* --- Settings Modal --- */
+        .modal-overlay { position: fixed; top: 0; left: 0; right: 0; bottom: 0; background: rgba(0,0,0,0.5); display: none; justify-content: center; align-items: center; z-index: 1000; backdrop-filter: blur(5px);}
+        .modal-content { background: var(--app-bg); padding: 30px; border-radius: 20px; width: 90%; max-width: 450px; display: flex; flex-direction: column; gap: 15px; }
+        .modal-content h3 { color: var(--primary); text-align: center; margin-bottom: 10px; font-size: 1.5rem;}
+        
+        @media (min-width: 768px) {
+            .app-grid { grid-template-columns: repeat(4, 1fr); gap: 30px;}
+            .app-icon { height: 180px; font-size: 1.5rem; }
+            .app-icon .icon-emoji { font-size: 4rem; }
+            .archive-btn-wrapper .app-icon { height: 120px; }
+        }
+
+        /* --- Screens --- */
+        #contract-screen, #archive-screen { display: none; flex-direction: column; min-height: 100vh; }
+        .top-bar { display: flex; justify-content: space-between; align-items: center; padding: 10px 15px; background: var(--app-bg); position: sticky; top: 0; z-index: 100; box-shadow: 0 5px 15px rgba(163, 177, 198, 0.3); flex-wrap: wrap; gap: 10px;}
+        .action-btns { display: flex; gap: 10px; flex-wrap: wrap; justify-content: center;}
+        .icon-btn { width: 45px; height: 45px; display: flex; align-items: center; justify-content: center; font-size: 1.3rem; color: var(--primary); flex-shrink: 0;}
+        
+        .workspace { flex: 1; padding: 15px; display: flex; justify-content: center; overflow-x: hidden; }
+        
+        /* --- Base Paper Styles (Responsive) --- */
+        .paper { 
+            width: 100%; max-width: 210mm; min-height: 297mm; 
+            padding: clamp(10px, 3vw, 15mm); display: none; background: #fff; 
+            border-radius: 10px; box-shadow: 0 10px 30px rgba(0,0,0,0.1); 
+            color: #333; font-size: clamp(12px, 3vw, 15px); position: relative;
+            margin: 0 auto;
+        }
+        .paper.active { display: block; animation: slideUp 0.4s ease; }
+        
+        @keyframes slideUp { from { opacity: 0; transform: translateY(20px); } to { opacity: 1; transform: translateY(0); } }
+        @keyframes fadeIn { from { opacity: 0; } to { opacity: 1; } }
+
+        /* Editable Fields (UI Only - NO DOTTED LINES) */
+        .ui-field, [contenteditable="true"] {
+            display: inline-block;
+            min-height: 24px;
+            padding: 4px 8px;
+            outline: none;
+            color: #000;
+            font-weight: bold;
+            text-align: center;
+            vertical-align: middle;
+            transition: 0.2s;
+            max-width: 100%;
+            border-radius: 4px;
+            background: rgba(0, 0, 0, 0.03); 
+            border: none !important; /* Forces no dotted lines */
+        }
+        .ui-field:focus, [contenteditable="true"]:focus, select:focus { background-color: #fef08a; color: #000; }
+        span[contenteditable="true"]:empty { min-width: 120px; }
+        
+        /* Dropdowns */
+        select.custom-select {
+            appearance: none; -webkit-appearance: none; -moz-appearance: none;
+            border: none; background: transparent; color: #000;
+            font-weight: bold; font-family: inherit; font-size: inherit; text-align: center;
+            outline: none; cursor: pointer; padding: 4px 15px; width: 100%;
+        }
+        .select-wrapper { position: relative; display: flex; flex: 1; background: rgba(0, 0, 0, 0.03); border: none; border-radius: 4px;}
+        .select-wrapper::after { content: '▼'; font-size: 10px; position: absolute; left: 5px; top: 50%; transform: translateY(-50%); color: #888; pointer-events: none; }
+
+        /* Logo Containers */
+        .logo-upload-container { width: clamp(80px, 20vw, 130px); height: clamp(60px, 15vw, 90px); border: 2px dashed #ccc; border-radius: 8px; display: flex; align-items: center; justify-content: center; cursor: pointer; position: relative; overflow: hidden; margin-bottom: 5px; background: #fafafa; flex-shrink: 0;}
+        .logo-upload-container img { width: 100%; height: 100%; object-fit: contain; display: none; z-index: 2; }
+        .logo-placeholder { position: absolute; color: #888; font-size: clamp(0.7rem, 2vw, 0.9rem); display: flex; flex-direction: column; align-items: center; z-index: 1; text-align: center;}
+
+        #global-image-upload { display: none; }
+
+        .watermark-bg { position: absolute; top: 50%; left: 50%; transform: translate(-50%, -50%); width: 75%; height: 75%; display: flex; align-items: center; justify-content: center; z-index: 0; pointer-events: none; opacity: 0.12; }
+        .watermark-bg img { max-width: 100%; max-height: 100%; object-fit: contain; display: none; }
+        .paper-content { position: relative; z-index: 1; width: 100%; }
+
+        /* --- Office Header formatting --- */
+        .office-header-container { text-align: center; flex: 1; display: flex; flex-direction: column; gap: 5px; min-width: 150px;}
+        .office-h1 { font-size: clamp(24px, 6vw, 36px); font-weight: 900; }
+        .office-h2 { font-size: clamp(16px, 4vw, 22px); font-weight: bold; }
+        .office-h3 { font-size: clamp(12px, 3vw, 16px); font-weight: bold; opacity: 0.9;}
+
+        /* =========================================
+           STYLE 1: CAR & MOTORCYCLE (Red Theme)
+           ========================================= */
+        .style-vehicle .office-h1 { color: #d32f2f; }
+        .style-vehicle .office-h2, .style-vehicle .office-h3 { color: #333; }
+        .style-vehicle .v-title { text-align:center; font-weight:900; font-size:clamp(18px, 4.5vw, 22px); margin: 15px 0; color: #d32f2f; }
+        .style-vehicle .v-meta { display: flex; justify-content: space-between; font-weight: bold; margin-bottom: 20px; font-size: clamp(13px, 3.5vw, 16px); align-items: center; flex-wrap: wrap; gap: 10px;}
+        .style-vehicle .v-row { display: flex; align-items: center; margin-bottom: 12px; flex-wrap: wrap; gap: 8px;}
+        .style-vehicle .v-row label { font-weight: bold; white-space: nowrap; color: #333;}
+        .style-vehicle .v-row span.ui-field { flex: 1; min-width: 100px; }
+        
+        .style-vehicle .v-parties-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(280px, 1fr)); gap: 25px; margin-bottom: 20px; }
+
+        .style-vehicle .v-party-box { border: 2px solid #d32f2f; border-radius: 10px; padding: 20px 15px 15px; position: relative; background: #fff;}
+        .style-vehicle .v-party-title { position: absolute; top: -14px; left: 50%; transform: translateX(-50%); background: #d32f2f; color: white; padding: 4px 25px; border-radius: 20px; font-weight: bold; white-space: nowrap; font-size: 14px;}
+        
+        .style-vehicle .v-details-box { border: 2px solid #333; border-radius: 10px; padding: 15px; margin-bottom: 20px; background: #fff;}
+        .style-vehicle .v-details-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(250px, 1fr)); gap: 15px; }
+        
+        .style-vehicle .v-finance-box { border: 2px solid #333; border-radius: 10px; padding: 15px; margin-bottom: 20px; background: #fff;}
+        
+        .style-vehicle .v-conditions { padding: 10px; }
+        .style-vehicle .v-conditions ul { list-style: none; padding: 0; display: flex; flex-direction: column; gap: 8px;}
+        .style-vehicle .v-conditions li { font-weight: bold; position: relative; padding-right: 18px; line-height: 1.6; color: #333;}
+        .style-vehicle .v-conditions li::before { content: '•'; position: absolute; right: 0; top: 0; color: #d32f2f; font-size: 1.2rem;}
+        
+        .style-vehicle .v-signatures { display: grid; grid-template-columns: repeat(auto-fit, minmax(100px, 1fr)); gap: 20px; text-align: center; margin-top: 35px; font-weight: bold; color: #d32f2f;}
+        .style-vehicle .v-signatures > div { display: flex; flex-direction: column; align-items: center; gap: 10px;}
+        .style-vehicle .sync-target-display { display:inline-block; font-weight: 900; color: #000; font-size: 1.1rem; min-height: 25px; width: 100%; text-align: center;}
+
+        /* =========================================
+           STYLE 2: REAL ESTATE (Red/Blue/Green Theme)
+           ========================================= */
+        .style-estate .office-h1 { color: #c62828; }
+        .style-estate .office-h3 { color: #1565c0; }
+        .style-estate .e-header { display: flex; align-items: center; justify-content: space-between; border-bottom: 3px solid #333; padding-bottom: 15px; margin-bottom: 25px; flex-wrap: wrap; gap: 15px; text-align: center;}
+        .style-estate .e-badge { border: 2px solid #c62828; color: #c62828; background: #fff; padding: 5px 25px; font-weight: bold; font-size: clamp(16px, 4.5vw, 20px); border-radius: 20px; text-align: center; width: fit-content; margin: -30px auto 25px auto; position: relative; z-index: 2;}
+        
+        .style-estate .e-parties-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(280px, 1fr)); gap: 25px; margin-bottom: 25px; }
+        
+        /* Seller Box */
+        .style-estate .e-party-box:nth-child(1) { border: 2px solid #333; border-radius: 10px; padding: 25px 15px 15px; position: relative; background: #fff;}
+        .style-estate .e-party-box:nth-child(1) .e-party-title { position: absolute; top: -14px; left: 50%; transform: translateX(-50%); background: #fff; border: 2px solid #333; color: #000; padding: 4px 20px; border-radius: 15px; font-weight: bold; white-space: nowrap;}
+        .style-estate .e-party-box:nth-child(1) label { color: #c62828; }
+        
+        /* Buyer Box */
+        .style-estate .e-party-box:nth-child(2) { border: 2px solid #333; border-radius: 10px; padding: 25px 15px 15px; position: relative; background: #fff;}
+        .style-estate .e-party-box:nth-child(2) .e-party-title { position: absolute; top: -14px; left: 50%; transform: translateX(-50%); background: #fff; border: 2px solid #333; color: #000; padding: 4px 20px; border-radius: 15px; font-weight: bold; white-space: nowrap;}
+        .style-estate .e-party-box:nth-child(2) label { color: #2e7d32; }
+
+        .style-estate .e-row { margin-bottom: 12px; display: flex; align-items: center; flex-wrap: wrap; gap: 8px;}
+        .style-estate .e-row label { font-weight: bold; white-space: nowrap; }
+        .style-estate .e-row span.ui-field { flex: 1; min-width: 100px;}
+        
+        .style-estate .e-section { margin-bottom: 20px; line-height: 2; font-weight: bold;}
+        .style-estate .e-flex-line { display: flex; flex-wrap: wrap; gap: 10px; align-items: center; margin-top: 10px;}
+        
+        .style-estate .text-red { color: #c62828; }
+        .style-estate .text-green { color: #2e7d32; }
+
+        .e-signatures { display: grid; grid-template-columns: repeat(auto-fit, minmax(100px, 1fr)); gap: 20px; text-align: center; margin-top: 40px; font-weight: bold; align-items: end;}
+
+        /* =========================================
+           STYLE 3: RENT (Blue Theme)
+           ========================================= */
+        .style-rent .office-h1 { color: #283593; font-size: clamp(35px, 8vw, 60px); font-weight: 900; }
+        .style-rent .r-header-box { display: flex; justify-content: space-between; align-items: center; margin-bottom: 25px; flex-wrap: wrap; gap: 15px; text-align: center;}
+        
+        .style-rent .r-grid-container { display: flex; flex-direction: column; gap: 12px; margin-bottom: 20px; }
+        .style-rent .r-flex-row { display: flex; flex-wrap: wrap; gap: 8px; align-items: center; }
+        
+        .style-rent .r-label { border: 2px solid #283593; background: #283593; color: #fff; padding: 8px 15px; font-weight: bold; border-radius: 6px; white-space: nowrap;}
+        .style-rent .r-input-box { flex: 1; border: 2px solid #283593; border-radius: 6px; padding: 4px; min-width: 150px; display: flex;}
+        .style-rent .r-input-box .ui-field { flex: 1; border: none; background: transparent; }
+        
+        .style-rent .r-section-title { border: 2px solid #283593; background: #283593; color: #fff; padding: 8px 20px; font-weight: bold; border-radius: 6px; margin: 15px 0 15px 0; display: inline-block;}
+        .style-rent .r-large-box { border: 2px solid #283593; color: #283593; border-radius: 6px; padding: 20px; font-weight: bold; margin-bottom: 20px; line-height: 1.8;}
+        .style-rent .r-text-block { font-weight: bold; line-height: 2; margin-bottom: 20px; color: #333;}
+        
+        .style-rent .r-signatures { display: grid; grid-template-columns: repeat(auto-fit, minmax(100px, 1fr)); gap: 20px; text-align: center; margin-top: 40px; font-weight: bold; align-items: end; color: #283593;}
+        .style-rent .sync-target-display { display:inline-block; font-weight: 900; color: #000; font-size: 1.1rem; min-height: 25px; width: 100%; text-align: center;}
+
+        /* =========================================
+           MOBILE OPTIMIZATIONS (Screen < 768px)
+           ========================================= */
+        @media screen and (max-width: 768px) {
+            .paper { border-radius: 0; box-shadow: none; padding: 15px 5px; }
+            .v-row, .e-row, .r-flex-row { flex-direction: column; align-items: flex-start; }
+            .v-row span.ui-field, .e-row span.ui-field, .r-input-box { width: 100%; margin-left: 0; }
+            .select-wrapper { width: 100%; }
+        }
+
+        /* =========================================
+           PRINT STYLES (STRICT 1 PAGE - COMPACT CSS)
+           ========================================= */
+        @media print {
+            @page { size: A4; margin: 4mm; }
+            
+            html, body { 
+                background: #fff !important; 
+                -webkit-print-color-adjust: exact !important; 
+                print-color-adjust: exact !important; 
+                margin: 0 !important; 
+                padding: 0 !important; 
+                width: 100% !important; 
+                height: 100% !important; 
+                overflow: hidden !important; 
+            }
+            
+            .no-print, #home-screen, #archive-screen, .top-bar, .modal-overlay, .select-wrapper::after, .logo-placeholder { display: none !important; }
+            
+            #contract-screen { display: block !important; height: 100% !important; margin: 0 !important; padding: 0 !important;}
+            .workspace { padding: 0 !important; display: block !important; height: 100% !important; margin: 0 !important;}
+            
+            .paper { 
+                box-shadow: none !important; 
+                border-radius: 0 !important; 
+                max-width: 100% !important; 
+                width: 100% !important; 
+                height: 99vh !important;
+                max-height: 288mm !important; 
+                padding: 5mm 10mm 2mm 10mm !important; 
+                margin: 0 auto !important; 
+                background: #fff !important; 
+                page-break-after: avoid !important; 
+                page-break-inside: avoid !important; 
+                overflow: hidden !important; 
+                box-sizing: border-box !important;
+            }
+            
+            /* Wipe all UI highlights - Ensure no borders anywhere */
+            .ui-field, [contenteditable="true"] { 
+                background: transparent !important; border: none !important; box-shadow: none !important; 
+                padding: 0 2px !important; min-height: auto !important; outline: none !important; text-decoration: none !important;
+            }
+            select.custom-select { appearance: none !important; -webkit-appearance: none !important; border: none !important; background: transparent !important; padding: 0 !important;}
+            .select-wrapper { background: transparent !important; border: none !important; }
+
+            /* General Compaction */
+            .office-h1 { font-size: 24pt !important; margin-bottom: 2px !important;}
+            .office-h2 { font-size: 14pt !important; margin-bottom: 2px !important;}
+            .office-h3 { font-size: 11pt !important; }
+            .logo-upload-container { border: none !important; width: 110px !important; height: 80px !important; margin-bottom: 0 !important; background: transparent !important; }
+            .watermark-bg { opacity: 0.1 !important; }
+
+            /* Force Horizontal Layouts */
+            .v-row, .e-row, .r-flex-row { flex-direction: row !important; align-items: center !important; gap: 5px !important; }
+            .v-row span.ui-field, .e-row span.ui-field { width: auto !important; flex: 1 !important; }
+            .v-parties-grid, .e-parties-grid { display: grid !important; grid-template-columns: 1fr 1fr !important; gap: 10px !important; }
+            .v-signatures, .e-signatures, .r-signatures { display: grid !important; grid-template-columns: repeat(4, 1fr) !important; gap: 10px !important; margin-top: 15px !important;}
+            .style-vehicle .v-signatures { grid-template-columns: repeat(3, 1fr) !important; }
+
+            /* Vehicle Contract specific shrink */
+            .style-vehicle .v-title { margin: 8px 0 !important; font-size: 18pt !important;}
+            .style-vehicle .v-meta { margin-bottom: 12px !important; font-size: 11pt !important;}
+            .style-vehicle .v-parties-grid { margin-bottom: 12px !important; }
+            .style-vehicle .v-party-box { padding: 15px 10px 5px !important; border-width: 1px !important;}
+            .style-vehicle .v-party-title { font-size: 11pt !important; top: -10px !important; padding: 1px 15px !important;}
+            .style-vehicle .v-row { margin-bottom: 3px !important; font-size: 11pt !important;}
+            .style-vehicle .v-details-box, .style-vehicle .v-finance-box { padding: 8px 10px !important; margin-bottom: 8px !important; border-width: 1px !important;}
+            .style-vehicle .v-details-grid { grid-template-columns: 1fr 1fr !important; gap: 8px !important;}
+            .style-vehicle .v-conditions { padding: 5px !important; }
+            .style-vehicle .v-conditions ul { gap: 3px !important; }
+            .style-vehicle .v-conditions li { font-size: 10.5pt !important; line-height: 1.3 !important; margin-bottom: 2px !important;}
+
+            /* Estate Contract specific shrink */
+            .style-estate .e-header { margin-bottom: 10px !important; padding-bottom: 5px !important; }
+            .style-estate .e-badge { padding: 2px 15px !important; font-size: 14pt !important; margin: -15px auto 10px auto !important; }
+            .style-estate .e-parties-grid { margin-bottom: 15px !important; }
+            .style-estate .e-party-box:nth-child(1), .style-estate .e-party-box:nth-child(2) { padding: 15px 10px 5px !important; border-width: 1px !important;}
+            .style-estate .e-party-title { font-size: 11pt !important; top: -10px !important; padding: 1px 15px !important; }
+            .style-estate .e-row { margin-bottom: 4px !important; font-size: 11pt !important;}
+            .style-estate .e-section { margin-bottom: 6px !important; line-height: 1.5 !important; font-size: 11.5pt !important; }
+            .style-estate .e-flex-line { margin-top: 4px !important; }
+            
+            /* Rent Contract specific shrink */
+            .style-rent .r-header-box { margin-bottom: 10px !important; }
+            .style-rent .logo-upload-container { width: 90px !important; height: 90px !important; }
+            .style-rent .office-h1 { font-size: 24pt !important; }
+            .style-rent .r-grid-container { margin-bottom: 10px !important; gap: 5px !important;}
+            .style-rent .r-label { padding: 2px 6px !important; font-size: 11pt !important; }
+            .style-rent .r-input-box { padding: 1px !important; min-width: auto !important;}
+            .style-rent .r-section-title { margin: 6px 0 !important; padding: 2px 15px !important; font-size: 12pt !important; }
+            .style-rent .r-text-block { margin-bottom: 6px !important; line-height: 1.5 !important; font-size: 11.5pt !important; }
+            .style-rent .r-large-box { padding: 10px !important; margin-bottom: 8px !important; font-size: 11.5pt !important; line-height: 1.5 !important;}
+        }
+    </style>
+</head>
+<body>
+    <input type="file" id="global-image-upload" accept="image/*">
+
+    <!-- 1. Home Screen -->
+    <div id="home-screen">
+        <div class="home-header">
+            <div class="datetime-container neu-flat">
+                <div class="time-display" id="clock-time">00<span class="blink">:</span>00</div>
+                <div class="date-display" id="clock-date">يوم، 00 شهر 0000</div>
+            </div>
+            
+            <div class="tools-panel">
+                <button class="neu-btn" onclick="openSettings()"><span class="icon-emoji">⚙️</span> إعدادات المكتب</button>
+                <button class="neu-btn" onclick="backupData()" style="color:#3b82f6;"><span class="icon-emoji">💾</span> نسخة احتياطية</button>
+                <button class="neu-btn" onclick="document.getElementById('import-file').click()" style="color:#8b5cf6;"><span class="icon-emoji">📂</span> استعادة البيانات</button>
+                <input type="file" id="import-file" style="display:none" accept=".json" onchange="restoreData(event)">
+            </div>
+        </div>
+
+        <div class="app-grid">
+            <button class="neu-btn app-icon" onclick="openApp('car-contract')">
+                <span class="icon-emoji">🚘</span> عقد سيارة
+            </button>
+            <button class="neu-btn app-icon" onclick="openApp('moto-contract')">
+                <span class="icon-emoji">🏍️</span> عقد دراجة
+            </button>
+            <button class="neu-btn app-icon" onclick="openApp('realestate-contract')">
+                <span class="icon-emoji">🏠</span> عقد عقار
+            </button>
+            <button class="neu-btn app-icon" onclick="openApp('rent-contract')">
+                <span class="icon-emoji">🔑</span> عقد إيجار
+            </button>
+            <div class="archive-btn-wrapper">
+                <button class="neu-btn app-icon" onclick="openArchiveScreen()">
+                    <span class="icon-emoji">📁</span> الأرشيف
+                </button>
+            </div>
+        </div>
+        <div class="developer-footer">برمجة الاستاذ احمد حسن</div>
+    </div>
+
+    <!-- Settings Modal -->
+    <div class="modal-overlay" id="settings-modal">
+        <div class="modal-content neu-flat">
+            <h3>إعدادات المكتب</h3>
+            <input type="text" id="set-office-name" class="neu-input" placeholder="اسم المكتب/المعرض">
+            <input type="text" id="set-office-phone" class="neu-input" placeholder="رقم الهاتف">
+            <input type="text" id="set-office-address" class="neu-input" placeholder="العنوان (مثال: الديوانية حي الزهراء..)">
+            <div style="display:flex; gap:10px; margin-top:10px;">
+                <button class="neu-btn" style="flex:1; padding:12px; color:#10b981;" onclick="saveSettings()">حفظ</button>
+                <button class="neu-btn" style="flex:1; padding:12px; color:#e53e3e;" onclick="closeSettings()">إلغاء</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- 2. Archive Screen -->
+    <div id="archive-screen">
+        <div class="top-bar">
+            <button class="neu-btn icon-btn" onclick="goHome()" title="العودة للرئيسية">🔙</button>
+            <input type="text" id="search-input" class="neu-input" onkeyup="filterArchive()" placeholder="🔍 ابحث عن عقد بالاسم..." style="flex:1; margin: 0 15px;">
+        </div>
+        <div class="workspace" style="flex-direction:column; align-items:center; overflow-y:auto;">
+            <div id="archive-list" style="width:100%; max-width:700px; display:flex; flex-direction:column; gap:15px;"></div>
+        </div>
+    </div>
+
+    <!-- 3. Workspace -->
+    <div id="contract-screen">
+        <div class="top-bar no-print">
+            <button class="neu-btn icon-btn" onclick="goHome()" title="العودة للرئيسية">🔙</button>
+            
+            <div class="action-btns">
+                <!-- Color Picker for Contract Background -->
+                <select id="bg-color-picker" class="neu-select" onchange="changePaperColor()" title="تغيير لون العقد" style="width: 40px; padding: 0; appearance: none; -webkit-appearance: none; text-align: center; font-size: 1.5rem; cursor: pointer;">
+                    <option value="#ffffff" title="أبيض">⚪</option>
+                    <option value="#f8fafc" title="رمادي فاتح">🌫️</option>
+                    <option value="#fefce8" title="أصفر باهت">🟨</option>
+                    <option value="#f0fdf4" title="أخضر باهت">🟩</option>
+                    <option value="#eff6ff" title="أزرق فاتح">🟦</option>
+                    <option value="#faf5ff" title="نيلي باهت">🪻</option>
+                    <option value="#fdf2f8" title="بنفسجي باهت">🟪</option>
+                    <option value="#fff1f2" title="وردي باهت">🌸</option>
+                    <option value="#fef2f2" title="أحمر باهت">🟥</option>
+                    <option value="#fff7ed" title="برتقالي باهت">🟧</option>
+                </select>
+
+                <button class="neu-btn icon-btn" onclick="saveContractToArchive()" style="color:#3b82f6;" title="حفظ نسخة في الأرشيف">💾</button>
+                <button class="neu-btn icon-btn" onclick="uploadWatermark()" style="color:#0ea5e9;" title="إضافة علامة مائية (لوكو)">💧</button>
+                <button class="neu-btn icon-btn" onclick="clearWatermark()" style="color:#8b5cf6;" title="إزالة العلامة المائية">🚫</button>
+                <button class="neu-btn icon-btn" onclick="clearFields()" style="color:#e53e3e;" title="تفريغ النصوص">🔄</button>
+                <button class="neu-btn icon-btn" onclick="window.print()" style="color:#10b981;" title="طباعة العقد">🖨️</button>
+            </div>
+        </div>
+
+        <div class="workspace" id="main-workspace">
+            
+            <!-- A. عقد بيع سيارة -->
+            <div id="car-contract" class="paper style-vehicle">
+                <div class="watermark-bg"><img id="wm-car-contract" src="" alt=""></div>
+                <div class="paper-content">
+                    
+                    <div style="display:flex; justify-content:space-between; align-items:center; flex-wrap:wrap; gap:10px;">
+                        <div class="logo-upload-container" onclick="triggerImageUpload('car-img')">
+                            <div class="logo-placeholder" id="car-img-placeholder"><span style="font-size: 1.5rem;">🖼️</span><span>صورة</span></div>
+                            <img id="car-img" src="" alt="">
+                        </div>
+                        <div class="office-header-container">
+                            <div class="office-h1 global-office-name">اسم المعرض</div>
+                            <div class="office-h2 global-office-phone">رقم الهاتف</div>
+                            <div class="office-h3 global-office-address">العنوان</div>
+                        </div>
+                        <div class="logo-upload-container" onclick="triggerImageUpload('car-logo')">
+                            <div class="logo-placeholder" id="car-logo-placeholder"><span style="font-size: 1.5rem;">🖼️</span><span>شعار</span></div>
+                            <img id="car-logo" src="" alt="">
+                        </div>
+                    </div>
+
+                    <div class="v-title">عقد بيع وشراء السيارات</div>
+                    
+                    <div class="v-meta">
+                        <div>التاريخ: <span class="auto-date ui-field"></span> الوقت: <span class="auto-time ui-field"></span></div>
+                        <div style="direction:ltr;">NO: <span class="auto-number ui-field" style="direction:rtl; text-align:right;"></span></div>
+                    </div>
+
+                    <div class="v-finance-box" style="padding: 10px 15px;">
+                        <div class="v-row" style="margin-bottom: 0;">
+                            <label>اسم المالك الشرعي:</label>
+                            <span contenteditable="true" class="ui-field"></span>
+                        </div>
+                    </div>
+
+                    <div class="v-parties-grid">
+                        <div class="v-party-box">
+                            <div class="v-party-title">الطرف الاول ( البائع )</div>
+                            <div class="v-row"><label>البائع السيد:</label><span contenteditable="true" class="ui-field sync-seller"></span></div>
+                            <div class="v-row"><label>السكن:</label><span contenteditable="true" class="ui-field"></span></div>
+                            <div class="v-row"><label>المعرف بالهوية:</label><span contenteditable="true" class="ui-field"></span></div>
+                            <div class="v-row"><label>موبايل:</label><span contenteditable="true" class="ui-field"></span></div>
+                        </div>
+                        <div class="v-party-box">
+                            <div class="v-party-title">الطرف الثاني ( المشتري )</div>
+                            <div class="v-row"><label>المشتري السيد:</label><span contenteditable="true" class="ui-field sync-buyer"></span></div>
+                            <div class="v-row"><label>السكن:</label><span contenteditable="true" class="ui-field"></span></div>
+                            <div class="v-row"><label>المعرف بالهوية:</label><span contenteditable="true" class="ui-field"></span></div>
+                            <div class="v-row"><label>موبايل:</label><span contenteditable="true" class="ui-field"></span></div>
+                        </div>
+                    </div>
+
+                    <div class="v-details-box">
+                        <div class="v-details-grid">
+                            <div>
+                                <div class="v-row">
+                                    <label>رقم السيارة:</label>
+                                    <span contenteditable="true" class="ui-field"></span>
+                                    <div class="select-wrapper" style="max-width: 100px;">
+                                        <select class="custom-select">
+                                            <option>بغداد</option><option>البصرة</option><option>نينوى</option>
+                                            <option>أربيل</option><option>النجف</option><option>ذي قار</option>
+                                            <option>كركوك</option><option>الأنبار</option><option>ديالى</option>
+                                            <option>المثنى</option><option selected>الديوانية</option><option>ميسان</option>
+                                            <option>واسط</option><option>صلاح الدين</option><option>دهوك</option>
+                                            <option>السليمانية</option><option>بابل</option><option>كربلاء</option>
+                                        </select>
+                                    </div>
+                                </div>
+                                <div class="v-row"><label>نوع السيارة:</label><span contenteditable="true" class="ui-field"></span></div>
+                                <div class="v-row"><label>الموديل:</label><span contenteditable="true" class="ui-field"></span></div>
+                                <div class="v-row"><label>رقم السنوية:</label><span contenteditable="true" class="ui-field"></span></div>
+                            </div>
+                            <div>
+                                <div class="v-row">
+                                    <label>الاستخدام:</label>
+                                    <div class="select-wrapper" style="max-width: 120px;">
+                                        <select class="custom-select">
+                                            <option>خصوصي</option><option>أجرة</option><option>حمل</option>
+                                            <option>زراعي</option><option>إنشائي</option>
+                                        </select>
+                                    </div>
+                                </div>
+                                <div class="v-row"><label>اللون:</label><span contenteditable="true" class="ui-field"></span></div>
+                                <div class="v-row"><label>رقم الشاصي:</label><span contenteditable="true" class="ui-field"></span></div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="v-finance-box">
+                        <div class="v-row"><label>ببدل قدره:</label><span contenteditable="true" class="ui-field"></span></div>
+                        <div class="v-row"><label>وقد استلم البائع مبلغ قدره:</label><span contenteditable="true" class="ui-field"></span></div>
+                        <div class="v-row"><label>والباقي قدره:</label><span contenteditable="true" class="ui-field"></span></div>
+                    </div>
+
+                    <div class="v-finance-box" style="padding: 10px 15px;">
+                        <div class="v-row" style="margin-bottom: 0;">
+                            <label>الملاحظات:</label>
+                            <span contenteditable="true" class="ui-field"></span>
+                        </div>
+                    </div>
+
+                    <div class="v-conditions">
+                        <ul contenteditable="true">
+                            <li>على الطرفان تحويل السيارة بعد العقد خلال المدة القانونية.</li>
+                            <li>الطرف الاول هو المسؤول عن احضار صاحب السيارة مستقبلاً.</li>
+                            <li>اذا نكل احد الطرفين يدفع غرامة قدرها ٢٠٪.</li>
+                            <li>يتحمل البائع كافة الغرامات المرورية قبل تاريخ البيع.</li>
+                            <li>يعتبر المكتب وسيطاً في اجراء المعاملة ولا يعتبر كفيلاً للطرفين.</li>
+                        </ul>
+                        <div style="text-align:center; font-weight:bold; margin-top:15px; font-size:13px; color: #333;">كل عقد غير مختوم بختم المكتب يعتبر باطلاً.</div>
+                    </div>
+
+                    <div class="v-signatures">
+                        <div>
+                            الطرف الاول البائع<br>
+                            <span class="sync-target-display sync-seller-dest"></span>
+                        </div>
+                        <div>
+                            منظم العقد<br>
+                            <span class="sync-target-display global-office-name"></span>
+                        </div>
+                        <div>
+                            الطرف الثاني المشتري<br>
+                            <span class="sync-target-display sync-buyer-dest"></span>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- B. عقد دراجة -->
+            <div id="moto-contract" class="paper style-vehicle">
+                <div class="watermark-bg"><img id="wm-moto-contract" src="" alt=""></div>
+                <div class="paper-content">
+                    <div style="display:flex; justify-content:space-between; align-items:center; flex-wrap:wrap; gap:10px;">
+                        <div class="logo-upload-container" onclick="triggerImageUpload('moto-img')">
+                            <div class="logo-placeholder" id="moto-img-placeholder"><span style="font-size: 1.5rem;">🖼️</span><span>صورة</span></div>
+                            <img id="moto-img" src="" alt="">
+                        </div>
+                        <div class="office-header-container">
+                            <div class="office-h1 global-office-name" style="color:#e65100;">اسم المعرض</div>
+                            <div class="office-h2 global-office-phone">رقم الهاتف</div>
+                            <div class="office-h3 global-office-address">العنوان</div>
+                        </div>
+                        <div class="logo-upload-container" onclick="triggerImageUpload('moto-logo')">
+                            <div class="logo-placeholder" id="moto-logo-placeholder"><span style="font-size: 1.5rem;">🖼️</span><span>شعار</span></div>
+                            <img id="moto-logo" src="" alt="">
+                        </div>
+                    </div>
+
+                    <div class="v-title" style="color:#e65100;">عقد بيع وشراء دراجة نارية</div>
+                    
+                    <div class="v-meta">
+                        <div>التاريخ: <span class="auto-date ui-field"></span> الوقت: <span class="auto-time ui-field"></span></div>
+                        <div style="direction:ltr; color:#e65100;">NO: <span class="auto-number ui-field" style="direction:rtl; text-align:right;"></span></div>
+                    </div>
+
+                    <div class="v-finance-box" style="padding: 10px 15px; border-color:#ffb74d; background:#fff3e0;">
+                        <div class="v-row" style="margin-bottom: 0;">
+                            <label style="color:#e65100;">اسم المالك الشرعي:</label>
+                            <span contenteditable="true" class="ui-field" style="background:#fff;"></span>
+                        </div>
+                    </div>
+
+                    <div class="v-parties-grid">
+                        <div class="v-party-box" style="border-color:#ffb74d; background:#fffaf0;">
+                            <div class="v-party-title" style="background:#e65100;">الطرف الاول ( البائع )</div>
+                            <div class="v-row"><label>البائع السيد:</label><span contenteditable="true" class="ui-field sync-seller"></span></div>
+                            <div class="v-row"><label>السكن:</label><span contenteditable="true" class="ui-field"></span></div>
+                            <div class="v-row"><label>رقم الهوية:</label><span contenteditable="true" class="ui-field"></span></div>
+                            <div class="v-row"><label>موبايل:</label><span contenteditable="true" class="ui-field"></span></div>
+                        </div>
+                        <div class="v-party-box" style="border-color:#ffb74d; background:#fffaf0;">
+                            <div class="v-party-title" style="background:#e65100;">الطرف الثاني ( المشتري )</div>
+                            <div class="v-row"><label>المشتري السيد:</label><span contenteditable="true" class="ui-field sync-buyer"></span></div>
+                            <div class="v-row"><label>السكن:</label><span contenteditable="true" class="ui-field"></span></div>
+                            <div class="v-row"><label>رقم الهوية:</label><span contenteditable="true" class="ui-field"></span></div>
+                            <div class="v-row"><label>موبايل:</label><span contenteditable="true" class="ui-field"></span></div>
+                        </div>
+                    </div>
+
+                    <div class="v-details-box" style="border-color:#ffb74d;">
+                        <div class="v-details-grid">
+                            <div>
+                                <div class="v-row">
+                                    <label>رقم الدراجة:</label>
+                                    <span contenteditable="true" class="ui-field"></span>
+                                    <div class="select-wrapper" style="max-width: 100px;">
+                                        <select class="custom-select">
+                                            <option>بغداد</option><option>البصرة</option><option>نينوى</option>
+                                            <option>أربيل</option><option>النجف</option><option>ذي قار</option>
+                                            <option>كركوك</option><option>الأنبار</option><option>ديالى</option>
+                                            <option>المثنى</option><option selected>الديوانية</option><option>ميسان</option>
+                                            <option>واسط</option><option>صلاح الدين</option><option>دهوك</option>
+                                            <option>السليمانية</option><option>بابل</option><option>كربلاء</option>
+                                        </select>
+                                    </div>
+                                </div>
+                                <div class="v-row"><label>نوع الدراجة:</label><span contenteditable="true" class="ui-field"></span></div>
+                                <div class="v-row"><label>الموديل:</label><span contenteditable="true" class="ui-field"></span></div>
+                                <div class="v-row"><label>سعة المحرك (CC):</label><span contenteditable="true" class="ui-field"></span></div>
+                            </div>
+                            <div>
+                                <div class="v-row">
+                                    <label>الاستخدام:</label>
+                                    <div class="select-wrapper" style="max-width: 120px;">
+                                        <select class="custom-select">
+                                            <option>دراجة نارية</option><option>ستوتة</option><option>تكتك</option>
+                                        </select>
+                                    </div>
+                                </div>
+                                <div class="v-row"><label>اللون:</label><span contenteditable="true" class="ui-field"></span></div>
+                                <div class="v-row"><label>رقم الشاصي:</label><span contenteditable="true" class="ui-field"></span></div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="v-finance-box" style="border-color:#ffb74d;">
+                        <div class="v-row"><label>ببدل قدره:</label><span contenteditable="true" class="ui-field"></span></div>
+                        <div class="v-row"><label>وقد استلم البائع مبلغ قدره:</label><span contenteditable="true" class="ui-field"></span></div>
+                        <div class="v-row"><label>والباقي قدره:</label><span contenteditable="true" class="ui-field"></span></div>
+                    </div>
+
+                    <div class="v-finance-box" style="padding: 10px 15px; border-color:#ffb74d;">
+                        <div class="v-row" style="margin-bottom: 0;">
+                            <label>الملاحظات:</label>
+                            <span contenteditable="true" class="ui-field"></span>
+                        </div>
+                    </div>
+
+                    <div class="v-conditions">
+                        <ul contenteditable="true">
+                            <li style="color:#e65100;">البائع مسؤول عن سلامة أوراق الدراجة والموقف القانوني لها حتى تاريخ العقد.</li>
+                            <li style="color:#e65100;">استلم المشتري الدراجة وتصرف بها وقبلها على كل عيب بعد الفحص والمعاينة.</li>
+                            <li style="color:#e65100;">لا يحق لأي من الطرفين النكول، وفي حال النكول يتحمل الناكل التبعات القانونية.</li>
+                            <li style="color:#e65100;">المعرض وسيط وليس كفيل أو ضامن لما يترتب خارج هذا الاتفاق.</li>
+                        </ul>
+                    </div>
+
+                    <div class="v-signatures" style="color:#e65100;">
+                        <div>الطرف الاول البائع<br><span class="sync-target-display sync-seller-dest" style="color:#000;"></span></div>
+                        <div style="color:#333;">منظم العقد<br><span class="sync-target-display global-office-name" style="color:#000;"></span></div>
+                        <div>الطرف الثاني المشتري<br><span class="sync-target-display sync-buyer-dest" style="color:#000;"></span></div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- C. عقد عقار -->
+            <div id="realestate-contract" class="paper style-estate">
+                <div class="watermark-bg"><img id="wm-realestate-contract" src="" alt=""></div>
+                <div class="paper-content">
+                    <div class="e-header">
+                        <div class="logo-upload-container" style="width:130px; height:90px;" onclick="triggerImageUpload('estate-logo1')">
+                            <div class="logo-placeholder" id="estate-logo1-placeholder"><span>🖼️</span><span>صورة</span></div>
+                            <img id="estate-logo1" src="" alt="">
+                        </div>
+                        <div class="office-header-container">
+                            <div class="office-h1 global-office-name">اسم المكتب</div>
+                            <div class="office-h3">لبيع وشراء وتنظيم عقود بيع الدور والاراضي</div>
+                            <div class="office-h2 global-office-phone" style="margin-top:5px; border:2px solid #333; display:inline-block; padding:4px 15px; border-radius:8px; align-self:center;">رقم الهاتف</div>
+                            <div class="office-h3 global-office-address" style="margin-top:5px;">العنوان</div>
+                        </div>
+                        <div class="logo-upload-container" style="width:130px; height:90px;" onclick="triggerImageUpload('estate-logo2')">
+                            <div class="logo-placeholder" id="estate-logo2-placeholder"><span>🖼️</span><span>صورة</span></div>
+                            <img id="estate-logo2" src="" alt="">
+                        </div>
+                    </div>
+
+                    <div style="display:flex; justify-content:space-between; font-weight:bold; border:2px solid #333; padding:8px 20px; border-radius:8px; margin-bottom:30px; align-items:center;">
+                        <div>NO: <span class="auto-number ui-field"></span></div>
+                        <div>التاريخ: <span class="auto-date ui-field"></span></div>
+                        <div class="e-badge">عقد بيع وشراء</div>
+                    </div>
+
+                    <div class="e-parties-grid">
+                        <div class="e-party-box">
+                            <div class="e-party-title">الطرف الاول ( البائع )</div>
+                            <div class="e-row"><label>البائع :</label><span contenteditable="true" class="ui-field sync-seller"></span></div>
+                            <div class="e-row"><label>العنوان :</label><span contenteditable="true" class="ui-field"></span></div>
+                            <div class="e-row"><label>رقم الهوية :</label><span contenteditable="true" class="ui-field"></span></div>
+                            <div class="e-row"><label>الهاتف :</label><span contenteditable="true" class="ui-field"></span></div>
+                        </div>
+                        <div class="e-party-box">
+                            <div class="e-party-title">الطرف الثاني ( المشتري )</div>
+                            <div class="e-row"><label>المشتري :</label><span contenteditable="true" class="ui-field sync-buyer"></span></div>
+                            <div class="e-row"><label>العنوان :</label><span contenteditable="true" class="ui-field"></span></div>
+                            <div class="e-row"><label>رقم الهوية :</label><span contenteditable="true" class="ui-field"></span></div>
+                            <div class="e-row"><label>الهاتف :</label><span contenteditable="true" class="ui-field"></span></div>
+                        </div>
+                    </div>
+
+                    <div class="e-section">لقد تم الاتفاق بين الطرفين على انعقاد هذا العقد وبالشروط الاتية :</div>
+                    
+                    <div class="e-section">
+                        <span class="text-red">اولا : </span> أ : يعترف الطرف الاول ( <span class="text-red">البائع</span> ) بانه باع للطرف الثاني ( <span class="text-green">المشتري</span> ) الملك المفصل فيما يلي .<br>
+                        <div class="e-flex-line">
+                            <label>نوع الملك</label><span contenteditable="true" class="ui-field"></span>
+                            <label>المساحة</label><span contenteditable="true" class="ui-field"></span>
+                        </div>
+                        <div class="e-flex-line">
+                            <label>الرقم والتسلسل :</label><span contenteditable="true" class="ui-field"></span>
+                            <label>المحلة</label><span contenteditable="true" class="ui-field"></span>
+                        </div>
+                    </div>
+
+                    <div class="e-section">
+                        <div class="e-flex-line"><span class="text-red">ب - </span> بدل البيع المتفق عليه / دينار : <span contenteditable="true" class="ui-field"></span> فلساً <span contenteditable="true" class="ui-field" style="max-width:80px;"></span></div>
+                        <div class="e-flex-line"><span class="text-red">ج - </span> العربون الذي تم قبضه : <span contenteditable="true" class="ui-field"></span> دينار</div>
+                        <div class="e-flex-line">الباقي <span contenteditable="true" class="ui-field"></span> دينار</div>
+                    </div>
+
+                    <div class="e-section">
+                        <div class="e-flex-line" style="display:block;"><span class="text-red">د - </span> اذا امتنع الطرف الاول ( <span class="text-red">البائع</span> ) عن اجراء التقرير او نكل عن البيع باي صورة كانت فانه ملزم باعادة العربون ويتعهد بدفع تضمينات الى الطرف الثاني ( <span class="text-green">المشتري</span> ) قدرها <span class="ui-field" contenteditable="true" style="min-width:120px;"></span> دينار.</div>
+                    </div>
+
+                    <div class="e-section">
+                        <div class="e-flex-line" style="display:block;"><span class="text-red">ثانيا : </span> يعترف الطرف الثاني ( <span class="text-green">المشتري</span> ) بانه قد قبل الشراء وفي حالت عدم التقرير او النكول عن الشراء وتأدية قصور البدل فانه يتعهد بتأدية تضمينات الى الطرف الاول ( <span class="text-red">البائع</span> ) قدرها <span class="ui-field" contenteditable="true" style="min-width:120px;"></span> دينار.</div>
+                    </div>
+
+                    <div class="e-section">
+                        <span class="text-red">ثالثا :</span> يحق للطرف الثاني ( <span class="text-green">المشتري</span> ) تقرير الملك لمن يشاء .<br>
+                        <span class="text-red">رابعا :</span> كل مكاتبة غير مختومة بختم المكتب تعتبر باطل .<br>
+                        <span class="text-red">خامسا :</span> لا تسترجع الدلالية عند حصول اي خلاف بين الطرفين بعد ابرام العقد .<br>
+                        ملاحظة - نسبة الدلالية ٢٪ والمكتب غير مسؤول بعد التقرير عن الفقرات الاضافية .<br>
+                        <div class="e-flex-line">فبناء على حصول التراضي والايجاب والقبول قرر هذا العقد في <span class="auto-date ui-field"></span></div>
+                    </div>
+
+                    <div class="e-signatures">
+                        <div class="text-red">الطرف الاول / البائع<br><span class="sync-target-display sync-seller-dest" style="color:#000;"></span></div>
+                        <div style="color: #1565c0;">الشاهد الاول<br><span class="ui-field" contenteditable="true"></span></div>
+                        <div style="color: #1565c0;">الشاهد الثاني<br><span class="ui-field" contenteditable="true"></span></div>
+                        <div class="text-green">الطرف الثاني / المشتري<br><span class="sync-target-display sync-buyer-dest" style="color:#000;"></span></div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- D. عقد إيجار -->
+            <div id="rent-contract" class="paper style-rent">
+                <div class="watermark-bg"><img id="wm-rent-contract" src="" alt=""></div>
+                <div class="paper-content">
+                    <div class="r-header-box">
+                        <div class="logo-upload-container" style="width:130px; height:130px; border-radius:10px;" onclick="triggerImageUpload('rent-logo1')">
+                            <div class="logo-placeholder" id="rent-logo1-placeholder"><span>🖼️</span><span>شعار</span></div>
+                            <img id="rent-logo1" src="" alt="">
+                        </div>
+                        <div class="office-header-container">
+                            <div style="font-size: clamp(35px, 8vw, 60px); font-weight: 900; color: #283593;">عقد ايجار</div>
+                            <div class="office-h1 global-office-name">اسم المكتب</div>
+                            <div class="office-h2 global-office-phone">رقم الهاتف</div>
+                            <div class="office-h3 global-office-address">العنوان</div>
+                        </div>
+                        <div class="logo-upload-container" style="width:130px; height:130px; border-radius:10px;" onclick="triggerImageUpload('rent-logo2')">
+                            <div class="logo-placeholder" id="rent-logo2-placeholder"><span>🖼️</span><span>شعار</span></div>
+                            <img id="rent-logo2" src="" alt="">
+                        </div>
+                    </div>
+                    
+                    <div style="display:flex; justify-content:space-between; margin-bottom:20px; font-weight:bold; font-size:16px;">
+                        <div>NO: <span class="auto-number ui-field"></span></div>
+                        <div>التاريخ: <span class="auto-date ui-field"></span></div>
+                    </div>
+
+                    <div class="r-grid-container">
+                        <div class="r-flex-row">
+                            <label class="r-label">تم العقد بين</label>
+                            <div class="r-input-box"><div contenteditable="true" class="ui-field sync-seller"></div></div>
+                            <label class="r-label" style="background:transparent; border:2px solid #283593; color:#283593;">رقم الهوية</label>
+                            <div class="r-input-box"><div contenteditable="true" class="ui-field"></div></div>
+                            <label class="r-label" style="background:transparent; border:none; padding:0; color:#283593;">المدعو فيما يلي المؤجر</label>
+                        </div>
+                        <div class="r-flex-row">
+                            <label class="r-label">وبـــــــــين</label>
+                            <div class="r-input-box"><div contenteditable="true" class="ui-field sync-buyer"></div></div>
+                            <label class="r-label" style="background:transparent; border:2px solid #283593; color:#283593;">رقم الهوية</label>
+                            <div class="r-input-box"><div contenteditable="true" class="ui-field"></div></div>
+                            <label class="r-label" style="background:transparent; border:none; padding:0; color:#283593;">المدعو فيما يلي المستأجر</label>
+                        </div>
+                    </div>
+
+                    <div class="r-section-title">على مايلي</div>
+
+                    <div class="r-large-box">
+                        اولا : ان المؤجر قد اجر الى المستأجر وهذا قد استأجر من المؤجر بعد الرؤية والاطلاع <div contenteditable="true" class="ui-field" style="width:100%; margin-top:8px;"></div>
+                    </div>
+
+                    <div class="r-grid-container">
+                        <div class="r-flex-row">
+                            <label class="r-label" style="background:transparent; border:2px solid #283593; color:#283593;">الواقع</label>
+                            <div class="r-input-box"><div contenteditable="true" class="ui-field"></div></div>
+                            <label class="r-label" style="background:transparent; border:2px solid #283593; color:#283593;">في محلة</label>
+                            <div class="r-input-box"><div contenteditable="true" class="ui-field"></div></div>
+                            <label class="r-label" style="background:transparent; border:2px solid #283593; color:#283593;">المرقمة</label>
+                            <div class="r-input-box"><div contenteditable="true" class="ui-field"></div></div>
+                        </div>
+                        <div class="r-flex-row">
+                            <label class="r-label" style="background:transparent; border:2px solid #283593; color:#283593;">لمـــــدة</label>
+                            <div class="r-input-box"><div contenteditable="true" class="ui-field"></div></div>
+                            <label class="r-label" style="background:transparent; border:2px solid #283593; color:#283593;">ابتداء من</label>
+                            <div class="r-input-box"><div contenteditable="true" class="ui-field"></div></div>
+                        </div>
+                        <div class="r-flex-row">
+                            <label class="r-label" style="background:transparent; border:2px solid #283593; color:#283593;">الى نهاية</label>
+                            <div class="r-input-box"><div contenteditable="true" class="ui-field"></div></div>
+                        </div>
+                        <div class="r-flex-row">
+                            <label class="r-label" style="background:transparent; border:none; color:#283593; padding:0;">ثانيا : ببدل ايجار قدره فقط :</label>
+                            <div class="r-input-box"><div contenteditable="true" class="ui-field"></div></div>
+                        </div>
+                    </div>
+
+                    <div style="border:2px solid #283593; border-radius:6px; height:80px; margin-bottom:20px; padding:10px;" contenteditable="true" class="ui-field"></div>
+
+                    <div class="r-grid-container">
+                        <div class="r-flex-row">
+                            <label class="r-label" style="background:transparent; border:none; padding:0; color:#283593;">ثالثا : للمستأجر حق السكنى</label>
+                            <div class="r-input-box"><div contenteditable="true" class="ui-field"></div></div>
+                            <label class="r-label" style="background:transparent; border:none; padding:0; color:#283593;">في المؤجر مدة الايجار</label>
+                            <div class="r-input-box"><div contenteditable="true" class="ui-field"></div></div>
+                        </div>
+                    </div>
+
+                    <div class="r-text-block">
+                        وعند ختم مدة الايجار ان المستأجر ملزم بتخلية المأجور وتسليمه الى المؤجر خاليا من الشواغل . واذا تاخر عن ذلك فيكون ملزم بان يدفع عن مدة التأخير ايجار يومي قدره <span class="ui-field" contenteditable="true" style="min-width:150px;"></span> من غير حاجة الى انذار رسمي .
+                    </div>
+                    
+                    <div class="r-text-block" contenteditable="true" class="ui-field" style="width: 100%; text-align: right;">
+                        رابعا : ان ضريبة الاملاك على المؤجر واما رسوم الماء والكهرباء والحراسة والتنظيفات فهي على المستأجر يدفعها منتظما وان يستلم الوصولات ويسلم كافة المصابيح الكهربائية والزجاج عند الطلب سالمة كما استلمها. المكتب غير مسؤول اذا اختلف الطرفين.
+                    </div>
+
+                    <div class="r-signatures">
+                        <div>المؤجر<br><span class="sync-target-display sync-seller-dest" style="color:#000;"></span></div>
+                        <div>الشاهد<br><span class="ui-field" contenteditable="true" style="color:#000; width:80%;"></span></div>
+                        <div>الشاهد<br><span class="ui-field" contenteditable="true" style="color:#000; width:80%;"></span></div>
+                        <div>المستأجر<br><span class="sync-target-display sync-buyer-dest" style="color:#000;"></span></div>
+                    </div>
+                </div>
+            </div>
+
+        </div>
+    </div>
+
+    <script>
+        let currentTabId = null;
+        let targetLogoId = null;
+        let contractCounter = parseInt(localStorage.getItem('contractsProCounter')) || 10001;
+        
+        let contractsArchiveList = JSON.parse(localStorage.getItem('contractsArchiveDatabaseV3')) || [];
+
+        // --- Clock System ---
+        function updateClock() {
+            const now = new Date();
+            
+            // ضبط الوقت بنظام 12 ساعة
+            let hours = now.getHours();
+            let minutes = String(now.getMinutes()).padStart(2, '0');
+            let ampm = hours >= 12 ? 'م' : 'ص'; // م = مساءً ، ص = صباحاً
+            
+            // تحويل الساعات من نظام 24 إلى 12
+            hours = hours % 12;
+            hours = hours ? hours : 12; // الساعة 0 (منتصف الليل) تصبح 12
+            hours = String(hours).padStart(2, '0');
+
+            // عرض الوقت في الشاشة الرئيسية
+            document.getElementById('clock-time').innerHTML = `${hours}<span class="blink">:</span>${minutes} <span style="font-size: clamp(1rem, 4vw, 1.5rem); margin-right: 5px;">${ampm}</span>`;
+            
+            // ضبط التاريخ
+            const options = { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' };
+            const formattedDate = now.toLocaleDateString('ar-IQ', options);
+            document.getElementById('clock-date').innerText = formattedDate;
+            
+            const formattedTime = `${hours}:${minutes} ${ampm}`;
+
+            // تعبئة التاريخ والوقت تلقائياً داخل العقود
+            document.querySelectorAll('.auto-date').forEach(el => {
+                if(el.innerText.trim() === '') el.innerText = formattedDate;
+            });
+            document.querySelectorAll('.auto-time').forEach(el => {
+                if(el.innerText.trim() === '') el.innerText = formattedTime;
+            });
+        }
+        setInterval(updateClock, 1000);
+        updateClock();
+
+        function generateContractNumber() {
+            document.querySelectorAll('.auto-number').forEach(el => {
+                if(el.innerText.trim() === '') {
+                    el.innerText = contractCounter;
+                }
+            });
+        }
+
+        // --- Navigation ---
+        function openApp(appId) {
+            document.getElementById('home-screen').style.display = 'none';
+            document.getElementById('archive-screen').style.display = 'none';
+            document.getElementById('contract-screen').style.display = 'flex';
+            
+            document.querySelectorAll('.paper').forEach(el => el.classList.remove('active'));
+            const activePaper = document.getElementById(appId);
+            activePaper.classList.add('active');
+            currentTabId = appId;
+            
+            updateClock();
+            generateContractNumber();
+            syncNames();
+        }
+
+        function goHome() {
+            document.getElementById('contract-screen').style.display = 'none';
+            document.getElementById('archive-screen').style.display = 'none';
+            document.getElementById('home-screen').style.display = 'flex';
+            currentTabId = null;
+        }
+
+        // --- ADVANCED NAME SYNC LOGIC ---
+        function syncNames() {
+            if(!currentTabId) return;
+            const activePaper = document.getElementById(currentTabId);
+            if(!activePaper) return;
+
+            const p1Source = activePaper.querySelector('.sync-seller');
+            if(p1Source) {
+                const val1 = p1Source.innerText.trim();
+                activePaper.querySelectorAll('.sync-seller-dest').forEach(t => t.innerText = val1);
+            }
+
+            const p2Source = activePaper.querySelector('.sync-buyer');
+            if(p2Source) {
+                const val2 = p2Source.innerText.trim();
+                activePaper.querySelectorAll('.sync-buyer-dest').forEach(t => t.innerText = val2);
+            }
+        }
+        
+        const mainWorkspace = document.getElementById('main-workspace');
+        mainWorkspace.addEventListener('input', syncNames);
+        mainWorkspace.addEventListener('keyup', syncNames);
+
+        // --- Settings Modal ---
+        function openSettings() { document.getElementById('settings-modal').style.display = 'flex'; }
+        function closeSettings() { document.getElementById('settings-modal').style.display = 'none'; }
+        
+        function saveSettings() {
+            const name = document.getElementById('set-office-name').value || 'اسم المعرض/المكتب';
+            const phone = document.getElementById('set-office-phone').value || '';
+            const address = document.getElementById('set-office-address').value || 'الديوانية حي الزهراء قرب مجمع الزيتون السكني';
+
+            localStorage.setItem('officeName', name);
+            localStorage.setItem('officePhone', phone);
+            localStorage.setItem('officeAddress', address);
+
+            applyOfficeSettings(name, phone, address);
+            closeSettings();
+        }
+
+        function applyOfficeSettings(name, phone, address) {
+            document.querySelectorAll('.global-office-name').forEach(el => el.innerText = name);
+            document.querySelectorAll('.global-office-phone').forEach(el => { el.innerText = phone; el.style.display = phone ? 'block' : 'none'; });
+            document.querySelectorAll('.global-office-address').forEach(el => { el.innerText = address; el.style.display = address ? 'block' : 'none'; });
+        }
+
+        // --- Image & Logo Logic ---
+        function triggerImageUpload(logoId) {
+            targetLogoId = logoId;
+            document.getElementById('global-image-upload').click();
+        }
+
+        function uploadWatermark() { if(currentTabId) triggerImageUpload('wm-' + currentTabId); }
+        function clearWatermark() {
+            if(currentTabId && confirm('هل أنت متأكد من إزالة العلامة المائية؟')) {
+                setLogoImage('wm-' + currentTabId, '');
+                saveData();
+            }
+        }
+
+        document.getElementById('global-image-upload').addEventListener('change', function(e) {
+            const file = e.target.files[0];
+            if(file && targetLogoId) {
+                const reader = new FileReader();
+                reader.onload = function(event) {
+                    setLogoImage(targetLogoId, event.target.result);
+                    saveData();
+                };
+                reader.readAsDataURL(file);
+            }
+            this.value = '';
+        });
+
+        function setLogoImage(logoId, src) {
+            const img = document.getElementById(logoId);
+            const placeholder = document.getElementById(logoId + '-placeholder');
+            if(img) {
+                if(src) {
+                    img.src = src;
+                    img.style.display = 'block';
+                    if(placeholder) placeholder.style.display = 'none';
+                } else {
+                    img.src = '';
+                    img.style.display = 'none';
+                    if(placeholder) placeholder.style.display = 'flex';
+                }
+            }
+        }
+
+        function clearFields() {
+            if(confirm('هل أنت متأكد من تفريغ الحقول النصية في هذا العقد؟ (معلومات المكتب والصور ستبقى محفوظة)')) {
+                const activePaper = document.getElementById(currentTabId);
+                const editables = activePaper.querySelectorAll('[contenteditable="true"]');
+                editables.forEach(el => {
+                    if(!el.classList.contains('global-office-name') && !el.classList.contains('global-office-phone') && !el.classList.contains('global-office-address')) {
+                        el.innerHTML = '';
+                    }
+                });
+
+                // --- مسح التاريخ والوقت القديم ليتم تحديثهما فوراً بالوقت الجديد ---
+                activePaper.querySelectorAll('.auto-date, .auto-time').forEach(el => {
+                    el.innerHTML = ''; 
+                });
+
+                activePaper.querySelectorAll('.sync-target-display').forEach(t => t.innerText = '');
+                activePaper.querySelectorAll('select').forEach(s => s.selectedIndex = 0);
+                
+                contractCounter++;
+                localStorage.setItem('contractsProCounter', contractCounter);
+                updateClock(); // تحديث الوقت فوراً
+                generateContractNumber();
+                saveData();
+            }
+        }
+
+        // --- Color Picker ---
+        function changePaperColor() {
+            if(currentTabId) {
+                const color = document.getElementById('bg-color-picker').value;
+                document.getElementById(currentTabId).style.backgroundColor = color;
+                saveData();
+            }
+        }
+
+        // --- Persistence & Backup Logic ---
+        function saveData() {
+            const data = {};
+            document.querySelectorAll('.paper').forEach(paper => {
+                data[paper.id + '_html'] = paper.querySelector('.paper-content').innerHTML;
+                data[paper.id + '_bg'] = paper.style.backgroundColor;
+                const selects = paper.querySelectorAll('select');
+                selects.forEach((sel, idx) => { data[paper.id + '_select_' + idx] = sel.value; });
+            });
+
+            const imgIds = ['home-logo', 'car-img', 'car-logo', 'moto-img', 'moto-logo', 'estate-logo1', 'estate-logo2', 'rent-logo1', 'rent-logo2', 'wm-car-contract', 'wm-moto-contract', 'wm-realestate-contract', 'wm-rent-contract'];
+            imgIds.forEach(id => {
+                const img = document.getElementById(id);
+                if(img && img.src && img.src.startsWith('data:image')) data[id + '_src'] = img.src;
+            });
+            localStorage.setItem('contractsProUltimateV15', JSON.stringify(data));
+        }
+
+        function loadData() {
+            const n = localStorage.getItem('officeName') || 'اسم المعرض/المكتب';
+            const p = localStorage.getItem('officePhone') || '0700 000 0000';
+            const a = localStorage.getItem('officeAddress') || 'الديوانية حي الزهراء قرب مجمع الزيتون السكني';
+            
+            document.getElementById('set-office-name').value = n;
+            document.getElementById('set-office-phone').value = p;
+            document.getElementById('set-office-address').value = a;
+            applyOfficeSettings(n, p, a);
+
+            const saved = localStorage.getItem('contractsProUltimateV15');
+            if (saved) {
+                const data = JSON.parse(saved);
+                document.querySelectorAll('.paper').forEach(paper => {
+                    if (data[paper.id + '_bg']) paper.style.backgroundColor = data[paper.id + '_bg'];
+                    if (data[paper.id + '_html']) {
+                        paper.querySelector('.paper-content').innerHTML = data[paper.id + '_html'];
+                    }
+                    const selects = paper.querySelectorAll('select');
+                    selects.forEach((sel, idx) => {
+                        if(data[paper.id + '_select_' + idx]) sel.value = data[paper.id + '_select_' + idx];
+                    });
+                });
+
+                const imgIds = ['home-logo', 'car-img', 'car-logo', 'moto-img', 'moto-logo', 'estate-logo1', 'estate-logo2', 'rent-logo1', 'rent-logo2', 'wm-car-contract', 'wm-moto-contract', 'wm-realestate-contract', 'wm-rent-contract'];
+                imgIds.forEach(id => { if (data[id + '_src']) setLogoImage(id, data[id + '_src']); });
+            }
+        }
+
+        function backupData() {
+            const allData = {
+                contracts: localStorage.getItem('contractsProUltimateV15'),
+                archive: localStorage.getItem('contractsArchiveDatabaseV3'),
+                counter: localStorage.getItem('contractsProCounter'),
+                office: { name: localStorage.getItem('officeName'), phone: localStorage.getItem('officePhone'), address: localStorage.getItem('officeAddress') }
+            };
+            const dataStr = "data:text/json;charset=utf-8," + encodeURIComponent(JSON.stringify(allData));
+            const dlAnchorElem = document.createElement('a');
+            dlAnchorElem.setAttribute("href", dataStr);
+            dlAnchorElem.setAttribute("download", "نسخة_احتياطية_للعقود.json");
+            document.body.appendChild(dlAnchorElem);
+            dlAnchorElem.click();
+            dlAnchorElem.remove();
+        }
+
+        function restoreData(event) {
+            const file = event.target.files[0];
+            if (!file) return;
+            const reader = new FileReader();
+            reader.onload = function(e) {
+                try {
+                    const data = JSON.parse(e.target.result);
+                    if(data.contracts) localStorage.setItem('contractsProUltimateV15', data.contracts);
+                    if(data.archive) {
+                        localStorage.setItem('contractsArchiveDatabaseV3', data.archive);
+                        contractsArchiveList = JSON.parse(data.archive);
+                    }
+                    if(data.counter) localStorage.setItem('contractsProCounter', data.counter);
+                    if(data.office) {
+                        localStorage.setItem('officeName', data.office.name);
+                        localStorage.setItem('officePhone', data.office.phone);
+                        localStorage.setItem('officeAddress', data.office.address);
+                    }
+                    alert("تمت استعادة البيانات بنجاح!");
+                    location.reload();
+                } catch(err) { alert("حدث خطأ، الملف غير صالح."); }
+            };
+            reader.readAsText(file);
+            event.target.value = '';
+        }
+
+        /* --- Archive Logic --- */
+        function openArchiveScreen() {
+            document.getElementById('home-screen').style.display = 'none';
+            document.getElementById('contract-screen').style.display = 'none';
+            document.getElementById('archive-screen').style.display = 'flex';
+            renderArchive(contractsArchiveList);
+        }
+
+        function saveContractToArchive() {
+            if(!currentTabId) return;
+            let contractName = prompt("أدخل اسماً لحفظ هذا العقد في الأرشيف (مثال: عقد سيارة أحمد):");
+            if(!contractName || contractName.trim() === "") return;
+
+            let activePaper = document.getElementById(currentTabId);
+            let clonedContent = activePaper.querySelector('.paper-content').cloneNode(true);
+            let originalSelects = activePaper.querySelectorAll('select');
+            let clonedSelects = clonedContent.querySelectorAll('select');
+            
+            clonedSelects.forEach((sel, idx) => {
+                let val = originalSelects[idx].value;
+                let span = document.createElement('span');
+                span.innerText = val;
+                span.className = "ui-field";
+                sel.parentNode.replaceChild(span, sel);
+            });
+
+            let wmImg = document.getElementById('wm-' + currentTabId);
+            let wmSrc = (wmImg && wmImg.src.startsWith('data:image')) ? wmImg.src : '';
+
+            let newRecord = {
+                id: Date.now().toString(),
+                name: contractName.trim(),
+                type: currentTabId,
+                date: new Date().toLocaleDateString('ar-IQ'),
+                content: clonedContent.innerHTML,
+                watermark: wmSrc,
+                bgColor: activePaper.style.backgroundColor
+            };
+
+            contractsArchiveList.push(newRecord);
+            localStorage.setItem('contractsArchiveDatabaseV3', JSON.stringify(contractsArchiveList));
+            
+            contractCounter++;
+            localStorage.setItem('contractsProCounter', contractCounter);
+            
+            alert("تم حفظ العقد بنجاح! يمكنك العثور عليه في الأرشيف.");
+        }
+
+        function renderArchive(list) {
+            let container = document.getElementById('archive-list');
+            container.innerHTML = '';
+            
+            if(list.length === 0) {
+                container.innerHTML = '<div style="text-align:center; padding:30px; font-weight:bold; color:var(--text-muted);">لا توجد عقود محفوظة حالياً.</div>';
+                return;
+            }
+            
+            [...list].reverse().forEach(contract => {
+                let card = document.createElement('div');
+                card.className = 'neu-flat';
+                card.style.padding = '20px';
+                card.style.display = 'flex';
+                card.style.justifyContent = 'space-between';
+                card.style.alignItems = 'center';
+                card.style.flexWrap = 'wrap';
+                card.style.gap = '15px';
+
+                let typeLabel = contract.type.includes('car') ? '🚘 سيارة' : 
+                               contract.type.includes('moto') ? '🏍️ دراجة' : 
+                               contract.type.includes('rent') ? '🔑 إيجار' : '🏠 عقار';
+
+                let info = document.createElement('div');
+                info.innerHTML = `
+                    <div style="font-weight:900; font-size:1.2rem; color:var(--primary); margin-bottom:5px;">${contract.name}</div>
+                    <div style="font-size:0.95rem; color:var(--text-dark); font-weight:bold;">
+                        <span style="background:var(--accent); color:#fff; padding:3px 10px; border-radius:10px; margin-left:10px;">${typeLabel}</span>
+                        📅 ${contract.date}
+                    </div>`;
+
+                let actions = document.createElement('div');
+                actions.style.display = 'flex';
+                actions.style.gap = '10px';
+                
+                let btnOpen = document.createElement('button');
+                btnOpen.className = 'neu-btn';
+                btnOpen.style.padding = '10px 20px';
+                btnOpen.style.color = '#10b981';
+                btnOpen.innerText = 'فتح للطباعة';
+                btnOpen.onclick = () => loadContractFromArchive(contract.id);
+
+                let btnDel = document.createElement('button');
+                btnDel.className = 'neu-btn';
+                btnDel.style.padding = '10px 20px';
+                btnDel.style.color = '#e53e3e';
+                btnDel.innerText = 'حذف';
+                btnDel.onclick = () => deleteContract(contract.id);
+
+                actions.appendChild(btnOpen);
+                actions.appendChild(btnDel);
+                card.appendChild(info);
+                card.appendChild(actions);
+                container.appendChild(card);
+            });
+        }
+
+        function filterArchive() {
+            let query = document.getElementById('search-input').value.toLowerCase();
+            let filtered = contractsArchiveList.filter(c => c.name.toLowerCase().includes(query));
+            renderArchive(filtered);
+        }
+
+        function loadContractFromArchive(id) {
+            let contract = contractsArchiveList.find(c => c.id === id);
+            if(!contract) return;
+            
+            document.getElementById('archive-screen').style.display = 'none';
+            document.getElementById('contract-screen').style.display = 'flex';
+            
+            document.querySelectorAll('.paper').forEach(el => el.classList.remove('active'));
+            let paper = document.getElementById(contract.type);
+            paper.classList.add('active');
+            currentTabId = contract.type;
+
+            paper.querySelector('.paper-content').innerHTML = contract.content;
+            if(contract.bgColor) {
+                paper.style.backgroundColor = contract.bgColor;
+            }
+            setLogoImage('wm-' + contract.type, contract.watermark || '');
+        }
+
+        function deleteContract(id) {
+            if(confirm("هل أنت متأكد من حذف هذا العقد نهائياً من الأرشيف؟")) {
+                contractsArchiveList = contractsArchiveList.filter(c => c.id !== id);
+                localStorage.setItem('contractsArchiveDatabaseV3', JSON.stringify(contractsArchiveList));
+                filterArchive();
+            }
+        }
+
+        window.onload = loadData;
+    </script>
+</body>
+</html>
